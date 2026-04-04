@@ -1,0 +1,1728 @@
+// D5: Context Management & Reliability — 75 questions
+export const d5Questions = [
+  {
+    id: "d5-001",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Progressive Summarization Risks",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "In a global bank's customer support operation handling 50,000 daily interactions, progressive summarization during long billing dispute sessions can silently convert exact dollar amounts and transaction dates into vague references, causing agents to approve incorrect refund amounts or miss chargeback deadlines.",
+    question: "Your customer support agent handles multi-issue billing disputes that often span 40+ messages. You notice that when conversations exceed the context window, the summarization step condenses early transaction details into phrases like 'several disputed charges from last month.' Refund amounts processed in late-conversation turns are frequently incorrect. What is the best architectural fix?",
+    choices: {
+      A: "Increase the context window limit so conversations never require summarization",
+      B: "Extract transactional facts (amounts, dates, transaction IDs, account numbers) into a persistent 'case facts' block that is excluded from summarization and prepended to every API call",
+      C: "Instruct the model to always remember exact numbers by adding 'never forget specific amounts' to the system prompt",
+      D: "Summarize only the oldest third of the conversation to preserve recent transaction details"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Expanding the context window is a temporary fix that does not scale. As conversations grow, you will always eventually hit a limit, and the fundamental vulnerability of summarization destroying numerics remains unaddressed.",
+      B: "CORRECT: A persistent 'case facts' block separates transactional data (which must be preserved verbatim) from narrative flow (which can be safely summarized). This architectural pattern ensures dollar amounts, dates, and IDs survive any number of summarization cycles.",
+      C: "INCORRECT: Natural language instructions cannot override how summarization algorithms condense information. The model does not control the summarization process that occurs before the prompt is assembled, and even in-context instructions offer no guarantee of numeric preservation.",
+      D: "INCORRECT: While this preserves recent details, it still destroys early transaction data that may be referenced later. In multi-issue disputes, the first issue mentioned is often revisited at conversation end, and its specifics would be lost."
+    }
+  },
+  {
+    id: "d5-002",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Lost in the Middle Effect",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A pharmaceutical research system synthesizing clinical trial data across 15 specialist subagents risks missing critical drug interaction findings buried in middle sections of aggregated reports, potentially leading to unsafe treatment recommendations.",
+    question: "Your multi-agent research system aggregates findings from 12 specialist subagents into a single context for the coordinator to synthesize. Testing reveals that findings from subagents 4-8 are frequently omitted from the final report, while findings from the first and last subagents are consistently included. The total aggregated content is well within the context window. What is the most effective solution?",
+    choices: {
+      A: "Randomize the order of subagent findings before each synthesis to distribute the omission risk evenly",
+      B: "Place key findings from all subagents at the beginning of the aggregated input with explicit section headers, followed by supporting detail",
+      C: "Reduce the number of subagents to 6 so less content occupies the middle positions",
+      D: "Ask the coordinator to explicitly process each subagent's findings sequentially in its chain-of-thought"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Randomization spreads the problem but does not solve it. You would still lose different findings each time, making the system unreliable in a different way. The omission becomes unpredictable rather than eliminated.",
+      B: "CORRECT: The lost-in-the-middle effect causes models to attend more reliably to content at the beginning and end of the input. By extracting key findings into a summary block at the top with clear section headers, you ensure all critical information occupies high-attention positions while keeping supporting detail available for reference.",
+      C: "INCORRECT: The lost-in-the-middle effect is positional, not length-based. Even with fewer subagents, content in middle positions will still receive less attention. Reducing subagents also reduces research coverage.",
+      D: "INCORRECT: Chain-of-thought instructions cannot override the fundamental attention pattern. The model's ability to follow such instructions for middle content is itself subject to the same positional bias that causes the omission."
+    }
+  },
+  {
+    id: "d5-003",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Tool Result Token Accumulation",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "A telecom provider's support agent queries CRM, billing, and network diagnostic tools that each return 40+ fields per call. After 3-4 tool calls in a session, accumulated tool results consume 60% of the context window, pushing earlier conversation context out and degrading resolution quality.",
+    question: "Your customer support agent calls a billing API that returns a full customer record with 45 fields (address history, payment methods, usage statistics, plan details, etc.) when the agent only needs the current balance and last 3 transactions. Over multi-tool conversations, these verbose results consume most of the context window. What should you do?",
+    choices: {
+      A: "Trim tool outputs to only the relevant fields before they are added to the conversation history",
+      B: "Use a larger context window model to accommodate the full tool outputs",
+      C: "Cache tool results externally and provide the model with a reference ID to look them up",
+      D: "Instruct the model in the system prompt to ignore irrelevant fields in tool results"
+    },
+    correct: "A",
+    explanations: {
+      A: "CORRECT: Trimming verbose tool outputs to only relevant fields before they accumulate in the conversation prevents disproportionate token consumption. This is a direct, scalable solution that preserves context budget for the actual conversation.",
+      B: "INCORRECT: A larger context window is a resource-intensive workaround that does not address the root cause. Tool results will still consume disproportionate space relative to their relevance, and costs scale linearly with token count.",
+      C: "INCORRECT: The model cannot look up external references during generation. It needs the relevant data in-context to reason about it. This approach would require additional tool calls to retrieve data, compounding the problem.",
+      D: "INCORRECT: The model cannot selectively ignore tokens. Even if it does not reference irrelevant fields in its response, those fields still consume context window space and contribute to pushing other information out."
+    }
+  },
+  {
+    id: "d5-004",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Conversation History in API Requests",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "A healthcare triage chatbot that fails to include complete conversation history in each API request loses track of reported symptoms mid-conversation, potentially misclassifying urgency when a patient reports chest pain early and then describes arm numbness several messages later.",
+    question: "A developer building a customer support chatbot notices that the agent sometimes 'forgets' information the customer shared earlier in the conversation, even though the conversation is well within context limits. The developer is using the Messages API. What is the most likely cause?",
+    choices: {
+      A: "The model's attention mechanism has a bias toward recent messages",
+      B: "The developer is not sending the complete conversation history with each API request, since the API is stateless",
+      C: "The system prompt is too long, crowding out conversation turns",
+      D: "The model has a known bug with retaining information across more than 10 turns"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: While recency bias exists, the described behavior of completely forgetting earlier information points to a more fundamental issue. Attention bias would cause reduced emphasis, not total loss of earlier context.",
+      B: "CORRECT: The Messages API is stateless. Each request must include the complete conversation history. A common developer mistake is sending only recent messages or assuming the API retains state between calls. This results in the model having no access to earlier turns.",
+      C: "INCORRECT: While a long system prompt does reduce available context, the symptom described (total forgetting of earlier turns) is more consistent with missing history than with context pressure. Context pressure would cause gradual degradation, not complete loss.",
+      D: "INCORRECT: There is no such bug. Claude can process conversations of arbitrary length within its context window. The issue is architectural, not a model deficiency."
+    }
+  },
+  {
+    id: "d5-005",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Upstream Agent Modification",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A hedge fund's research system where specialist agents return 2,000-token reasoning chains for each stock analysis wastes 80% of the coordinator's context on intermediate reasoning, leaving insufficient room to synthesize findings across 20+ securities for portfolio-level decisions.",
+    question: "Your multi-agent research system has specialist subagents that each return a lengthy reasoning chain (1,500-2,000 tokens) explaining how they arrived at their findings. The coordinator agent receives all these outputs but struggles to synthesize them because the accumulated reasoning chains leave little context for actual synthesis. What is the best approach?",
+    choices: {
+      A: "Modify upstream subagents to return structured data with key findings and conclusions only, stripping intermediate reasoning",
+      B: "Have the coordinator process subagent outputs one at a time, building a running synthesis",
+      C: "Increase the coordinator's context window to accommodate all reasoning chains plus synthesis",
+      D: "Have each subagent summarize its own output to 200 tokens before passing to the coordinator"
+    },
+    correct: "A",
+    explanations: {
+      A: "CORRECT: Modifying upstream agents to return structured data instead of verbose reasoning chains directly addresses the root cause. The coordinator needs findings and conclusions, not the reasoning process. Structured output (JSON with key fields) is more token-efficient and easier to synthesize.",
+      B: "INCORRECT: Sequential processing introduces ordering bias and prevents the coordinator from seeing cross-subagent patterns. It also increases latency linearly with the number of subagents and still requires holding a growing synthesis in context.",
+      C: "INCORRECT: This is the 'just add more resources' anti-pattern. It does not address the fundamental inefficiency of passing reasoning chains that the coordinator does not need. Costs increase without proportional value.",
+      D: "INCORRECT: Having subagents self-summarize risks the same progressive summarization problem where specific data points (exact figures, dates, citations) are condensed into vague language. Structured data output avoids this by preserving specifics in defined fields."
+    }
+  },
+  {
+    id: "d5-006",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Escalation Triggers",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "A major airline's rebooking agent that escalates based on customer anger rather than problem complexity routes 40% of interactions to human agents unnecessarily, costing $12 per escalation while leaving genuinely complex policy exceptions unhandled by automation.",
+    question: "You are designing escalation criteria for a customer support agent. Which set of triggers represents the most appropriate escalation design?",
+    choices: {
+      A: "Escalate when the customer's sentiment score drops below -0.7, when the agent's confidence is below 50%, or when the conversation exceeds 15 turns",
+      B: "Escalate immediately on any customer expression of dissatisfaction, to ensure no negative experience goes unaddressed by a human",
+      C: "Escalate on explicit customer requests for a human agent, policy exceptions or gaps not covered by existing rules, and inability to make progress after exhausting available tools",
+      D: "Escalate only when the agent's self-assessed confidence falls below a threshold, since the model can best judge when it needs help"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Sentiment scores and self-reported confidence are both unreliable escalation signals. Sentiment does not correlate with complexity (a calm customer may have an unsolvable problem, an angry one may need a simple fix). Conversation length is a proxy, not a cause.",
+      B: "INCORRECT: Escalating on any dissatisfaction would route a massive volume of easily-resolvable issues to human agents, defeating the purpose of automation. Many customers express frustration that resolves once the issue is addressed.",
+      C: "CORRECT: These three triggers cover the legitimate reasons for escalation: honoring the customer's explicit choice (autonomy), handling situations outside the agent's rules (policy gaps), and recognizing actual inability to resolve (dead ends). They are specific, actionable, and avoid unreliable proxies.",
+      D: "INCORRECT: Self-reported confidence is poorly calibrated. Models tend to express high confidence even when wrong and may not recognize when they lack relevant knowledge. This creates both false negatives (failing to escalate genuine issues) and false positives."
+    }
+  },
+  {
+    id: "d5-007",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Explicit Human Request Handling",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "An insurance claims agent that tries to 'resolve' a customer's request for a human supervisor by offering additional solutions first generates 35% complaint rate increases, as customers perceive the agent as obstructive when their explicit request is not honored.",
+    question: "A customer interacting with your support agent says: 'I want to speak to a real person.' Your agent has identified the likely solution to their billing issue. What should the agent do?",
+    choices: {
+      A: "Offer the solution first, and if the customer rejects it, then escalate to a human agent",
+      B: "Immediately escalate to a human agent without attempting further resolution",
+      C: "Acknowledge the request, briefly mention the available solution, and ask if they would like to try it first or proceed to a human agent",
+      D: "Explain that the AI can resolve the issue faster than a human agent and proceed with the solution"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Delaying escalation after an explicit request for a human agent is perceived as obstructive. The customer has made their preference clear, and continuing to offer automated solutions erodes trust.",
+      B: "CORRECT: When a customer explicitly requests a human agent, the correct response is immediate escalation. This honors customer autonomy and avoids the perception of being trapped in an automated system. The potential efficiency gain of resolving in-agent does not outweigh the trust cost of ignoring an explicit request.",
+      C: "INCORRECT: Even a brief counter-offer can feel like the agent is trying to prevent escalation. The customer has already decided they want a human. Presenting alternatives, however gently, delays their stated need.",
+      D: "INCORRECT: Arguing with the customer about the superiority of AI resolution directly contradicts their expressed preference and will almost certainly increase frustration. This is the worst possible response to an explicit escalation request."
+    }
+  },
+  {
+    id: "d5-008",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Frustration vs. Escalation",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A fintech platform's support agent must distinguish between customers who are frustrated but have solvable problems (90% of angry interactions) and customers who genuinely need human intervention, to maintain both 80%+ FCR and customer satisfaction above 4.2/5.",
+    question: "Your support agent encounters a customer who writes in all caps: 'THIS IS RIDICULOUS. I'VE BEEN CHARGED TWICE AND NOBODY IS HELPING ME.' The agent has access to billing tools that can verify and reverse duplicate charges. What is the correct agent behavior?",
+    choices: {
+      A: "Immediately escalate to a human agent because the high-frustration language indicates the situation requires human empathy",
+      B: "Acknowledge the customer's frustration, then use billing tools to investigate and attempt to resolve the duplicate charge, escalating only if the customer explicitly requests a human or the tools cannot resolve it",
+      C: "Ask the customer to calm down before proceeding, as emotional language makes it harder for the agent to process the request accurately",
+      D: "Escalate because the sentiment analysis score will be extremely negative, crossing the escalation threshold"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Frustration does not equal complexity. This is a straightforward duplicate charge that the agent's tools can likely resolve. Escalating based on emotional tone rather than problem characteristics wastes human agent resources on solvable issues.",
+      B: "CORRECT: The pattern is: acknowledge frustration, then attempt resolution. Escalation occurs only when the customer explicitly asks for a human or the agent genuinely cannot resolve the issue. Angry customers with solvable problems are best served by fast resolution, not handoff delays.",
+      C: "INCORRECT: Asking a customer to calm down is dismissive and will escalate the emotional situation. The agent should acknowledge feelings and move to resolution, not condition service on emotional state.",
+      D: "INCORRECT: Sentiment-based escalation is explicitly identified as unreliable. High negative sentiment correlates with frustration, not with problem complexity or the need for human intervention. Many highly frustrated customers have simple, automatable issues."
+    }
+  },
+  {
+    id: "d5-009",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Multiple Customer Matches",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A healthcare provider's scheduling agent that selects the 'most likely' patient from multiple matches based on appointment history risks booking procedures for the wrong patient, creating liability exposure and potential patient safety issues.",
+    question: "Your support agent queries the customer database with the name 'John Smith' and receives 4 matching records. The customer has only provided their name so far. What should the agent do?",
+    choices: {
+      A: "Select the record with the most recent activity, as it is most likely the active customer",
+      B: "Present all four matches to the customer and ask them to confirm which account is theirs",
+      C: "Ask for additional identifying information (email, phone number, or account number) to narrow the match before taking any action",
+      D: "Use the phone number from the incoming call to automatically match against the records"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Heuristic selection based on recency is a dangerous anti-pattern. The most recently active 'John Smith' has only a 25% chance of being the correct customer. Acting on the wrong account could expose another customer's data or apply changes to the wrong account.",
+      B: "INCORRECT: Presenting all four records would expose personal information (addresses, account numbers, etc.) from other customers to this caller. This is a privacy violation and potentially a regulatory compliance issue.",
+      C: "CORRECT: When tool results return multiple matches, the agent must ask for additional identifiers to disambiguate. This avoids both heuristic guessing (which risks acting on the wrong account) and information exposure (which risks privacy violations). The agent should ask for email, phone, or account number.",
+      D: "INCORRECT: While using caller ID as an additional signal is reasonable in a telephony context, this assumes the channel provides verified phone data and that it maps to exactly one of the four records. It is not a general solution and should supplement, not replace, explicit verification."
+    }
+  },
+  {
+    id: "d5-010",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Policy Gap Escalation",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "An e-commerce returns agent that improvises responses to policy gaps (e.g., damaged items from a discontinued product line) creates inconsistent precedents, leading to a 23% increase in follow-up complaints when similar requests receive different treatment.",
+    question: "A customer requests a price match against a competitor for a product your company sells. Your agent's policy documentation covers standard returns, exchanges, and warranty claims, but does not mention price matching at all. What should the agent do?",
+    choices: {
+      A: "Deny the request since price matching is not in the policy, meaning it is not offered",
+      B: "Approve a one-time price match as a goodwill gesture to maintain customer satisfaction",
+      C: "Escalate to a human agent because the policy is silent on this specific request, representing a policy gap",
+      D: "Search for any related policy that could be interpreted to cover price matching and apply it"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Absence of a policy is not the same as a policy of denial. The agent cannot infer that silence means rejection. Denying a potentially valid request without authority damages customer relationships unnecessarily.",
+      B: "INCORRECT: Approving outside of policy is equally dangerous. The agent lacks authority to create new policy precedents. A goodwill approval could create expectations that the company cannot or does not want to sustain.",
+      C: "CORRECT: When policy is ambiguous or silent on a specific request, the agent should escalate. Policy gaps represent situations where the agent lacks the authority to make a judgment call. Human agents or supervisors can make policy decisions that the AI agent should not.",
+      D: "INCORRECT: Creatively reinterpreting adjacent policies to cover unaddressed situations is a form of policy improvisation. This creates inconsistent outcomes and may authorize actions the business never intended to support."
+    }
+  },
+  {
+    id: "d5-011",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Escalation with Few-Shot Examples",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A legal services intake agent without concrete escalation examples misclassifies 28% of potential malpractice claims as general inquiries, causing the firm to miss the statute of limitations on time-sensitive cases worth an average of $340,000.",
+    question: "Your customer support agent's escalation criteria say 'escalate complex or sensitive issues.' In production, you find the agent escalates too aggressively on routine issues while failing to escalate genuine edge cases. What is the best way to improve escalation accuracy?",
+    choices: {
+      A: "Add a confidence threshold: escalate when the model reports confidence below 60%",
+      B: "Replace the vague criteria with explicit escalation rules accompanied by few-shot examples showing both correct escalations and correct non-escalations",
+      C: "Implement a secondary classification model that determines whether each interaction should be escalated",
+      D: "Track escalation rates and adjust the system prompt wording when rates deviate from the target percentage"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Self-reported confidence is poorly calibrated. The model may express high confidence on edge cases it mishandles and low confidence on routine tasks. Confidence thresholds create a false sense of precision without addressing the underlying ambiguity in escalation criteria.",
+      B: "CORRECT: Vague criteria like 'complex or sensitive' leave too much room for interpretation. Explicit rules with few-shot examples demonstrating boundary cases teach the model exactly what constitutes an escalation-worthy situation. Examples of correct non-escalation are equally important to prevent over-escalation.",
+      C: "INCORRECT: A secondary classifier adds complexity and latency without addressing the root cause. If the criteria are vague for the primary model, they will be equally vague for a classifier. You have now doubled your calibration problem.",
+      D: "INCORRECT: Targeting a percentage treats escalation as a statistical goal rather than a case-by-case decision. Adjusting prompts to hit a rate target may suppress legitimate escalations or generate unnecessary ones to meet the number."
+    }
+  },
+  {
+    id: "d5-012",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Structured Error Context",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A hospital's multi-agent diagnostic system that returns generic 'error' statuses from radiology and lab subagents prevents the coordinator from distinguishing between unavailable test results (retry later) and tests that were never ordered (order them now), delaying diagnosis by an average of 4.2 hours.",
+    question: "In your multi-agent research system, a subagent tasked with querying a financial database fails. It returns the message: 'Error: operation failed.' The coordinator agent receives this and must decide how to proceed. What is wrong with this error propagation pattern, and what should be done instead?",
+    choices: {
+      A: "The error message is fine; the coordinator should simply retry the operation since most failures are transient",
+      B: "The subagent should return structured error context including failure type, what was attempted, any partial results obtained, and suggested alternatives",
+      C: "The subagent should silently handle the error and return a best-effort result to avoid disrupting the coordinator's workflow",
+      D: "The coordinator should terminate the entire research task since one subagent failure compromises the integrity of the full analysis"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Blind retry assumes all failures are transient, which is false. An authentication failure, a query syntax error, or a permanently unavailable dataset will fail again on retry. Without knowing the failure type, the coordinator cannot make an informed retry decision.",
+      B: "CORRECT: Structured error context enables the coordinator to make informed decisions. Knowing the failure type (timeout vs. auth vs. not found), what was attempted (specific query/endpoint), partial results (if any data was returned before failure), and alternatives (other data sources) allows intelligent recovery rather than blind retry or premature termination.",
+      C: "INCORRECT: Silently suppressing errors is an explicit anti-pattern. The coordinator will operate on incomplete data without knowing it, potentially producing confident-sounding but fatally flawed analysis. The user has no way to assess the reliability of the output.",
+      D: "INCORRECT: Terminating the entire workflow because one subagent failed is the other anti-pattern extreme. Many research tasks can produce valuable partial results, and other subagents may have succeeded. Wholesale termination wastes all completed work."
+    }
+  },
+  {
+    id: "d5-013",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Access Failure vs Empty Result",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A compliance monitoring system that treats a database access timeout identically to 'no violations found' may report a clean compliance status when in reality the violations database was unreachable, exposing the firm to regulatory penalties averaging $2.3 million per incident.",
+    question: "A subagent in your research system queries a regulatory database and gets an HTTP 503 response. Another subagent queries a different database and gets a valid response with zero matching records. Both subagents report 'no results' to the coordinator. What is the fundamental problem?",
+    choices: {
+      A: "Both subagents should retry their queries before reporting no results",
+      B: "The coordinator should treat any 'no results' response with suspicion and independently verify",
+      C: "The subagents must distinguish between access failures (503 = service unavailable) and valid empty results (0 matches), as these require completely different downstream handling",
+      D: "The subagent that got the 503 should be replaced with a more reliable data source"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Retry is appropriate for the 503 (transient failure) but pointless for the empty result set (valid response). Treating both situations identically fails to address the core issue: they are fundamentally different conditions that look the same at the coordinator level.",
+      B: "INCORRECT: Independent verification adds latency and complexity without solving the architectural problem. The coordinator needs to know the difference at the subagent level, not discover it through redundant queries.",
+      C: "CORRECT: A 503 means 'I could not access the data' while zero matches means 'I accessed the data and nothing matched.' The coordinator's actions should differ dramatically: retry/alternative source for access failures, proceed with confidence for valid empty results. Conflating these is a critical reliability failure.",
+      D: "INCORRECT: Replacing the data source does not fix the architectural problem. Any data source can experience transient failures. The subagent needs to report the nature of the failure, not just the absence of results, regardless of which source it queries."
+    }
+  },
+  {
+    id: "d5-014",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Local Recovery and Propagation",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A logistics optimization system where subagents immediately propagate every API timeout to the coordinator generates 200+ error escalations per hour during routine network fluctuations, overwhelming the coordinator and delaying critical route optimization decisions.",
+    question: "Your multi-agent system has subagents that each call external APIs. During a brief network instability, subagents begin reporting timeout errors to the coordinator. Some of these timeouts resolve on retry within seconds, while others indicate genuinely unavailable services. What is the correct error handling pattern?",
+    choices: {
+      A: "Have all subagents immediately propagate all errors to the coordinator, which manages a centralized retry queue",
+      B: "Have subagents implement local retry logic for transient failures (timeouts, rate limits) and propagate only unresolvable errors with structured context to the coordinator",
+      C: "Have subagents silently retry indefinitely until they succeed, to insulate the coordinator from transient issues",
+      D: "Have the coordinator implement a global circuit breaker that halts all subagents when error rates exceed a threshold"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Propagating every transient error to the coordinator creates unnecessary noise and decision overhead. The coordinator's context fills with error handling rather than synthesis. This is the 'every error is urgent' anti-pattern.",
+      B: "CORRECT: Subagents should handle what they can (transient retries) and escalate what they cannot (persistent failures, auth errors, data not found) with structured context. This keeps the coordinator focused on synthesis and high-level decisions while local agents handle routine recovery.",
+      C: "INCORRECT: Silent indefinite retry is dangerous. A subagent stuck in a retry loop on a genuinely unavailable service will never complete, blocking the overall workflow without the coordinator knowing why. This is the silent suppression anti-pattern in disguise.",
+      D: "INCORRECT: A global circuit breaker is overly coarse. Network instability affecting one external API should not halt subagents querying completely different, functioning services. This approach treats all failures uniformly regardless of scope."
+    }
+  },
+  {
+    id: "d5-015",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Synthesis with Coverage Annotations",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A due diligence research system for M&A transactions that presents synthesized findings without indicating which areas had subagent failures leads analysts to assume comprehensive coverage, potentially missing $50M+ liabilities in areas where data was actually unavailable.",
+    question: "Your multi-agent research system synthesizes findings from 8 subagents into a final report. Two subagents failed (regulatory database timeout and one returned partial data). The coordinator must produce the report. What is the best approach?",
+    choices: {
+      A: "Produce the report from the 6 successful subagents and add a disclaimer that the report may be incomplete",
+      B: "Wait and retry the failed subagents until all 8 succeed before producing the report",
+      C: "Structure the synthesis with explicit coverage annotations distinguishing well-supported sections from areas with known gaps, including what data was unavailable and why",
+      D: "Have the coordinator fill in the gaps using its general knowledge to ensure the report is comprehensive"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: A generic disclaimer is insufficient. The consumer of the report needs to know specifically which sections are well-supported and which have gaps. 'May be incomplete' does not help the reader assess which findings to trust.",
+      B: "INCORRECT: Indefinite waiting blocks the entire workflow. The failures may be persistent (database maintenance, access issues). The report consumer may prefer a partial report with clear annotations over no report at all.",
+      C: "CORRECT: Coverage annotations allow the report consumer to make informed decisions. Each section should indicate whether it is well-supported (multiple sources confirmed), partially supported (some data unavailable), or has known gaps (specific databases were unreachable). This preserves the value of successful subagent work while being transparent about limitations.",
+      D: "INCORRECT: Filling gaps with general knowledge without attribution is dangerous. The report consumer cannot distinguish between findings backed by specific data sources and the model's general training. In research contexts, provenance matters as much as the finding itself."
+    }
+  },
+  {
+    id: "d5-016",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Context Degradation Symptoms",
+    difficulty: "hard",
+    scenario: 2,
+    importance: "A development team using Claude Code to refactor a 500K-line legacy codebase notices the agent starts suggesting patterns that contradict the actual code architecture, leading to 15 hours of wasted work before developers realize the agent's context had degraded.",
+    question: "You are using Claude Code for an extended codebase exploration session. After several hours of analyzing a complex legacy system, you notice the agent starts saying things like 'based on typical patterns in systems like this' and 'this likely follows standard MVC conventions.' Earlier in the session, it was citing specific file paths and function names. What is happening and what should you do?",
+    choices: {
+      A: "The model is being appropriately cautious by hedging its statements; this is normal behavior and no action is needed",
+      B: "The model's context has degraded and it is substituting general knowledge for specific codebase details; you should use /compact to reduce context and reload key findings",
+      C: "The model has encountered code it does not understand and is generalizing to cover its knowledge gap",
+      D: "The model is optimizing its responses for speed by providing general patterns rather than looking up specifics"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: This is not healthy hedging. The shift from citing specific file paths to referencing 'typical patterns' is a reliable symptom of context degradation. The model has lost access to the specific details it was referencing earlier.",
+      B: "CORRECT: When a model shifts from specific references (exact file paths, function names, line numbers) to generic language ('typical patterns,' 'standard conventions'), this indicates context degradation. The specific codebase details have been pushed out or summarized away. Using /compact to reduce context consumption and then reloading key findings restores specificity.",
+      C: "INCORRECT: The model was successfully citing specifics earlier for the same codebase. The change in behavior correlates with session duration and context consumption, not with encountering unfamiliar code patterns.",
+      D: "INCORRECT: The model does not strategically choose between specific and general responses for performance reasons. The shift to general language is involuntary and indicates lost context, not an optimization choice."
+    }
+  },
+  {
+    id: "d5-017",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Scratchpad Files for Persistence",
+    difficulty: "medium",
+    scenario: 4,
+    importance: "A developer exploring a legacy financial trading system across multiple Claude sessions loses track of critical module dependencies discovered in earlier sessions, causing them to introduce breaking changes that cost 3 days of debugging when the discovered architecture is forgotten.",
+    question: "You are using Claude to explore a large, poorly documented legacy codebase over multiple sessions. Each session discovers important architectural details, but you need these findings to persist across session boundaries. What is the most effective approach?",
+    choices: {
+      A: "Copy and paste key findings from each session into the next session's initial prompt",
+      B: "Maintain scratchpad files that record key architectural findings, module dependencies, and patterns discovered, loading them at the start of each session",
+      C: "Rely on the model's general understanding of the codebase since it was likely in the training data",
+      D: "Take screenshots of important findings and reference them as needed"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Manual copy-paste is error-prone and does not scale. You will inevitably miss important details, and the initial prompt will grow unmanageably large as discoveries accumulate across many sessions.",
+      B: "CORRECT: Scratchpad files serve as persistent memory across context boundaries. By recording architectural findings, key dependencies, configuration patterns, and naming conventions in structured files, you create a reliable knowledge base that can be loaded into any new session. This counteracts context degradation and session boundaries.",
+      C: "INCORRECT: Proprietary codebases are almost certainly not in training data. Even if portions were, the model cannot reliably distinguish between general patterns and this specific codebase's implementation. This leads to the exact 'typical patterns' substitution that indicates degradation.",
+      D: "INCORRECT: Screenshots are not machine-readable and cannot be efficiently loaded into conversation context. Structured text in scratchpad files can be directly consumed by the model and searched/filtered as needed."
+    }
+  },
+  {
+    id: "d5-018",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Subagent Delegation for Exploration",
+    difficulty: "hard",
+    scenario: 2,
+    importance: "A team refactoring a microservices architecture with 40+ services loses main-agent context to verbose grep outputs and file reads when the coordinating agent directly explores each service, reducing synthesis quality for the overall migration plan.",
+    question: "You are coordinating a large codebase analysis using Claude Code. You need to understand the authentication flow, which touches 12 different files across 4 services. Reading all these files directly would consume most of your context window. What is the best approach?",
+    choices: {
+      A: "Read each file sequentially, summarizing as you go to manage context",
+      B: "Spawn a subagent to investigate the authentication flow, receiving back only its structured findings while your main context stays clean for coordination",
+      C: "Use grep to find all auth-related functions and read only those specific lines",
+      D: "Read the first and last files in the flow, as these will contain the entry and exit points that define the overall pattern"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Sequential reading and summarization still consumes context with intermediate results. Each file read adds tokens even if you summarize afterward, and progressive summarization risks losing specific details about how the files interact.",
+      B: "CORRECT: Spawning a subagent isolates the verbose exploration output from the main agent's context. The subagent can read all 12 files, trace the flow, and return structured findings (entry points, middleware chain, token validation steps, etc.) as a compact summary. The main agent preserves its context for coordination across multiple such investigations.",
+      C: "INCORRECT: Grep results for 'auth' across a large codebase will return many irrelevant matches alongside relevant ones. The results lack the structural context needed to understand the flow, and accumulating grep output has its own token cost.",
+      D: "INCORRECT: Authentication flows are not necessarily linear. Reading only endpoints misses critical middleware, validation logic, and error handling in the middle files. This is essentially applying the 'lost in the middle' problem by choice."
+    }
+  },
+  {
+    id: "d5-019",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Crash Recovery with State Persistence",
+    difficulty: "hard",
+    scenario: 2,
+    importance: "A 6-hour codebase migration session using Claude Code crashes at 80% completion, and without structured state persistence the developer must restart from scratch, wasting $400 in API costs and an entire workday.",
+    question: "You are designing a long-running codebase migration workflow using Claude Code that will take multiple hours. Partway through previous attempts, the session has crashed due to context limits or network issues, losing all progress. How should you design for crash recovery?",
+    choices: {
+      A: "Save the entire conversation history to a file after each significant step so it can be replayed",
+      B: "Design the workflow with structured state exports: a manifest of completed tasks, pending tasks, key decisions made, and current findings that can bootstrap a new session",
+      C: "Use shorter, more frequent sessions to reduce the probability of crashes",
+      D: "Implement automatic checkpointing by periodically saving the model's internal state"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Replaying an entire conversation history is inefficient and may exceed context limits itself. Much of the conversation is exploratory and does not need to be replayed. You need the conclusions, not the journey.",
+      B: "CORRECT: Structured state persistence captures what matters for recovery: which files have been migrated (completed tasks), which remain (pending tasks), architectural decisions made, and current findings. A new session can load this manifest and resume from the point of failure without replaying exploratory conversation.",
+      C: "INCORRECT: Shorter sessions reduce individual crash risk but introduce their own context management problems. Each session boundary requires careful state transfer, and important cross-session patterns may be lost. This is a mitigation, not a solution.",
+      D: "INCORRECT: You cannot save the model's internal state through the API. The model's state exists only during a single request. Structured external state persistence is the feasible alternative."
+    }
+  },
+  {
+    id: "d5-020",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Phase Summarization Between Agents",
+    difficulty: "medium",
+    scenario: 4,
+    importance: "A developer exploring a legacy system's database layer spawns analysis agents for the next phase (API layer) without summarizing database findings first, causing the API analysis agents to miss critical stored procedure dependencies that explain seemingly broken API endpoints.",
+    question: "You are conducting a multi-phase codebase analysis. Phase 1 explored the database schema and produced detailed findings. Phase 2 will analyze the API layer, which depends on the database. How should you transition between phases?",
+    choices: {
+      A: "Pass the complete Phase 1 conversation to Phase 2 agents as context",
+      B: "Summarize Phase 1 findings into a structured document emphasizing conclusions and key facts before spawning Phase 2 agents",
+      C: "Let Phase 2 agents rediscover the database details on their own for a fresh perspective",
+      D: "Pass only the database schema files to Phase 2 agents without any analysis"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: The complete Phase 1 conversation contains extensive exploration, dead ends, and verbose tool outputs. Passing it raw wastes Phase 2 agents' context on irrelevant content and may trigger the lost-in-the-middle effect on critical findings.",
+      B: "CORRECT: Summarizing Phase 1 findings into a structured document (key tables, relationships, constraints, naming conventions, known issues) before Phase 2 preserves the essential knowledge while keeping Phase 2 agents' context clean for their own exploration. This is the recommended pattern for multi-phase analysis.",
+      C: "INCORRECT: Rediscovery wastes time and tokens repeating work already done. Phase 2 agents may also miss patterns that Phase 1 discovered through extensive exploration, especially non-obvious constraints or legacy quirks.",
+      D: "INCORRECT: Raw schema files without analysis context miss the crucial interpretive layer. Phase 1 discovered why the schema is structured as it is, which constraints are enforced in code vs. database, and which naming conventions are meaningful. This analytical context is essential for Phase 2."
+    }
+  },
+  {
+    id: "d5-021",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Aggregate Accuracy Masking",
+    difficulty: "hard",
+    scenario: 6,
+    importance: "A mortgage processing system reporting 97% overall extraction accuracy conceals a 68% accuracy rate on self-employment income documents, causing 32% of self-employed applicant files to require manual rework and delaying their approvals by an average of 11 business days.",
+    question: "Your structured data extraction system reports 97% overall accuracy across all document types. Stakeholders want to move to full automation with no human review. You analyze the breakdown and find: W-2 forms at 99.5%, standard invoices at 98%, but handwritten medical receipts at 72% and foreign-language documents at 65%. What should you recommend?",
+    choices: {
+      A: "Proceed with full automation since 97% overall accuracy meets the quality bar",
+      B: "Automate only the high-accuracy document types, routing low-accuracy types to human review, and invest in improving extraction for those specific types",
+      C: "Increase the training data for all document types uniformly to improve overall accuracy above 99%",
+      D: "Add a confidence threshold: automate extractions above 90% confidence and review everything below"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: 97% aggregate accuracy masks catastrophic failures on specific document types. A 72% accuracy rate on handwritten medical receipts means nearly one in three extractions is wrong. Automating these would produce significant downstream errors that the overall metric conceals.",
+      B: "CORRECT: Stratified analysis reveals that accuracy varies dramatically by document type. The correct approach is to automate where accuracy is proven reliable (W-2s, standard invoices) and route problem categories to human review while investing in targeted improvements. This is the stratified reliability approach rather than blanket automation.",
+      C: "INCORRECT: Uniform training data increases are inefficient. The high-performing types do not need more data, while the low-performing types likely need fundamentally different approaches (OCR improvements for handwriting, translation layers for foreign languages), not just more examples.",
+      D: "INCORRECT: Confidence thresholds without calibration are unreliable. The model may report high confidence on handwritten receipts while still achieving only 72% accuracy. Confidence scores must be calibrated per document type against labeled validation sets to be meaningful."
+    }
+  },
+  {
+    id: "d5-022",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Stratified Sampling for Validation",
+    difficulty: "medium",
+    scenario: 6,
+    importance: "An insurance claims extraction system that only validates random samples misses a systematic error pattern where policy number extraction fails on claims submitted via mobile app (different PDF format), causing 15% of mobile-submitted claims to be misrouted.",
+    question: "You need to design a validation strategy for a document extraction system that processes 10,000 documents daily across 8 document types. Your budget allows human review of 200 documents per day. What is the most effective sampling approach?",
+    choices: {
+      A: "Randomly sample 200 documents per day from the full pool regardless of document type",
+      B: "Use stratified random sampling, ensuring each document type is represented proportionally with a minimum sample per type, oversampling from types with higher historical error rates",
+      C: "Focus all 200 reviews on the document types with the lowest historical accuracy to improve them fastest",
+      D: "Review only documents where the model reported low confidence, as these are most likely to contain errors"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Pure random sampling will under-represent rare document types. If handwritten receipts are 2% of volume, random sampling would only include 4 per day, which is statistically insufficient to detect accuracy changes for that type.",
+      B: "CORRECT: Stratified sampling ensures every document type is monitored with statistical significance. Minimum samples per type prevent rare types from being invisible. Oversampling high-error types concentrates review effort where it has the most impact while still monitoring all types for regression.",
+      C: "INCORRECT: Exclusive focus on low-accuracy types means high-accuracy types are never validated. You would not detect if W-2 extraction accuracy degraded from 99.5% to 85% due to a format change until the problem became widespread.",
+      D: "INCORRECT: Low-confidence review creates a biased sample. You only validate documents the model was uncertain about, never discovering cases where the model is confidently wrong. Stratified random sampling catches both high-confidence errors and low-confidence ones."
+    }
+  },
+  {
+    id: "d5-023",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Field-Level Confidence Calibration",
+    difficulty: "hard",
+    scenario: 6,
+    importance: "A tax preparation system that uses uncalibrated model confidence to auto-accept extracted income figures has a 40% false positive rate in its 'high confidence' bracket, resulting in $2.1M in incorrect tax filings that trigger IRS audits for 850 clients.",
+    question: "Your extraction system outputs confidence scores for each extracted field. You want to use these scores to route low-confidence extractions to human review. Initial testing shows that when the model reports 95% confidence, actual accuracy is only 78%. What should you do?",
+    choices: {
+      A: "Lower the automation threshold to 99% confidence to compensate for the miscalibration",
+      B: "Calibrate confidence scores using a labeled validation set so that reported confidence aligns with actual accuracy, then set thresholds based on calibrated scores",
+      C: "Replace confidence scores with a separate binary classifier that predicts whether each extraction is correct",
+      D: "Ignore confidence scores entirely and use rule-based validation checks instead"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Shifting an uncalibrated threshold does not fix calibration. If 95% confidence yields 78% accuracy, 99% confidence may yield 85% accuracy rather than 99%. Without calibration, you do not know the mapping, and shifting the threshold may severely reduce automation rates without proportional accuracy gains.",
+      B: "CORRECT: Confidence calibration uses a labeled validation set to learn the mapping between reported confidence and actual accuracy. After calibration, a reported 95% confidence genuinely corresponds to 95% accuracy. This enables meaningful threshold-based routing where the tradeoff between automation rate and accuracy is predictable and controllable.",
+      C: "INCORRECT: A binary classifier also requires calibration and has its own confidence issues. It adds system complexity without fundamentally solving the calibration problem. The extraction model's continuous confidence scores, when properly calibrated, provide more granular routing than a binary decision.",
+      D: "INCORRECT: Rule-based validation can catch format errors (wrong date format, negative amounts) but cannot assess semantic accuracy (correct amount extracted from the wrong line). Confidence scores, when calibrated, capture uncertainty about the extraction process that rules cannot."
+    }
+  },
+  {
+    id: "d5-024",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Document Type and Field Analysis",
+    difficulty: "medium",
+    scenario: 6,
+    importance: "A medical records extraction system achieves 96% accuracy on patient names but only 71% on medication dosages, and without field-level analysis, the system is approved for full automation, causing dosage errors that trigger 23 adverse drug event investigations.",
+    question: "Before moving your extraction system to production, you want to validate its readiness. You have accuracy data showing 95% overall, but have not broken down performance by field. Why is field-level accuracy analysis critical before deployment?",
+    choices: {
+      A: "Because different fields have different acceptable error rates, and some may be below threshold even when overall accuracy is high",
+      B: "Because field-level analysis is required by data processing regulations in all industries",
+      C: "Because overall accuracy is always misleading and should not be used as a metric",
+      D: "Because the model might be cheating by copying fields from other records"
+    },
+    correct: "A",
+    explanations: {
+      A: "CORRECT: Different fields have different criticality and different extraction difficulty. A system that perfectly extracts customer names but frequently misreads dollar amounts is dangerous in a financial context. Overall accuracy masks these field-level disparities, and each field must meet its own accuracy threshold based on the downstream impact of errors.",
+      B: "INCORRECT: While some regulations do require specific validation, field-level analysis is an engineering best practice rather than a universal regulatory requirement. The reason is practical, not merely compliance-driven.",
+      C: "INCORRECT: Overall accuracy is a useful directional metric. It is not 'always misleading,' but it is insufficient on its own. Field-level analysis supplements overall accuracy rather than replacing it.",
+      D: "INCORRECT: This is not a realistic concern for well-designed extraction systems. Field-level analysis is valuable for understanding differential accuracy across fields, not for detecting data leakage between records."
+    }
+  },
+  {
+    id: "d5-025",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Source Attribution Loss",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A pharmaceutical research synthesis that loses source attribution during summarization presents a contested drug interaction finding as universally established, causing a clinical trial to proceed without additional safety protocols that the original dissenting source would have warranted.",
+    question: "Your multi-agent research system has specialist subagents that each produce summaries of their source material. The coordinator synthesizes these summaries into a final report. Users complain that the final report makes claims without indicating which sources support them, making it impossible to verify findings. What is the root cause and fix?",
+    choices: {
+      A: "Add a bibliography section at the end of the final report listing all sources consulted",
+      B: "Require subagents to output claim-source mappings that the coordinator preserves and merges during synthesis, so every claim in the final report links to its supporting source(s)",
+      C: "Have the coordinator add citations by searching for supporting sources after synthesis is complete",
+      D: "Instruct the coordinator to include the source name in parentheses after each sentence"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: A bibliography without inline attribution does not solve the problem. Knowing that 15 sources were consulted does not tell the reader which source supports which claim. The provenance link between claim and source is lost.",
+      B: "CORRECT: Claim-source mappings must be created at the subagent level (where the source material is directly accessible) and preserved through the synthesis pipeline. The coordinator merges these mappings, so the final report maintains traceability from each claim to its originating source(s). This is the structured provenance pattern.",
+      C: "INCORRECT: Post-hoc citation search is unreliable. The coordinator may find sources that superficially match but are not the actual basis for the claim. The attribution must flow forward from the original research, not be reconstructed backward.",
+      D: "INCORRECT: This instruction-based approach is fragile. The coordinator may fabricate source names, misattribute claims, or inconsistently apply the citation format. Without structured claim-source data flowing from subagents, the coordinator is guessing at provenance."
+    }
+  },
+  {
+    id: "d5-026",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Conflicting Statistics",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A policy research system that silently selects one market size estimate ($4.2B) over another ($7.8B) without noting the disagreement causes a government agency to base regulations on a single data point rather than understanding the range of expert estimates.",
+    question: "Your research system's subagents find conflicting statistics on market size: Subagent A reports $4.2B (from a 2023 industry report), Subagent B reports $7.8B (from a 2024 government survey), and Subagent C reports $5.5B (from an academic paper). The coordinator must include market size in the final report. What is the correct approach?",
+    choices: {
+      A: "Average the three values and report $5.83B as the estimated market size",
+      B: "Select the most recent value ($7.8B from 2024) as the most up-to-date estimate",
+      C: "Report all three values with their sources and dates, annotating the disagreement and letting the report consumer evaluate which is most applicable",
+      D: "Omit market size from the report since the conflicting data makes any single figure unreliable"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Averaging conflicting statistics from different methodologies and time periods creates a fictitious number that no source actually supports. The differences may reflect different definitions, scopes, or methodologies rather than measurement error that averaging would resolve.",
+      B: "INCORRECT: Recency does not guarantee superiority. The 2024 government survey may use a different market definition than the industry report. Selecting one source without explaining why discards information the reader needs to assess the claim.",
+      C: "CORRECT: Conflicting statistics must be annotated with attribution rather than resolved by arbitrary selection. The report should present all values with sources, dates, and where possible, the methodological differences that explain the discrepancy. The report consumer (a domain expert) is better positioned to judge which estimate is most relevant to their specific question.",
+      D: "INCORRECT: Omitting the information entirely is overly conservative. The conflicting data is still informative: it shows the range of estimates and the methodological disagreement. Omission deprives the reader of useful context."
+    }
+  },
+  {
+    id: "d5-027",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Temporal Data Handling",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A financial research system that synthesizes GDP growth figures without tracking publication dates presents a 2019 pre-pandemic figure alongside a 2021 recovery figure as contradictory, when in reality they reflect the same economy at different moments in time.",
+    question: "Your research subagents return economic statistics from multiple sources. Some figures are from 2022 reports while others are from 2024 reports. The coordinator needs to synthesize these into a coherent analysis. What structural requirement should the subagent outputs include?",
+    choices: {
+      A: "A flag indicating whether each statistic is 'current' or 'outdated'",
+      B: "Publication dates and data collection dates for each statistic in the structured output",
+      C: "Only the most recent statistics, discarding older data automatically",
+      D: "A relevance score from 0-1 indicating how applicable each statistic is to the current analysis"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Binary current/outdated labels lose temporal nuance. A 2022 statistic may be the most recent available for a specific metric, making it 'current' for that context. The determination requires the actual dates, not a pre-judgment.",
+      B: "CORRECT: Publication and data collection dates enable the coordinator to interpret statistics in temporal context. A GDP figure from a 2022 report using 2021 data means something different from a 2024 report using 2023 data. Both dates matter: when the data was collected and when the analysis was published. This enables proper temporal synthesis.",
+      C: "INCORRECT: Automatically discarding older data loses valuable trend information. Comparing 2022 and 2024 figures reveals trends and changes. Additionally, the 'most recent' figure for a specific metric may not be the most comprehensive or reliable.",
+      D: "INCORRECT: A model-generated relevance score is subjective and poorly defined. What makes a statistic 'relevant' depends on the specific analysis question, which the subagent may not fully understand. Concrete dates are objective metadata that the coordinator can use to make informed relevance judgments."
+    }
+  },
+  {
+    id: "d5-028",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Case Facts Block Design",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A wealth management chatbot that summarizes portfolio discussions loses specific asset allocation percentages and rebalancing thresholds, causing the agent to recommend trades that contradict the client's previously stated risk tolerance by up to 20 percentage points.",
+    question: "You are designing the 'case facts' block for a financial services support agent. The agent handles complex portfolio discussions spanning 30+ messages. Which design best preserves critical information across conversation summarization?",
+    choices: {
+      A: "Store the full text of every customer message in the case facts block to ensure nothing is lost",
+      B: "Store a natural language summary of key discussion points, updated after each customer message",
+      C: "Store structured fields extracted from the conversation: account numbers, dollar amounts, dates, product names, percentages, and customer decisions, formatted as key-value pairs",
+      D: "Store only the most recent 5 messages verbatim, as recent context is most important"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Storing every message defeats the purpose of having a case facts block. The block would grow as large as the conversation itself, providing no context savings and no protection against summarization.",
+      B: "INCORRECT: Natural language summaries are precisely what progressive summarization produces, and they are the source of the problem. 'Customer discussed portfolio rebalancing options' preserves no actionable specifics. The case facts block must resist the narrative compression that summarization applies.",
+      C: "CORRECT: Structured key-value pairs preserve the exact transactional data that summarization destroys. Account: X12345, Target_Allocation: 60/40, Rebalancing_Threshold: 5%, Last_Trade_Date: 2024-03-15 survives any number of summarization cycles because it is outside the summarizable narrative. This is the core principle of separating facts from narrative.",
+      D: "INCORRECT: Recency-based storage loses early conversation data that may be critical. A client's account number and risk tolerance stated in message 2 are essential throughout the conversation, not just when recently mentioned."
+    }
+  },
+  {
+    id: "d5-029",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Section Headers for Navigation",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A legal research system aggregating precedent analyses without section headers causes the synthesis agent to miss a directly relevant Supreme Court ruling buried between two lower court analyses, resulting in an incomplete brief that opposing counsel exploits in oral arguments.",
+    question: "You are aggregating findings from multiple research subagents into a single context for synthesis. The combined output is 15,000 tokens. How should you structure this aggregated input to maximize the coordinator's ability to reference all findings?",
+    choices: {
+      A: "Concatenate all findings in the order they were received, preserving the natural flow",
+      B: "Sort findings by relevance score from highest to lowest",
+      C: "Use explicit section headers for each subagent's findings, with a summary block of key findings at the beginning",
+      D: "Compress findings using abbreviations and shorthand to reduce total token count"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Unstructured concatenation makes it difficult for the model to navigate. Without section breaks, the middle sections of a 15,000-token input are particularly vulnerable to the lost-in-the-middle effect, and the model cannot efficiently locate specific findings.",
+      B: "INCORRECT: Relevance scores are subjective, and sorting by them places less 'relevant' (but potentially critical) findings at the end of the middle zone. Relevance depends on the synthesis question, not on a pre-assigned score.",
+      C: "CORRECT: Explicit section headers create navigable structure that helps the model locate specific findings. The summary block at the beginning ensures all key findings occupy the high-attention position at the start, mitigating the lost-in-the-middle effect. Headers also serve as retrieval cues during generation.",
+      D: "INCORRECT: Abbreviations and shorthand reduce token count at the cost of clarity. The model may misinterpret abbreviated findings, and the savings are marginal compared to the risk of introducing ambiguity into the synthesis input."
+    }
+  },
+  {
+    id: "d5-030",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Reiteration-Based Escalation",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A subscription cancellation agent that escalates on first frustration expression routes 45% of interactions to humans, when 80% of initially frustrated customers accept the offered solution on their second message, demonstrating that premature escalation wastes resources.",
+    question: "Your support agent encounters this conversation flow:\n- Customer: 'This is frustrating, my order hasn't arrived.'\n- Agent: 'I understand your frustration. Let me check the tracking... Your order shows delivered to your address yesterday at 3:15 PM. Would you like me to initiate a missing package investigation?'\n- Customer: 'That's still unacceptable, I need to talk to someone about this.'\n\nWhat should the agent do now?",
+    choices: {
+      A: "Offer more resolution options since the customer may not realize all available solutions",
+      B: "Escalate to a human agent because the customer has now explicitly and repeatedly requested human assistance after being offered a resolution",
+      C: "Escalate because the customer's sentiment has been negative for two consecutive messages",
+      D: "Continue troubleshooting because the customer's underlying issue (missing package) is still resolvable by the agent"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: The customer has already been offered a resolution (missing package investigation) and responded by requesting human contact. Offering more options after an explicit escalation request feels dismissive and obstructive.",
+      B: "CORRECT: This follows the correct pattern: acknowledge frustration and offer resolution first, then escalate when the customer reiterates their desire for human contact. The first expression of frustration was met with a resolution attempt. The second message is an explicit, reiterated request for a human after seeing the available automated option. This is the appropriate escalation trigger.",
+      C: "INCORRECT: Escalation here is correct, but the reasoning is wrong. It is not because of consecutive negative sentiment. It is because the customer explicitly requested a human after being offered a resolution. Sentiment-based reasoning would have incorrectly escalated at the first message.",
+      D: "INCORRECT: While the underlying issue may be technically resolvable, the customer has explicitly requested human assistance after seeing the automated option. Continuing to troubleshoot over the customer's stated preference violates the 'honor explicit requests' principle."
+    }
+  },
+  {
+    id: "d5-031",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Generic Error Status Anti-Pattern",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A supply chain optimization system where subagents return 'status: failed' without context forces the coordinator to either blindly retry all failures (wasting time on permanent issues) or skip them all (missing data from transient issues), degrading delivery route optimization by 18%.",
+    question: "Your coordinator agent receives the following error reports from three subagents:\n- Subagent A: {status: 'error'}\n- Subagent B: {status: 'error', type: 'timeout', attempted: 'query SEC database for 10-K filings', partial_results: '3 of 5 filings retrieved', alternatives: 'EDGAR direct API'}\n- Subagent C: {status: 'error'}\n\nWhich subagent error report enables the best coordinator decision-making?",
+    choices: {
+      A: "All three are equivalent since the coordinator knows an error occurred in each case",
+      B: "Subagent B, because structured error context allows the coordinator to use partial results, attempt the alternative source, and understand the failure scope",
+      C: "Subagents A and C, because their simpler format is easier for the coordinator to process quickly",
+      D: "None of them, since the coordinator should never receive error reports and should only receive successful results"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Knowing 'an error occurred' without context is nearly useless for decision-making. The coordinator cannot distinguish transient from permanent failures, does not know what was attempted, and cannot leverage partial results or alternatives.",
+      B: "CORRECT: Subagent B's structured error context provides everything the coordinator needs: the failure type (timeout, suggesting transient), what was attempted (specific query), partial results (3 of 5 filings are usable), and an alternative path (EDGAR API). The coordinator can include partial results in synthesis and retry via the alternative source.",
+      C: "INCORRECT: Simpler format is not better when it strips away actionable information. The coordinator processes these errors to make recovery decisions, and minimal information leads to minimal recovery capability.",
+      D: "INCORRECT: Errors are inevitable in multi-agent systems with external dependencies. Refusing to surface them to the coordinator means failures are either silently suppressed (dangerous) or cause subagents to block indefinitely (also dangerous)."
+    }
+  },
+  {
+    id: "d5-032",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Error Suppression Anti-Pattern",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A credit risk assessment system where a subagent silently fails to retrieve bankruptcy records produces risk scores that omit critical negative history, leading to $3.2M in approved loans to applicants who would have been declined with complete data.",
+    question: "A junior engineer argues that subagents should catch all exceptions and return best-effort results to prevent the coordinator from being overwhelmed with errors. A senior engineer argues that all errors should terminate the workflow to ensure data integrity. Who is correct?",
+    choices: {
+      A: "The junior engineer, because robustness requires graceful degradation",
+      B: "The senior engineer, because partial data leads to incorrect conclusions",
+      C: "Neither; both silent suppression and wholesale termination are anti-patterns. The correct approach is structured error propagation with context that enables the coordinator to make informed recovery decisions",
+      D: "Both are partially correct and their approaches should be combined: suppress minor errors and terminate on major ones"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Silent error suppression means the coordinator and ultimately the user receive confident-looking output built on incomplete data. Graceful degradation requires acknowledgment of what degraded, not silent omission of failures.",
+      B: "INCORRECT: Wholesale termination wastes all successful subagent work and is disproportionate to localized failures. If 7 of 8 subagents succeeded, terminating the entire workflow discards valuable, complete data.",
+      C: "CORRECT: Both extremes are explicitly identified as anti-patterns. The correct middle path is structured error propagation: subagents report what failed, why, what partial data exists, and what alternatives are available. The coordinator then decides whether to proceed with partial data (annotated), retry, use alternatives, or escalate. This preserves both robustness and transparency.",
+      D: "INCORRECT: Categorizing errors as 'minor' and 'major' at the subagent level is itself problematic. A 'minor' error to the subagent (e.g., one field missing) may be critical to the coordinator's synthesis. The coordinator, not the subagent, should determine the impact of each failure."
+    }
+  },
+  {
+    id: "d5-033",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Routing Low-Confidence Extractions",
+    difficulty: "medium",
+    scenario: 6,
+    importance: "A contract analysis system that auto-accepts all extractions regardless of confidence introduces errors in 8% of liability clauses, costing a law firm $1.7M in a single quarter when incorrect clause interpretations affect client advice on three major deals.",
+    question: "Your document extraction system produces field-level confidence scores that have been calibrated against a labeled validation set. You need to design the routing logic. Which routing strategy is most effective?",
+    choices: {
+      A: "Route all extractions below 80% confidence to human review, auto-accept everything above",
+      B: "Route all extractions to human review regardless of confidence to ensure maximum accuracy",
+      C: "Route low-confidence extractions and extractions with ambiguous or contradictory values to human review, while auto-accepting high-confidence extractions from validated document types",
+      D: "Use a single global confidence threshold and adjust it monthly based on error reports"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: A single confidence threshold ignores that some errors are high-confidence (the model is confidently wrong). Additionally, 80% may be too low for critical fields (e.g., dollar amounts) and unnecessarily high for non-critical fields (e.g., document date format).",
+      B: "INCORRECT: Routing everything to human review defeats the purpose of automation. If humans must review every extraction, the system provides no efficiency gain. The goal is to reliably identify which extractions need human attention.",
+      C: "CORRECT: This multi-factor routing catches both explicit uncertainty (low confidence) and semantic issues (ambiguous/contradictory values that may have high confidence but are logically problematic). Limiting auto-acceptance to validated document types adds another safety layer, ensuring that only document types with proven accuracy bypass human review.",
+      D: "INCORRECT: A single global threshold is too coarse. Different fields have different accuracy profiles and different downstream impact. Monthly adjustment is also too slow to catch sudden accuracy degradation from format changes."
+    }
+  },
+  {
+    id: "d5-034",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Claim-Source Mapping Preservation",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A regulatory compliance research system that loses claim-source mappings during synthesis produces reports where analysts cannot determine whether a compliance requirement originated from an SEC filing, an internal memo, or a news article, undermining the legal defensibility of compliance decisions.",
+    question: "Your research system has a three-level pipeline: source readers (level 1), specialist analysts (level 2), and final synthesizer (level 3). Source attribution is lost by the time it reaches level 3. Where should you fix this?",
+    choices: {
+      A: "At level 3 only: have the synthesizer trace back through the pipeline to find original sources",
+      B: "At all levels: require each level to output claim-source mappings that flow through the pipeline, with each level preserving and enriching the mappings from the previous level",
+      C: "At level 1 only: ensure source readers tag everything with source IDs, and trust that downstream levels will preserve them",
+      D: "Bypass the issue by having the synthesizer generate reports without citations, adding a note that sources are available on request"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: By level 3, the original source context may have been summarized away. Tracing backward requires access to earlier pipeline stages, which the synthesizer typically does not have. Provenance must flow forward, not be reconstructed backward.",
+      B: "CORRECT: Claim-source mappings must be a first-class data structure that every pipeline level produces and consumes. Level 1 creates initial mappings, level 2 preserves them while adding analytical attribution, and level 3 merges them during synthesis. This ensures end-to-end traceability without relying on any single level.",
+      C: "INCORRECT: Tagging at level 1 is necessary but insufficient. Level 2 analysts may combine claims from multiple sources, introduce new claims from their analysis, or restructure information in ways that break the original tagging if they are not explicitly required to maintain and transform the mappings.",
+      D: "INCORRECT: Reports without inline attribution are the problem that needs solving, not a feature to accept. 'Sources available on request' is impractical for decision-makers who need to assess the reliability of each claim in real-time."
+    }
+  },
+  {
+    id: "d5-035",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Contested vs Established Findings",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A medical research synthesis that presents a contested treatment efficacy claim (supported by one small study, contradicted by two larger studies) in the same authoritative tone as well-established findings causes clinicians to overweight weak evidence in treatment decisions.",
+    question: "Your research synthesis system produces reports covering multiple topics. Some findings are supported by multiple independent sources while others are contested or supported by only one source. How should the report distinguish between these?",
+    choices: {
+      A: "Include only findings supported by at least two independent sources, omitting contested or single-source findings",
+      B: "Present all findings with the same format and let the reader judge reliability based on the cited sources",
+      C: "Structure the report with explicit sections distinguishing well-established findings (multiple corroborating sources) from contested findings (conflicting evidence) and single-source findings",
+      D: "Assign a reliability score (1-10) to each finding based on the number of supporting sources"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Omitting single-source or contested findings loses potentially important information. A single-source finding from a highly authoritative source may be more reliable than multiple corroborating lower-quality sources. The reader needs this information to make their own judgment.",
+      B: "INCORRECT: Uniform presentation buries the critical distinction between confidence levels. Readers scanning the report will treat all findings as equally supported. Structural differentiation is necessary to communicate evidence quality at the report level, not just the citation level.",
+      C: "CORRECT: Structuring reports with explicit evidence confidence sections communicates the epistemic status of each finding. Readers can quickly identify which conclusions are well-grounded and which require additional investigation. This preserves all findings while accurately representing the state of evidence.",
+      D: "INCORRECT: Numerical reliability scores imply a precision that does not exist. The difference between a '6' and a '7' reliability is meaningless. Categorical distinctions (well-established, contested, single-source) communicate the qualitative difference more accurately than pseudo-quantitative scores."
+    }
+  },
+  {
+    id: "d5-036",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Lost in the Middle — Short Conversations",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A premium banking concierge agent handling high-net-worth clients loses a wire transfer routing number mentioned in message 3 of a 7-message conversation because it falls in the positional middle, causing a $250,000 transfer to be sent to the wrong account.",
+    question: "A developer argues that the lost-in-the-middle effect only matters for very long contexts with thousands of tokens. Your system processes conversations averaging 8 messages with a total of 2,000 tokens. Should you worry about positional effects?",
+    choices: {
+      A: "No, the lost-in-the-middle effect only manifests in contexts above 10,000 tokens",
+      B: "No, 8 messages is well within the model's reliable processing range regardless of information position",
+      C: "Yes, the lost-in-the-middle effect is positional, not length-based, and critical facts placed in middle messages of even short conversations can receive less attention",
+      D: "Yes, but only if the 2,000 tokens contain tool outputs that inflate the positional distribution"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: The lost-in-the-middle effect is not gated by a minimum token count. It is a property of attention patterns that applies to relative positions within any context, not just long ones.",
+      B: "INCORRECT: The number of messages is not the determining factor. What matters is where critical information falls relative to the beginning and end of the context. Middle-positioned facts in an 8-message conversation are still in the lower-attention zone.",
+      C: "CORRECT: The lost-in-the-middle effect is fundamentally positional, not length-based. Even in a short 2,000-token conversation, facts placed in middle positions receive less attention than facts at the beginning or end. This is why extracting critical facts into a case facts block at the beginning of the context is important regardless of conversation length.",
+      D: "INCORRECT: While tool outputs can exacerbate positional issues by pushing information into middle positions, the positional attention bias exists independently of tool outputs. The effect applies to any content in middle positions."
+    }
+  },
+  {
+    id: "d5-037",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Tool Output Trimming Strategy",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "A retail support agent queries an inventory API that returns warehouse locations, supply chain metadata, and internal SKU hierarchies alongside the simple stock availability status, consuming 400 tokens per query when only 30 tokens of relevant data are needed per customer inquiry.",
+    question: "Your customer support agent calls a product lookup API that returns 45 fields per product. The agent only needs price, availability, and description for customer inquiries. Where should the trimming logic be implemented?",
+    choices: {
+      A: "In the system prompt, instructing the model to ignore irrelevant fields when processing tool results",
+      B: "In the tool definition's output schema, filtering fields before they enter the conversation context",
+      C: "After the conversation ends, trimming the stored conversation for analytics purposes",
+      D: "In a post-processing step that summarizes tool outputs using another model call"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: System prompt instructions cannot prevent tokens from being consumed. Even if the model ignores certain fields in its reasoning, those fields still occupy space in the context window and contribute to pushing other information out.",
+      B: "CORRECT: Filtering at the tool definition level prevents irrelevant fields from ever entering the conversation context. This is the most efficient approach: it reduces token consumption at the source, keeps the context clean, and ensures only relevant data is available for the model to process.",
+      C: "INCORRECT: Post-conversation trimming helps with storage costs but does not address the real-time context window problem. During the conversation, the verbose tool outputs have already consumed tokens and degraded context quality.",
+      D: "INCORRECT: Using another model call to summarize tool outputs adds latency, cost, and introduces the risk of summarization errors. Simple field filtering is deterministic, fast, and accurate. This is overengineering a problem with a straightforward solution."
+    }
+  },
+  {
+    id: "d5-038",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Sentiment as Escalation Signal",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A government benefits agency that uses sentiment-based escalation routes 55% of calm, polite applicants with genuinely complex eligibility edge cases through the automated path, resulting in incorrect benefit denials for 1,200 applicants per month who needed human adjudication.",
+    question: "Your team proposes adding sentiment analysis to the escalation system: when customer sentiment drops below a threshold, the agent would automatically offer escalation to a human. A product manager supports this, citing that negative sentiment correlates with complex issues. What is the best technical argument against this approach?",
+    choices: {
+      A: "Sentiment analysis adds too much latency to the response pipeline",
+      B: "Sentiment analysis is unreliable because it does not correlate with problem complexity: calm customers may have genuinely intractable policy issues while angry customers may have simple billing errors",
+      C: "Sentiment analysis would increase the number of human agents needed, raising costs",
+      D: "Sentiment analysis works well but should be combined with a confidence score for better results"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: While latency is a practical concern, it is not the fundamental issue. Even if sentiment analysis were instantaneous, it would still be a poor escalation signal.",
+      B: "CORRECT: Sentiment measures emotional state, not problem complexity or the need for human intervention. A customer calmly explaining an edge case in their insurance coverage may have a genuinely unresolvable automated issue, while a customer angrily typing about a double charge may have a problem solvable in 30 seconds. Escalation triggers should be based on problem characteristics and explicit customer requests, not emotional proxies.",
+      C: "INCORRECT: Cost is a consequence, not a technical argument against the approach. Even if cost were acceptable, sentiment-based escalation would still route the wrong interactions to humans.",
+      D: "INCORRECT: Combining two unreliable signals (sentiment and self-reported confidence) does not produce a reliable one. Both are poor proxies for the actual decision needed: does this interaction require human judgment?"
+    }
+  },
+  {
+    id: "d5-039",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Partial Result Utilization",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A competitive intelligence system that discards all findings when one of five subagents fails wastes $800 in API costs per report and delivers results 4 hours late, when 80% of the analysis was already complete and actionable for the trading desk's morning briefing.",
+    question: "Your research coordinator receives results from 8 subagents. Six succeeded completely, one returned partial results (3 of 5 data sources queried before timeout), and one failed entirely (authentication error). The user needs the report urgently. What should the coordinator do?",
+    choices: {
+      A: "Retry both failed subagents and wait for complete results before producing the report",
+      B: "Produce the report using all available data, clearly annotating which sections are fully supported, which are based on partial data, and which topics have no coverage due to the authentication failure",
+      C: "Produce the report using only the 6 fully successful subagents, omitting the other two topics entirely",
+      D: "Ask the user whether they want a partial or complete report"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: The authentication error will not resolve on retry (it is not transient). Waiting indefinitely for an unresolvable error blocks the urgent report. The timeout subagent could be retried as a background task, but the report should not wait.",
+      B: "CORRECT: This maximizes the value of available data while maintaining transparency. The 6 complete sections, the partial section (with annotation that 2 of 5 sources were not queried), and the missing section (with explanation of the auth failure) give the user a comprehensive picture of both findings and coverage gaps. The user can make informed decisions about which sections to trust.",
+      C: "INCORRECT: Omitting the partial results wastes 60% of that subagent's successful work. Three of five data sources were queried and returned valid data. This data has value when properly annotated, even if coverage is incomplete.",
+      D: "INCORRECT: In an urgent context, asking the user adds unnecessary delay. The architect should design the system to always produce the best possible report with available data plus clear annotations. If the user wanted to wait, they would not have marked the report as urgent."
+    }
+  },
+  {
+    id: "d5-040",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Using /compact for Extended Sessions",
+    difficulty: "medium",
+    scenario: 2,
+    importance: "A developer using Claude Code for a 4-hour refactoring session notices progressively slower responses and increasingly generic suggestions after hour 2, not realizing that context consumption from verbose file reads has degraded the agent's ability to reference specific code details.",
+    question: "During an extended Claude Code session exploring a legacy codebase, you notice responses becoming slower and less specific. You have been reading many files and running grep searches. What is the most appropriate action?",
+    choices: {
+      A: "Start a completely new session and re-read all the files from scratch",
+      B: "Use /compact to reduce context consumption from accumulated exploration outputs, then continue the session",
+      C: "Switch to a model with a larger context window to avoid the degradation",
+      D: "Continue working, as the model will self-correct when it notices degradation"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Starting a new session loses all accumulated understanding, including non-obvious insights gained through exploration. If scratchpad files were maintained, this is viable but wasteful. /compact provides a less disruptive solution.",
+      B: "CORRECT: /compact reduces context consumption by compressing accumulated tool outputs (file reads, grep results, command outputs) while preserving the essential findings. This restores context budget for continued specific exploration without losing the session's accumulated knowledge.",
+      C: "INCORRECT: Switching models mid-session is disruptive and does not address the root cause. Even larger context windows will eventually degrade with enough accumulated verbose outputs. The solution is managing context, not expanding it.",
+      D: "INCORRECT: Models cannot self-detect context degradation. The shift to generic responses is involuntary and the model does not 'notice' that it is referencing general patterns instead of specifics. External intervention (/compact or context management) is required."
+    }
+  },
+  {
+    id: "d5-041",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "High-Confidence Error Discovery",
+    difficulty: "hard",
+    scenario: 6,
+    importance: "A property tax assessment system that only reviews low-confidence extractions misses a systematic high-confidence error where the model consistently transposes two adjacent tax lot numbers on a specific county's form format, causing $4.6M in assessments to be applied to wrong properties.",
+    question: "Your extraction system has been in production for 3 months with a human review pipeline that reviews all extractions below 75% confidence. Error rates in the review queue have been decreasing. A spot check of auto-accepted high-confidence extractions reveals a 12% error rate on a specific field for a newly added document type. What does this reveal about your review strategy?",
+    choices: {
+      A: "The confidence threshold should be raised from 75% to 90% to catch more errors",
+      B: "The review strategy has a blind spot: it only catches errors the model is uncertain about, not errors the model confidently makes, and must include stratified random sampling of high-confidence extractions",
+      C: "The 12% error rate is acceptable for a newly added document type and will improve over time",
+      D: "The confidence model needs retraining with the new document type before continuing"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Raising the threshold addresses this specific case but does not fix the structural problem. The model may be confidently wrong at any confidence level. A 90% threshold still assumes that above-threshold extractions are reliable, which this evidence contradicts.",
+      B: "CORRECT: Reviewing only low-confidence extractions creates a systematic blind spot for high-confidence errors. Stratified random sampling of the auto-accepted pool is essential to detect cases where the model is confidently wrong. This is especially critical when new document types are added, but applies to all document types as formats evolve.",
+      C: "INCORRECT: A 12% error rate on auto-accepted extractions means 12% of that document type's extractions are entering downstream systems with errors and no human review. 'It will improve over time' provides no mechanism for actually improving and leaves errors accumulating.",
+      D: "INCORRECT: Retraining the confidence model helps but does not address the architectural gap. Even after retraining, the system still lacks a mechanism to detect future cases where the model becomes confidently wrong. Stratified sampling is the structural solution."
+    }
+  },
+  {
+    id: "d5-042",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Content Type Rendering",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A financial research report that presents quarterly earnings data as narrative prose paragraphs instead of tables forces analysts to spend 45 minutes manually extracting comparable figures that a properly formatted table would have made instantly scannable.",
+    question: "Your research synthesis system produces reports containing financial data, news summaries, and regulatory analysis. All content is currently rendered as narrative prose. Users complain that financial data is hard to compare and news context is lost in tabular fragments. What should you change?",
+    choices: {
+      A: "Convert all content to structured tables for consistency",
+      B: "Convert all content to narrative prose with embedded numbers for readability",
+      C: "Render different content types appropriately: financial data as tables for comparison, news context as prose for narrative flow, regulatory analysis with hierarchical structure for navigation",
+      D: "Let the user choose their preferred format and render all content accordingly"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Forcing all content into tables works for numerical data but is terrible for narrative context. A news event summarized in table cells loses temporal flow, causation, and contextual nuance that prose communicates effectively.",
+      B: "INCORRECT: Narrative prose works for qualitative analysis but makes financial data comparison nearly impossible. Users must mentally extract and compare numbers scattered across paragraphs rather than scanning a table column.",
+      C: "CORRECT: Different content types have different optimal representations. Financial data is most useful as tables (enabling quick comparison across periods or entities). News and qualitative findings are best as prose (preserving narrative flow). Regulatory analysis benefits from hierarchical structure (sections, subsections). Matching format to content type serves the reader's actual information needs.",
+      D: "INCORRECT: A single user-chosen format applied to all content types faces the same problem as options A and B. The optimal format depends on the content, not on user preference. Users may prefer tables for financial data and prose for news simultaneously."
+    }
+  },
+  {
+    id: "d5-043",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Progressive Summarization and Numerics",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A tax preparation support agent that progressively summarizes client conversations converts 'filing deadline is April 15, 2025 with a $2,847 refund expected' into 'client discussed their upcoming tax refund,' causing the agent to miss the deadline reminder and quote an incorrect refund amount.",
+    question: "You analyze your support agent's conversation logs and find the following summarization pattern:\n\nOriginal: 'Customer reported order #A7832, placed on March 3rd for $127.45, with a promotional discount of 15% applied. Delivery was expected by March 10th.'\n\nSummarized to: 'Customer placed an order last month with a discount. Delivery was expected soon after.'\n\nWhat type of information was disproportionately lost, and why?",
+    choices: {
+      A: "All information was lost equally; the summary is simply too short",
+      B: "Narrative context was lost because summaries focus on extracting data points",
+      C: "Numerical values (order number, date, dollar amount, percentage, delivery date) were selectively destroyed because progressive summarization disproportionately compresses specific data points into vague qualitative language",
+      D: "The customer's emotional state was lost, which is the most critical information for support"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: The information loss is not uniform. The summary retains the general narrative (customer placed an order, got a discount, expected delivery) but destroyed every specific data point. This pattern is consistent and systematic, not random.",
+      B: "INCORRECT: The opposite occurred. The narrative structure survived ('customer placed an order with a discount, expected delivery soon') while the specific data points were destroyed. Summarization preserves narrative flow while compressing specifics.",
+      C: "CORRECT: Progressive summarization selectively destroys numerical and specific data points. Order number A7832 becomes anonymous, March 3rd becomes 'last month,' $127.45 disappears entirely, 15% becomes 'a discount,' and March 10th becomes 'soon after.' This is the signature failure mode: numbers are the first casualties of narrative compression.",
+      D: "INCORRECT: Emotional state was not present in the original text to be lost. The critical loss is operational data (amounts, dates, identifiers) that the agent needs to take correct action on the customer's behalf."
+    }
+  },
+  {
+    id: "d5-044",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Ambiguity in Policy Interpretation",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A telecommunications support agent that creatively interprets a data plan policy to grant a customer unlimited tethering (not explicitly allowed or denied) creates a precedent that 2,300 other customers cite in subsequent interactions, costing the company $1.2M in unplanned bandwidth allocation.",
+    question: "A customer asks your support agent: 'Can I use my unlimited data plan for tethering my laptop 24/7 for my home office?' The policy states 'Unlimited data for on-device usage. Tethering included up to 15GB/month.' The customer argues this means tethering should also be unlimited since the plan is called 'unlimited.' What should the agent do?",
+    choices: {
+      A: "Agree with the customer's interpretation since the plan is indeed called 'unlimited' and customer satisfaction is the priority",
+      B: "Firmly deny the request, citing the 15GB tethering limit as a clear policy boundary",
+      C: "Explain the current tethering policy clearly, and if the customer disagrees with the interpretation or pushes for an exception, escalate to a human agent who can make policy interpretation decisions",
+      D: "Offer a one-time exception to allow unlimited tethering this month as a compromise"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: The agent lacks authority to reinterpret policy. The plan terms specify a 15GB tethering limit. Accepting the customer's interpretation overrides the written policy based on a naming ambiguity, creating precedent the business may not intend.",
+      B: "INCORRECT: While the 15GB limit is clear, the customer is making a reasonable (if incorrect) argument about the plan naming creating an expectation. Simply citing the number without acknowledging the customer's perspective, and without an escalation path for genuine disagreement, creates a poor experience.",
+      C: "CORRECT: The agent should explain the current policy accurately and clearly. If the customer accepts, issue resolved. If the customer disagrees and argues the plan name creates different expectations, this is a policy interpretation dispute that exceeds the agent's authority. Escalating to a human who can authorize exceptions or explain the rationale is the appropriate boundary.",
+      D: "INCORRECT: One-time exceptions to data limits create precedent and expectations. The customer will expect the same next month, and the agent lacks authority to override technical policy limits. This is the 'improvise a compromise' anti-pattern."
+    }
+  },
+  {
+    id: "d5-045",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Transient vs Permanent Failure Distinction",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A fraud detection system that retries authentication failures (permanent) with the same strategy as timeout failures (transient) wastes 45 minutes of processing time per failed subagent before giving up, delaying fraud alerts by enough time for $180K in additional fraudulent transactions.",
+    question: "A subagent in your research system encounters different types of failures: HTTP 429 (rate limit), HTTP 401 (unauthorized), HTTP 503 (service unavailable), and HTTP 404 (not found). Which failures should the subagent retry locally versus propagate to the coordinator?",
+    choices: {
+      A: "Retry all of them, since any failure might be transient",
+      B: "Retry 429 and 503 locally (transient); propagate 401 and 404 to the coordinator (unresolvable without intervention)",
+      C: "Propagate all of them to the coordinator for centralized retry management",
+      D: "Retry 429 locally; propagate 401, 503, and 404 since the subagent cannot determine if they are transient"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Retrying a 401 (unauthorized) will fail indefinitely unless credentials are fixed, which the subagent cannot do. Retrying a 404 (not found) will also fail unless the resource URL changes. Blind retry of permanent failures wastes time and resources.",
+      B: "CORRECT: 429 (rate limit) and 503 (service unavailable) are classic transient failures that typically resolve with backoff. The subagent can handle these with exponential backoff retry. 401 (unauthorized) requires credential intervention and 404 (not found) indicates the resource does not exist at that path. Both require coordinator-level decisions (use alternative credentials, try different data source).",
+      C: "INCORRECT: Propagating easily-recoverable transient failures to the coordinator creates unnecessary noise. A rate limit that resolves in 2 seconds does not need coordinator attention. Local retry for transient failures keeps the coordinator focused on actual problems.",
+      D: "INCORRECT: 503 is a well-established transient status code. While some 503s can persist during extended outages, the initial retry strategy should treat them as transient with a bounded retry count before propagating. Treating 503 as immediately unresolvable misses easy recovery opportunities."
+    }
+  },
+  {
+    id: "d5-046",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Coordinating Multi-Investigation Sessions",
+    difficulty: "hard",
+    scenario: 4,
+    importance: "A developer investigating a performance regression across a distributed system's 12 microservices loses track of which services have been analyzed and what was found in each, causing them to re-examine 3 services and miss 2 others, extending a P1 incident by 6 hours.",
+    question: "You are using Claude to investigate a complex bug that spans multiple components of a large system. The investigation will require examining authentication, database, caching, and API gateway components. Each component investigation will involve reading many files. How should you structure this investigation?",
+    choices: {
+      A: "Investigate all four components in a single continuous session, reading files as needed",
+      B: "Create a separate Claude session for each component, manually transferring findings between sessions",
+      C: "Use the main agent to coordinate, spawning subagents for each component investigation, with findings summarized before the next component is investigated",
+      D: "Investigate the most likely culprit first and only examine other components if needed"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: A single continuous session will accumulate massive context from file reads across four components. By the time you investigate the API gateway (component 4), the authentication details (component 1) will likely have been summarized or pushed out, causing context degradation.",
+      B: "INCORRECT: Manual transfer between sessions is error-prone and time-consuming. Important cross-component patterns may be lost in translation, and the developer bears the cognitive burden of maintaining coherence across sessions.",
+      C: "CORRECT: The main agent coordinates the investigation while subagents handle verbose file exploration for each component. Each subagent returns structured findings, which the main agent records and summarizes before spawning the next subagent. This keeps the main context clean for cross-component pattern detection while enabling deep investigation of each component.",
+      D: "INCORRECT: Investigating only the 'most likely' culprit risks confirmation bias and misses cross-component interaction bugs. Complex bugs in distributed systems frequently involve multiple components, and premature narrowing delays root cause discovery."
+    }
+  },
+  {
+    id: "d5-047",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Calibration with Labeled Validation Sets",
+    difficulty: "hard",
+    scenario: 6,
+    importance: "A healthcare records extraction system deployed without field-level calibration reports 92% confidence on medication dosage fields but achieves only 67% accuracy, causing 1 in 3 auto-accepted dosage extractions to be incorrect, triggering 8 medication error near-misses in the first month.",
+    question: "You are calibrating your extraction system's confidence scores. You have a labeled validation set of 5,000 documents. After calibration, you find that for 'invoice amount' fields, 90% confidence corresponds to 91% accuracy (well-calibrated), but for 'date' fields, 90% confidence corresponds to only 74% accuracy (poorly calibrated). What should you do?",
+    choices: {
+      A: "Apply a global calibration correction that adjusts all confidence scores downward by the average miscalibration",
+      B: "Implement field-specific calibration so that confidence thresholds are meaningful per field, with different automation thresholds for different fields based on their calibration curves",
+      C: "Remove confidence scores for date fields and use rule-based validation instead",
+      D: "Retrain the extraction model to improve date field accuracy before deploying"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Global calibration correction assumes uniform miscalibration, which the data contradicts. Invoice amounts are well-calibrated; applying a downward correction would undermine their already-accurate confidence scores, reducing automation rates unnecessarily.",
+      B: "CORRECT: Calibration must be field-specific because different fields have different extraction challenges and different confidence profiles. Field-specific calibration curves allow you to set meaningful thresholds per field: auto-accept invoice amounts at 90% confidence (where it is reliable) but require human review for dates at the same threshold (where it is not). This maximizes automation where reliable and adds oversight where needed.",
+      C: "INCORRECT: Rule-based validation catches format errors but not extraction errors (e.g., extracting the wrong date from a multi-date document in the correct format). Confidence scores, when properly calibrated per field, provide information that rules cannot.",
+      D: "INCORRECT: Retraining may improve date accuracy, but you still need field-level calibration to know when the improvement is sufficient. Even after retraining, the confidence-accuracy mapping for dates must be independently validated. This addresses the symptom but not the structural gap."
+    }
+  },
+  {
+    id: "d5-048",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Publication Date Requirements",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A macroeconomic research system that synthesizes unemployment data from three sources without tracking data collection periods presents a pre-COVID figure (3.5% from January 2020 data published in March 2020) alongside a recovery figure (5.2% from 2022 data) as 'conflicting estimates,' when they actually represent different points in time.",
+    question: "Your research system synthesizes economic data from multiple subagents. Subagent A returns 'GDP growth: 2.1%' from a government report. Subagent B returns 'GDP growth: 3.4%' from a think tank analysis. Without additional metadata, these appear to be conflicting statistics. What metadata would most help the coordinator resolve or properly annotate this discrepancy?",
+    choices: {
+      A: "The credibility ranking of each source",
+      B: "The publication date and data collection/reference period for each statistic",
+      C: "The methodology section of each report",
+      D: "The geographic scope of each estimate"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Credibility rankings are subjective and do not explain the discrepancy. A highly credible source can report different numbers than another highly credible source if they are measuring different time periods or using different definitions.",
+      B: "CORRECT: Publication and data collection dates are the most likely explanation for different GDP figures. If A reports Q1 2024 GDP (published June 2024) and B reports Q3 2024 GDP (published December 2024), the numbers are not conflicting; they describe different periods. Temporal metadata enables the coordinator to present them as a timeline rather than a disagreement.",
+      C: "INCORRECT: Methodology differences can explain some discrepancies, but temporal differences are the most common and most resolvable explanation for divergent economic statistics. Methodology is relevant but secondary to temporal context.",
+      D: "INCORRECT: Geographic scope matters (national vs. regional GDP), but both figures were presented without geographic qualifiers. While geographic metadata is useful, temporal metadata is more commonly the explanation for apparently conflicting economic statistics from similar-scope sources."
+    }
+  },
+  {
+    id: "d5-049",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Context Window as Complete Conversation",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "A B2B SaaS support agent that only sends the last 5 messages in each API call fails to reference a customer's enterprise tier status mentioned in message 1, causing it to repeatedly suggest self-service options inappropriate for their support level, damaging a $450K annual contract relationship.",
+    question: "Your development team wants to reduce API costs by sending only the most recent 5 messages to the model instead of the full conversation history. What is the primary risk of this approach?",
+    choices: {
+      A: "The model will generate lower-quality responses due to less training signal",
+      B: "The model will lose access to information shared earlier in the conversation, including customer details, issue context, and previous resolution attempts, leading to repetitive or contradictory responses",
+      C: "The model will refuse to respond if it detects an incomplete conversation",
+      D: "The model will hallucinate earlier conversation content to fill in the gaps"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Response quality is not about 'training signal.' The model's capabilities are fixed. The issue is that the model cannot reference information it does not have access to in the current request.",
+      B: "CORRECT: Truncating conversation history means the model has no access to earlier context. A customer who explained their problem, shared account details, and discussed attempted solutions in messages 1-5 would need to repeat all of this after message 10 when only messages 6-10 are sent. This creates a frustrating loop and degrades resolution quality.",
+      C: "INCORRECT: The model will not refuse to respond. It will process whatever conversation history it receives as if it were the complete conversation. It has no way to detect that earlier messages were omitted.",
+      D: "INCORRECT: While the model may make assumptions about unshared context, this is not the primary risk. The primary risk is the concrete operational impact of losing specific customer details and conversation context."
+    }
+  },
+  {
+    id: "d5-050",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Self-Reported Confidence for Escalation",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A medical triage chatbot that uses its own confidence assessment to decide when to escalate to a nurse reports 'high confidence' on 15% of cases where a nurse would have identified red-flag symptoms requiring immediate escalation, creating liability exposure for the healthcare system.",
+    question: "A proposal for your support agent includes having the model output a confidence score (0-100) with each response, and escalating to a human when confidence drops below 40. Testing reveals the model reports 85+ confidence on 92% of interactions, including many where human reviewers identify incorrect responses. Why is this approach fundamentally flawed?",
+    choices: {
+      A: "The confidence threshold is too low; it should be set at 70 to catch more uncertain responses",
+      B: "The model's self-reported confidence is poorly calibrated: it reflects response fluency rather than correctness, so it cannot reliably identify its own knowledge gaps or errors",
+      C: "The model is deliberately inflating confidence to avoid escalation, which it perceives as a failure",
+      D: "Confidence scoring works but only with chain-of-thought prompting to make the model think more carefully about its uncertainty"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Raising the threshold does not fix the calibration problem. If the model reports 85+ for 92% of interactions including wrong ones, raising the threshold to 70 still catches almost nothing. The distribution of reported confidence does not meaningfully separate correct from incorrect responses.",
+      B: "CORRECT: Self-reported confidence reflects how coherent and well-formed the response feels, not whether the content is actually correct. The model can fluently and confidently produce an incorrect policy interpretation because it 'sounds right.' This fundamental calibration gap means self-reported confidence cannot serve as a reliable escalation trigger.",
+      C: "INCORRECT: The model does not have goals or motivations around escalation. It does not strategically inflate confidence. The miscalibration is a fundamental property of how language models assess their own outputs, not a strategic choice.",
+      D: "INCORRECT: Chain-of-thought can improve reasoning but does not fix confidence calibration. A model reasoning through a problem step-by-step can still arrive confidently at the wrong conclusion. The meta-cognitive ability to assess one's own accuracy is distinct from reasoning ability."
+    }
+  },
+  {
+    id: "d5-051",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Error Recovery Strategy Design",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A real-time market analysis system that applies uniform 3-retry logic to all failures wastes 45 seconds retrying expired API tokens (which will never succeed without token refresh) while the market moves, causing the fund to miss a $2M arbitrage window.",
+    question: "You are designing the error recovery strategy for a multi-agent system. Subagents encounter various failure types: rate limits, expired tokens, malformed queries, network timeouts, and resource not found errors. How should recovery be stratified?",
+    choices: {
+      A: "Apply exponential backoff retry to all failure types uniformly, with a maximum of 5 retries",
+      B: "Implement failure-type-specific recovery: retry with backoff for rate limits and timeouts, request new credentials for expired tokens, fix and retry for malformed queries, and propagate resource-not-found to the coordinator with alternatives",
+      C: "Retry all failures once, and if they persist, propagate all of them to the coordinator",
+      D: "Never retry at the subagent level; centralize all retry logic in the coordinator"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Uniform retry treats all failures identically, which is wasteful and sometimes counterproductive. Retrying an expired token 5 times with exponential backoff wastes 30+ seconds on something that will never succeed without a credential refresh.",
+      B: "CORRECT: Different failure types require different recovery strategies. Rate limits and timeouts are transient (retry with backoff). Expired tokens require a specific action (credential refresh). Malformed queries require correction (fix the query). Resource-not-found requires a different approach entirely (alternative source). This stratified approach maximizes recovery success while minimizing wasted effort.",
+      C: "INCORRECT: A single retry catches some transient failures but misses rate limits that need longer backoff and does not attempt corrective action for fixable failures (expired tokens, malformed queries). It is better than no retry but far from optimal.",
+      D: "INCORRECT: Centralizing all retry logic in the coordinator overloads the coordinator with operational recovery that subagents can handle more efficiently. The coordinator should focus on strategic decisions, not managing individual API retries."
+    }
+  },
+  {
+    id: "d5-052",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Scratchpad File Structure",
+    difficulty: "medium",
+    scenario: 4,
+    importance: "A consulting team using Claude to analyze a client's legacy ERP system across 3 weeks of sessions maintains an unstructured notes file that grows to 8,000 lines, making it as difficult to navigate as the codebase itself and providing diminishing value for bootstrapping new sessions.",
+    question: "You are designing the scratchpad file format for a multi-session codebase exploration. Which structure is most effective for persisting findings across context boundaries?",
+    choices: {
+      A: "A chronological log of all commands run and their outputs",
+      B: "A structured document with sections for: architecture overview, key module dependencies, naming conventions, known issues/quirks, and unresolved questions, updated as findings accumulate",
+      C: "A flat list of file paths that have been examined",
+      D: "A copy of all source files that have been read during the exploration"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: A chronological log contains mostly noise (failed searches, exploratory dead ends, verbose outputs). Loading this into a new session wastes context on irrelevant history rather than actionable findings.",
+      B: "CORRECT: A structured scratchpad with categorical sections captures the knowledge that matters for continuing the exploration. Architecture overview provides the big picture, dependencies capture relationships, naming conventions help navigate the codebase, known issues prevent re-discovering the same problems, and unresolved questions direct the next session's exploration.",
+      C: "INCORRECT: A list of examined files tells you what was looked at but not what was found. It provides no architectural understanding, no dependency information, and no insights. It is useful as a progress tracker but not as a knowledge persistence mechanism.",
+      D: "INCORRECT: Copying source files duplicates the codebase and provides no analytical value. The point of the scratchpad is to capture insights and understanding, not raw data. Raw files can always be re-read; the analysis and interpretation are what need persisting."
+    }
+  },
+  {
+    id: "d5-053",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Accuracy by Document Type Validation",
+    difficulty: "hard",
+    scenario: 6,
+    importance: "A government benefits processing system approved for full automation based on 96% aggregate accuracy is later found to have 58% accuracy on handwritten applications from elderly applicants, causing 42% of this vulnerable population's applications to be processed incorrectly, triggering a congressional inquiry.",
+    question: "Your extraction system processes 5 document types. Before approving full automation, you run accuracy validation. Results show: Type A: 99%, Type B: 97%, Type C: 95%, Type D: 89%, Type E: 71%. Overall weighted accuracy is 94%. What is the correct deployment decision?",
+    choices: {
+      A: "Deploy full automation since 94% overall exceeds the 90% threshold",
+      B: "Deploy full automation for Types A-C, human review for Type D, and reject/exclude Type E until accuracy improves",
+      C: "Deploy full automation for Types A-C (proven accuracy), route Type D to human review (borderline), redesign the extraction approach for Type E (unacceptable accuracy), with stratified monitoring for all types",
+      D: "Hold all deployment until Type E reaches 90% accuracy, since inconsistent performance undermines trust"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: The 94% overall accuracy masks a 71% accuracy rate on Type E, meaning nearly 1 in 3 Type E extractions contain errors. Deploying based on an aggregate that conceals a catastrophic failure rate is the exact anti-pattern this domain warns against.",
+      B: "INCORRECT: This is close but incomplete. Simply excluding Type E means those documents are not processed at all, which may not be acceptable. The correct approach includes a plan for improving Type E (redesigning the extraction approach) rather than just excluding it.",
+      C: "CORRECT: This tiered approach matches deployment decisions to demonstrated accuracy: automate what is proven reliable, add human oversight for borderline cases, and invest in improving fundamentally underperforming areas. Stratified monitoring ensures that accuracy does not degrade over time for any type, catching regressions early.",
+      D: "INCORRECT: Holding all deployment penalizes the 99% Types A-C because of Type E's poor performance. This throws away proven automation value. Type-specific deployment decisions allow the organization to capture value from high-performing types while addressing low-performing ones."
+    }
+  },
+  {
+    id: "d5-054",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Annotating Uncertainty in Synthesis",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A venture capital due diligence system that presents all market analyses with equal certainty causes partners to weight a single blog post's TAM estimate equally with a Gartner report's validated figure, leading to a $15M investment based on inflated market assumptions.",
+    question: "Your coordinator agent is synthesizing findings that include one well-sourced market analysis (based on 3 independent datasets), one single-analyst opinion piece, and one statistic that two subagents found contradictory values for. How should the synthesis handle these different levels of certainty?",
+    choices: {
+      A: "Present all findings uniformly and let the reader assess reliability from the cited sources",
+      B: "Include only the well-sourced analysis, discarding the opinion piece and contradictory statistic as unreliable",
+      C: "Present the well-sourced analysis with confidence, attribute the opinion piece to its single source with appropriate hedging, and present the contradictory statistic with both values and their sources",
+      D: "Average the contradictory values, paraphrase the opinion piece as established fact, and present everything with equal authority"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Uniform presentation fails to communicate the significant differences in evidence quality. Readers scanning the report will not pause to evaluate each citation's weight. The synthesis should do this analytical work.",
+      B: "INCORRECT: Discarding information eliminates potentially valuable data. A single-analyst opinion from a domain expert may contain crucial insights. Contradictory statistics reveal genuine uncertainty that the reader needs to know about.",
+      C: "CORRECT: This approach annotates uncertainty at the appropriate level. Well-supported findings are presented with confidence. Single-source findings are attributed and hedged ('according to [analyst], ...'). Contradictory data is presented with both values and sources, annotating the disagreement rather than resolving it. This preserves all information while accurately communicating certainty levels.",
+      D: "INCORRECT: This approach actively destroys useful information. Averaging contradictory values produces a number no source supports. Presenting an opinion as established fact misrepresents the evidence base. Equal authority presentation is misleading."
+    }
+  },
+  {
+    id: "d5-055",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Multi-Issue Session Context",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A utility company's support agent handling multi-issue sessions (billing + service outage + plan change) in a single conversation loses the billing details by the time the plan change is discussed, causing the new plan to be set without accounting for the billing credits that were just agreed upon.",
+    question: "Your support agent handles sessions where customers frequently bring up 3-4 separate issues in a single conversation. By the time the agent addresses issue #4, the specific details of issues #1 and #2 have been summarized into vague references. The agent sometimes contradicts its own earlier commitments. What architectural change addresses this?",
+    choices: {
+      A: "Limit customers to one issue per session to prevent context overload",
+      B: "Maintain a per-session structured state that tracks each issue separately: issue description, status (open/resolved), key facts, and commitments made, persisted outside the summarizable conversation",
+      C: "Increase the system prompt size to include instructions about remembering all issues",
+      D: "After each issue is resolved, start a fresh conversation context for the next issue"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Forcing customers to one issue per session creates a terrible customer experience. Customers call with multiple issues, and forcing them to re-authenticate and re-explain context multiple times increases handle time and frustration.",
+      B: "CORRECT: A per-session structured state block that tracks each issue independently with its key facts and commitments provides a reliable reference that survives summarization. When addressing issue #4, the agent can reference the structured state for issues #1-3 to ensure consistency and avoid contradictions.",
+      C: "INCORRECT: System prompt instructions do not override the mechanics of context management. No matter how strongly worded, the instruction cannot prevent information loss when the conversation exceeds context limits and is summarized.",
+      D: "INCORRECT: Starting fresh for each issue loses cross-issue context that may be important. A billing credit (issue 1) may affect the plan change recommendation (issue 3). Isolated contexts prevent the agent from seeing these connections."
+    }
+  },
+  {
+    id: "d5-056",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Inability to Progress Escalation",
+    difficulty: "medium",
+    scenario: 1,
+    importance: "A technical support agent that continues cycling through the same 3 troubleshooting steps for 25 minutes without escalating wastes customer time and reduces satisfaction scores by 1.8 points compared to agents that escalate after detecting a lack of progress.",
+    question: "Your support agent has attempted three different approaches to resolve a customer's connectivity issue: restarting the modem, checking cable connections, and running a line test. All three approaches failed. The agent has no additional troubleshooting tools available. What should happen next?",
+    choices: {
+      A: "Try the three approaches again in case they work the second time",
+      B: "Escalate to a human agent because the agent has exhausted its available tools and cannot make further progress on resolution",
+      C: "Ask the customer if they have tried anything on their own that might provide new information",
+      D: "Suggest the customer try again later, as the issue might resolve itself"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Repeating the same failed approaches is the definition of inability to progress. If restarting the modem did not work the first time, it is unlikely to work again (unless there was a time-dependent external factor, which the agent cannot determine).",
+      B: "CORRECT: Inability to make progress after exhausting available tools is an explicit escalation trigger. The agent has tried all available approaches and none resolved the issue. Continuing without new tools or approaches wastes the customer's time. Escalation to a human agent who may have access to additional diagnostic tools or can dispatch a technician is the appropriate next step.",
+      C: "INCORRECT: While gathering additional information is sometimes useful, it is a delay tactic when the agent has no additional actions to take based on new information. The agent has no fourth troubleshooting tool regardless of what the customer reports.",
+      D: "INCORRECT: Suggesting the customer wait is an evasion of responsibility. The customer contacted support because they need the issue resolved now. Dismissing them without escalation is a failure of the support system."
+    }
+  },
+  {
+    id: "d5-057",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Coordinator Error Handling Design",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A clinical trials research system where the coordinator has no error handling logic produces reports that look complete but silently omit safety data from a subagent that encountered an authentication failure, potentially endangering trial participants.",
+    question: "You are designing the coordinator agent for a multi-agent system with 10 subagents. How should the coordinator be structured to handle the range of subagent outcomes?",
+    choices: {
+      A: "Process all subagent results in a single pass, handling errors inline as they appear",
+      B: "First categorize subagent results into three buckets (complete success, partial results with errors, total failure), then synthesize with appropriate annotations for each category, noting gaps and their causes",
+      C: "Process only successful results and log failures for later investigation",
+      D: "Require all subagents to succeed before beginning synthesis, retrying failures up to the timeout limit"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Processing in a single pass without categorization makes it easy to overlook failure context. An error buried in the middle of 10 subagent results may receive insufficient attention due to the lost-in-the-middle effect, ironically.",
+      B: "CORRECT: Categorization before synthesis ensures the coordinator has a clear picture of data quality before attempting synthesis. Complete results inform confident findings, partial results inform annotated findings with caveats, and total failures inform explicit gaps. This structured approach prevents silent omission and enables coverage annotations.",
+      C: "INCORRECT: Ignoring failures and logging them for 'later investigation' is the silent suppression anti-pattern. The final report will appear complete but lack information from failed subagents, and the reader has no way to know what is missing.",
+      D: "INCORRECT: Requiring all subagents to succeed blocks the entire system on the slowest or most error-prone subagent. This is the wholesale termination anti-pattern when a subagent permanently fails."
+    }
+  },
+  {
+    id: "d5-058",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Context Degradation Self-Detection",
+    difficulty: "hard",
+    scenario: 2,
+    importance: "A development team relies on Claude Code to self-report when its context has degraded, but the agent continues confidently suggesting refactoring patterns that contradict the actual codebase architecture, causing 40 hours of misdirected work before a senior developer reviews and catches the errors.",
+    question: "A team member suggests adding a system prompt instruction: 'If you are unsure about specific codebase details, explicitly say so rather than guessing.' Will this effectively prevent context degradation issues?",
+    choices: {
+      A: "Yes, this instruction will cause the model to flag when it is operating from general knowledge rather than specific context",
+      B: "Partially; it helps with known unknowns but the model cannot detect when it has lost context it previously had, so it will confidently reference 'typical patterns' without realizing it lost specific knowledge",
+      C: "Yes, combined with a confidence score output, this creates a reliable degradation detection system",
+      D: "No, system prompt instructions have no effect on how the model handles context boundaries"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: The model cannot reliably distinguish between 'I have specific context' and 'I am substituting general knowledge for lost context.' When context degrades, the model does not experience a gap. It simply works with what it has and fills in with training knowledge seamlessly.",
+      B: "CORRECT: The instruction helps when the model encounters topics it has never seen in the current context (known unknowns). However, context degradation is about losing information that was previously available. The model does not remember what it used to know in earlier parts of the context. It cannot flag 'I used to know the specific file path but now I only know the general pattern' because that meta-awareness requires the very context that was lost.",
+      C: "INCORRECT: Adding a confidence score does not fix the meta-cognitive gap. The model will confidently report high confidence when substituting general patterns for specific context, because from its current perspective, its general knowledge seems applicable.",
+      D: "INCORRECT: System prompt instructions do affect model behavior. The instruction will help in some cases. But it cannot solve the fundamental problem that context degradation is invisible to the model experiencing it."
+    }
+  },
+  {
+    id: "d5-059",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Human Review Workflow Design",
+    difficulty: "medium",
+    scenario: 6,
+    importance: "A loan processing system that routes 45% of extractions to human review (everything below 95% confidence) creates a backlog that causes 3-day processing delays, negating the automation benefit and causing 20% of applicants to abandon their applications.",
+    question: "You are designing the human review workflow for a document extraction system. The system processes 5,000 documents per day and you have 10 human reviewers. Which workflow design optimally uses human resources?",
+    choices: {
+      A: "Route all documents through human review to ensure zero errors",
+      B: "Route only extractions flagged by the system (low confidence, ambiguous values, contradictions between fields) to human review, with auto-acceptance of validated high-confidence extractions",
+      C: "Have humans spot-check a random 10% sample and assume the rest are correct",
+      D: "Use human reviewers only for the first month, then switch to full automation once the system is tuned"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: 5,000 documents per day with 10 reviewers means 500 documents per reviewer per day, which is likely infeasible for thorough review. This approach provides no automation benefit and creates a bottleneck.",
+      B: "CORRECT: Intelligent routing concentrates human review on extractions where it adds the most value: low-confidence extractions (where the model is uncertain), ambiguous values (where the document is unclear), and field contradictions (where extracted values are logically inconsistent). High-confidence, validated extractions pass through automatically, allowing human resources to focus where they have the most impact.",
+      C: "INCORRECT: Random 10% sampling is a monitoring strategy, not a review strategy. It catches systematic errors over time but does not prevent individual extraction errors. The two approaches serve different purposes and should be combined, not substituted.",
+      D: "INCORRECT: Document types, formats, and quality evolve over time. A system tuned in month one may degrade in month six due to new document formats, changed layouts, or different data patterns. Ongoing human review of flagged extractions is a permanent need, not a temporary one."
+    }
+  },
+  {
+    id: "d5-060",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Source Merger During Synthesis",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A geopolitical risk analysis system that merges corroborating sources into single citations loses the distinction between a CIA World Factbook entry and a blog post both claiming the same GDP figure, preventing analysts from assessing the quality of evidence supporting key risk assessments.",
+    question: "During synthesis, your coordinator merges findings from multiple subagents. Two subagents independently found the same statistic (market size of $5.2B) from different sources (one from an industry report, one from a government database). How should the coordinator handle this during synthesis?",
+    choices: {
+      A: "Include the statistic once with a citation to whichever source was found first",
+      B: "Include the statistic once but preserve both source attributions, noting that multiple independent sources corroborate the figure",
+      C: "Include the statistic twice, once for each source, to preserve full traceability",
+      D: "Average the two values even though they are identical, to demonstrate multi-source validation"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Arbitrarily selecting one source discards the valuable information that two independent sources agree. Multi-source corroboration significantly increases reliability, and the reader should know about it.",
+      B: "CORRECT: When multiple independent sources corroborate a finding, the synthesis should note this corroboration while preserving both attributions. This is the correct merge pattern: deduplicate the claim but preserve and merge the source mappings. The reader knows both that the figure is $5.2B and that it is independently confirmed by two different types of sources.",
+      C: "INCORRECT: Including the same statistic twice creates redundancy and confusion. The reader would wonder if these are different figures or the same one. The claim should appear once with merged attribution.",
+      D: "INCORRECT: Averaging identical values is mathematically meaningless (the average of $5.2B and $5.2B is $5.2B). This adds complexity without value and suggests a misunderstanding of the purpose of multi-source validation."
+    }
+  },
+  {
+    id: "d5-061",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Key Findings Placement",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A legal research system that places its most critical case precedent finding in position 7 of 12 aggregated sections sees the coordinator omit this precedent from 34% of synthesized briefs, despite it being the most directly relevant to the client's case.",
+    question: "You are designing the input format for a coordinator that synthesizes research from 10 subagents. Each subagent produces approximately 1,000 tokens of findings. You know the coordinator needs to reference all findings, but some are more critical than others. How should you structure the input?",
+    choices: {
+      A: "Order subagent findings by the time they were completed, first-in first-out",
+      B: "Order subagent findings randomly to avoid any systematic bias",
+      C: "Place a key-findings summary block at the beginning, followed by full subagent outputs organized with section headers",
+      D: "Place the most important subagent findings in the middle where they are flanked by supporting context"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Completion order has no relationship to importance. The first subagent to finish may have the least critical findings. This ordering creates arbitrary positional placement that may disadvantage critical information.",
+      B: "INCORRECT: Random ordering distributes the lost-in-the-middle risk evenly but does not mitigate it. Critical findings would have a 60-80% chance of landing in middle positions, making them consistently vulnerable to omission.",
+      C: "CORRECT: Placing key findings at the beginning leverages the positional attention advantage. The model attends most reliably to content at the beginning and end of the input. A summary block at the top ensures all critical findings are in the high-attention zone, while section headers in the full outputs provide navigable structure for detailed reference.",
+      D: "INCORRECT: Placing important findings in the middle is the worst possible strategy given the lost-in-the-middle effect. Middle positions receive the least attention. This approach virtually guarantees that the most important findings are the most likely to be omitted."
+    }
+  },
+  {
+    id: "d5-062",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Escalation System Monitoring",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A health insurance claims support system with no escalation monitoring allows a gradual drift where the agent stops escalating complex pre-authorization disputes, causing a 3-month accumulation of incorrectly auto-denied claims worth $2.8M that should have received human review.",
+    question: "Your support agent has been in production for 6 months with well-defined escalation criteria. Escalation rates have gradually dropped from 18% to 6%. Stakeholders celebrate the improvement, assuming the agent is resolving more issues independently. What should concern you?",
+    choices: {
+      A: "Nothing; decreasing escalation rates indicate the agent is improving at independent resolution",
+      B: "The decline could indicate the agent is failing to escalate cases that should be escalated, and you need to audit a sample of non-escalated interactions to verify resolution quality",
+      C: "The escalation criteria should be loosened to restore the original 18% rate",
+      D: "The decline is expected as customers learn what the agent can handle and self-select to human agents for complex issues"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: A declining escalation rate has two possible explanations: genuinely better resolution or silent failure to escalate. Without auditing, you cannot distinguish between these. Celebrating without investigation is dangerous.",
+      B: "CORRECT: The gradual decline in escalation rates is a potential red flag that requires investigation. By auditing a sample of non-escalated interactions, you can determine whether the agent is genuinely resolving more issues (good) or failing to escalate issues that still need human attention (bad). Resolution quality metrics on non-escalated interactions are the critical diagnostic.",
+      C: "INCORRECT: Loosening criteria to hit a target rate is backward. The criteria should be based on what situations require escalation, not on achieving a particular percentage. If the audit shows the agent is correctly resolving more, the lower rate is correct.",
+      D: "INCORRECT: Customer self-selection may explain some of the decline, but it is an assumption without evidence. The audit is still necessary to verify that the non-escalated interactions are being resolved satisfactorily."
+    }
+  },
+  {
+    id: "d5-063",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Multi-Agent Error Correlation",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A financial analysis system where 3 of 8 subagents all fail querying the same Bloomberg API does not correlate these failures, leading the coordinator to independently retry each subagent when a single API status check would have revealed a system-wide outage.",
+    question: "In your multi-agent system, three subagents simultaneously report timeout errors when querying the same external API. The coordinator receives these as three independent error reports. What pattern should the coordinator implement?",
+    choices: {
+      A: "Retry all three subagents independently since their queries are different",
+      B: "Correlate the errors to identify the common dependency failure, check the API status once, and make a single recovery decision that applies to all three subagents",
+      C: "Escalate all three errors to the user immediately since multiple simultaneous failures indicate a critical system issue",
+      D: "Ignore the failures and proceed with the other 5 subagents' results since 5 out of 8 is sufficient"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Independent retry wastes resources when the root cause is shared. If the external API is down, all three retries will fail. Correlated failures should be diagnosed at the root cause level, not retried independently.",
+      B: "CORRECT: When multiple subagents fail on the same dependency, the coordinator should correlate these failures to identify the common root cause. A single API health check is more efficient than three independent retries. If the API is down, the coordinator can make one decision (wait, use alternative source, annotate the gap) that applies to all affected subagents.",
+      C: "INCORRECT: While multiple failures are notable, immediately escalating to the user without attempting diagnosis is premature. The coordinator should first assess whether the failures are recoverable (transient API issue) or require user intervention (permanent service discontinuation).",
+      D: "INCORRECT: Silently ignoring 3 of 8 subagents means 37.5% of the research is missing. This is the suppression anti-pattern. The coordinator should at minimum annotate which areas lack coverage and why."
+    }
+  },
+  {
+    id: "d5-064",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Ambiguous and Contradictory Extraction Routing",
+    difficulty: "medium",
+    scenario: 6,
+    importance: "A contract analysis system that auto-accepts high-confidence extractions misses cases where the contract states both 'net 30 payment terms' in clause 4 and 'net 60 payment terms' in an amendment on page 12, because the model confidently extracts whichever it encounters first.",
+    question: "Your extraction system encounters a document where the extracted 'payment terms' field says 'Net 30' but the extracted 'payment deadline' field says '60 days from invoice date.' The model reports high confidence for both extractions. What should happen?",
+    choices: {
+      A: "Accept both extractions since the model is confident and let the downstream system resolve the inconsistency",
+      B: "Accept the 'payment terms' field as it is more specific and override the deadline field",
+      C: "Route this extraction to human review because the two fields are logically contradictory, regardless of the high confidence scores",
+      D: "Re-extract both fields and use whichever result the model produces more consistently"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Passing contradictory data to downstream systems shifts the problem without solving it. Downstream systems may not have the logic to detect contradictions, leading to unpredictable behavior or silent data corruption.",
+      B: "INCORRECT: Heuristic resolution of contradictions by the automated system is unreliable. The 'Net 30' may be from a standard template while '60 days' may be from a negotiated amendment that supersedes it. The system cannot make this judgment without document context.",
+      C: "CORRECT: Logically contradictory extractions should be routed to human review regardless of individual confidence scores. High confidence on two mutually exclusive values means at least one confidence score is wrong. A human reviewer can examine the source document to determine which value is correct, potentially discovering a contractual amendment or typographical error.",
+      D: "INCORRECT: Re-extraction may produce the same results or flip randomly based on sampling. Consistency does not equal correctness. The fundamental issue is a contradiction in the source document or the extraction, not extraction variability."
+    }
+  },
+  {
+    id: "d5-065",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Provenance Through Pipeline Layers",
+    difficulty: "hard",
+    scenario: 3,
+    importance: "A pharmaceutical research report that presents a drug efficacy claim without provenance causes a regulatory reviewer to reject the submission, costing the company 6 months and $12M in delayed market entry because the claim cannot be traced to its supporting clinical trial.",
+    question: "Your research pipeline has three layers: data collection, analysis, and synthesis. A finding in the final report states: 'Drug X shows 23% improvement in outcomes.' A regulatory reviewer asks which clinical trial supports this claim. Your team cannot trace the finding back to its source. What is the structural failure?",
+    choices: {
+      A: "The synthesis layer should have generated a bibliography",
+      B: "The analysis layer should have stored a log of all documents processed",
+      C: "Each layer failed to maintain and pass forward claim-source mappings, breaking the provenance chain from data collection through analysis to synthesis",
+      D: "The data collection layer should have tagged each document with a unique identifier"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: A bibliography lists sources but does not link specific claims to specific sources. Knowing that 15 trials were consulted does not tell the reviewer which trial produced the 23% improvement figure.",
+      B: "INCORRECT: A processing log shows what was examined but not which specific data points flowed from which sources into which claims. It is an audit trail of activity, not a provenance chain for findings.",
+      C: "CORRECT: Provenance requires an unbroken chain from claim to source through every pipeline layer. Data collection must tag findings with sources, analysis must preserve these tags while adding analytical attribution, and synthesis must merge tags while maintaining traceability. The failure is systemic across all three layers, not localized to one.",
+      D: "INCORRECT: Unique identifiers at the collection layer are necessary but insufficient. If the analysis layer strips these identifiers during processing, and the synthesis layer does not carry them into the final report, the identifiers provide no end-to-end traceability."
+    }
+  },
+  {
+    id: "d5-066",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Structured Data vs Verbose Reasoning",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A competitive intelligence system where analyst subagents return 1,800-token reasoning chains per company analysis leaves the coordinator with 18,000 tokens of reasoning for 10 companies and only 2,000 tokens remaining for synthesis, producing superficial cross-company comparisons.",
+    question: "Your subagent analyzes a company and returns:\n\n'After examining the Q3 earnings report, I noticed several trends. First, revenue grew by 12% year-over-year, which is notable because... [500 more tokens of reasoning] ...Therefore, the company's financial position is strong with revenue growth of 12%, operating margin of 18%, and debt-to-equity ratio of 0.45.'\n\nHow should the subagent's output be restructured?",
+    choices: {
+      A: "Keep the full reasoning chain so the coordinator understands the analytical process",
+      B: "Have the subagent output structured data: {revenue_growth: '12%', operating_margin: '18%', debt_equity: 0.45, assessment: 'strong', key_risks: [...], sources: [...]}",
+      C: "Ask the subagent to output a shorter version of the same reasoning",
+      D: "Have the coordinator read only the last paragraph of each subagent's output"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: The coordinator does not need to understand the analytical process; it needs the conclusions and data. Passing full reasoning chains to the coordinator wastes context on intermediate steps that have no synthesis value.",
+      B: "CORRECT: Structured data output strips the verbose reasoning and delivers exactly what the coordinator needs: specific values, assessments, risks, and sources. This is dramatically more token-efficient and makes cross-subagent synthesis straightforward because fields are directly comparable.",
+      C: "INCORRECT: A shorter reasoning chain still includes narrative that the coordinator does not need. The issue is not length but format. Even a 200-token reasoning paragraph is less useful to the coordinator than a 100-token structured data object.",
+      D: "INCORRECT: Relying on the model to place conclusions at the end of its output is fragile. The 'last paragraph' may contain caveats, next steps, or metadata rather than conclusions. Structured output makes the location of specific information deterministic."
+    }
+  },
+  {
+    id: "d5-067",
+    domain: "D5",
+    taskStatement: "5.2",
+    topic: "Clarification vs Heuristic Selection",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A pharmacy verification system that heuristically selects the 'most likely' prescription from ambiguous doctor handwriting dispenses the wrong medication in 2.3% of ambiguous cases, causing 14 adverse drug events per quarter across a chain of 200 pharmacies.",
+    question: "Your customer support agent queries the order database for 'blue wireless headphones' and gets 5 matching products across different price points and brands. The customer has not specified which product they are asking about. What is the most robust approach?",
+    choices: {
+      A: "Present the most popular product as the likely match and ask the customer to confirm",
+      B: "Present all 5 products and ask the customer which one they are referring to",
+      C: "Ask the customer for additional identifying information (order number, brand, approximate price) to narrow to a single match",
+      D: "Use the customer's purchase history to predict which product they are most likely asking about"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Popularity-based selection is a heuristic that will be wrong 80% of the time with 5 candidates. Leading with a guess creates friction when it is wrong and the customer must correct the agent.",
+      B: "INCORRECT: Presenting all 5 products may expose information about product availability, pricing, or inventory that should not be shared without context. It also overwhelms the customer with choices when a single clarifying question would resolve the ambiguity.",
+      C: "CORRECT: Asking for additional identifiers (order number, brand, price range) narrows the match without heuristic guessing or information exposure. This mirrors the multiple-customer-match pattern: when multiple records match, ask for disambiguation rather than selecting based on heuristics.",
+      D: "INCORRECT: Purchase history prediction is a heuristic that may be wrong. The customer may be asking about a product they are considering, one they received as a gift, or one a family member ordered. History-based prediction introduces bias without certainty."
+    }
+  },
+  {
+    id: "d5-068",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Subagent vs Direct Exploration Tradeoffs",
+    difficulty: "hard",
+    scenario: 2,
+    importance: "A team that exclusively uses subagent delegation for every code question experiences 3x latency increases and misses cross-file patterns that would be obvious in the main agent's broader context, while a team that never delegates exhausts context within 30 minutes of exploration.",
+    question: "When exploring a codebase with Claude Code, when should you use subagent delegation versus direct exploration in the main agent context?",
+    choices: {
+      A: "Always use subagents for any file reading to keep the main context clean",
+      B: "Use subagents for verbose, focused investigations (e.g., trace a call chain across 15 files) and direct exploration for quick lookups and high-level understanding that benefits from accumulated context",
+      C: "Never use subagents because they lose the accumulated context of the main exploration",
+      D: "Use subagents only when the main agent explicitly reports context pressure"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Using subagents for every file read adds unnecessary overhead. Quick lookups (reading a config file, checking a function signature) are more efficiently done in the main context, and the main agent benefits from accumulating these small pieces of context for pattern recognition.",
+      B: "CORRECT: The tradeoff is between context efficiency and accumulated understanding. Verbose investigations (tracing an auth flow across 15 files) should use subagents because the intermediate file contents would overwhelm the main context. But quick lookups and high-level navigation benefit from staying in the main context, where they build the agent's overall understanding of the codebase.",
+      C: "INCORRECT: Never using subagents means every verbose exploration consumes main context. After a few deep dives, the main agent's context will be filled with file contents, and it will lose the ability to reference earlier findings.",
+      D: "INCORRECT: Waiting for the main agent to report context pressure means waiting for degradation to begin. By the time the model starts referencing 'typical patterns,' valuable context has already been lost. Proactive delegation of known-verbose investigations is better than reactive delegation."
+    }
+  },
+  {
+    id: "d5-069",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Validation Set Representativeness",
+    difficulty: "hard",
+    scenario: 6,
+    importance: "A medical claims extraction system calibrated using a validation set of only typed forms is deployed on a mix of typed and handwritten forms, and the calibration curves that work perfectly for typed forms produce dangerously miscalibrated confidence for handwritten ones, auto-accepting 35% of incorrect handwritten extractions.",
+    question: "You are building a labeled validation set for calibrating your extraction system's confidence scores. Your production document mix is: 60% standard typed forms, 25% scanned handwritten forms, 10% multi-language forms, and 5% mixed-format forms. How should the validation set be composed?",
+    choices: {
+      A: "Match the production distribution exactly: 60% typed, 25% handwritten, 10% multi-language, 5% mixed",
+      B: "Focus entirely on the problematic categories (handwritten and multi-language) since typed forms already work well",
+      C: "Ensure all document types are represented with sufficient samples for statistically meaningful calibration, oversampling rare types to ensure minimum sample sizes, while maintaining proportional representation of common types",
+      D: "Use only typed forms since they are the majority and will produce the most statistically significant results"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Exactly matching production distribution may leave rare types with insufficient samples. If the validation set is 1,000 documents, mixed-format gets only 50 samples, which may be too few for reliable calibration curves.",
+      B: "INCORRECT: Ignoring typed forms means the calibration for 60% of production volume is unvalidated. Typed form accuracy could degrade without detection. All types need calibration, not just the challenging ones.",
+      C: "CORRECT: The validation set must be representative enough to calibrate each document type independently. Rare types need oversampling to reach minimum sample sizes for statistical significance. Common types need sufficient representation for reliable calibration. The goal is meaningful per-type calibration curves, which requires enough data points for each type.",
+      D: "INCORRECT: Calibrating on only typed forms produces calibration curves that are accurate for typed forms but dangerously misleading for other types. When applied to handwritten forms (which have fundamentally different error patterns), the calibration will be wrong."
+    }
+  },
+  {
+    id: "d5-070",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Handling Missing Source Data",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A climate policy research system that omits findings from developing nations (where data is often incomplete) produces policy recommendations biased toward developed-world conditions, resulting in a UN report that ignores the needs of 4.5 billion people in underrepresented regions.",
+    question: "Your research system's subagent for Asian market data returns findings covering Japan, South Korea, and China, but notes that data for Southeast Asian markets was unavailable due to language barriers in source databases. How should the coordinator handle this in the synthesis?",
+    choices: {
+      A: "Report the Asian market findings as complete since three major markets were covered",
+      B: "Omit the Asian market section entirely since the data is incomplete",
+      C: "Include the available findings with an explicit annotation noting that Southeast Asian markets are not covered and why, so the reader understands the scope and limitations",
+      D: "Extrapolate Southeast Asian data from the available East Asian data since the markets are geographically proximate"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: Presenting partial data as complete is misleading. Japan, South Korea, and China are significant markets but do not represent 'Asia.' Southeast Asia (650 million people, rapidly growing economies) has materially different market dynamics. The reader needs to know about this coverage gap.",
+      B: "INCORRECT: Omitting all Asian data because Southeast Asian data is missing discards valuable information from three major economies. The available data has significant value when properly scoped.",
+      C: "CORRECT: Include what you have, annotate what is missing, and explain why. This maximizes the value of available data while being transparent about limitations. The reader can make informed decisions about how much weight to give the Asia section knowing it covers East Asia but not Southeast Asia.",
+      D: "INCORRECT: Southeast Asian markets have fundamentally different economic structures, regulatory environments, and growth trajectories from East Asian markets. Geographic proximity does not imply economic similarity. Extrapolation would produce misleading data presented as factual."
+    }
+  },
+  {
+    id: "d5-071",
+    domain: "D5",
+    taskStatement: "5.3",
+    topic: "Error Context for Recovery Decisions",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A supply chain monitoring system where subagent errors lack context forces the coordinator to apply uniform recovery (retry 3x), causing the system to waste 12 minutes retrying a permanently decommissioned supplier API instead of querying the replacement API that was documented in the error.",
+    question: "A subagent fails and returns: {type: 'api_error', code: 503, attempted: 'GET /api/v2/supplier-data', partial_results: null, alternatives: ['/api/v3/supplier-data'], retry_after: '30s'}. How does this structured error context improve the coordinator's decision-making compared to a simple 'error: operation failed' message?",
+    choices: {
+      A: "It does not improve decision-making; the coordinator should retry regardless of the error details",
+      B: "It allows the coordinator to wait 30 seconds then retry the v2 endpoint, try the v3 alternative if v2 fails again, and know that no partial results are available for this subagent's scope",
+      C: "It allows the coordinator to immediately try the v3 alternative without waiting, since v3 supersedes v2",
+      D: "It allows the coordinator to skip this subagent entirely since there is a retry_after header, indicating the service is rate-limited"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Blind retry without considering the error context wastes time on permanent failures and misses alternatives. The structured context exists specifically to enable informed recovery decisions.",
+      B: "CORRECT: The structured error context enables a layered recovery strategy: (1) the 503 with retry_after suggests a transient issue, so waiting 30 seconds and retrying is appropriate, (2) the alternative endpoint provides a fallback if the retry fails, (3) knowing partial_results is null tells the coordinator there is no data to work with from this subagent until recovery succeeds. Each field informs a specific decision.",
+      C: "INCORRECT: Immediately jumping to v3 skips the simple fix (waiting 30 seconds for v2 to recover). The 503 with retry_after suggests the v2 endpoint will likely be available shortly. v3 is the fallback, not the first attempt.",
+      D: "INCORRECT: A 503 is 'Service Unavailable,' not rate limiting (which would be 429). Skipping the subagent entirely when a retry and an alternative endpoint are available wastes the recovery opportunity. The error context provides everything needed for recovery."
+    }
+  },
+  {
+    id: "d5-072",
+    domain: "D5",
+    taskStatement: "5.1",
+    topic: "Token Budget Allocation",
+    difficulty: "hard",
+    scenario: 1,
+    importance: "A complex insurance claims processing agent that allocates 80% of its context window to tool results and system prompts leaves only 20% for conversation history, causing the agent to lose the claimant's description of their accident after just 4 messages, forcing them to repeat critical injury details.",
+    question: "Your support agent has a 100K token context window. The system prompt is 3K tokens. Each tool call returns an average of 2K tokens (after trimming). A typical session involves 8 tool calls and 20 customer/agent message pairs averaging 200 tokens each. What is the context budget concern?",
+    choices: {
+      A: "No concern; 3K + (8 * 2K) + (20 * 200) = 23K tokens, well within the 100K limit",
+      B: "The conversation will exceed the context window due to tool result accumulation",
+      C: "While the current session fits in context, adding the case facts block and any conversation history from summarized earlier sessions creates budget pressure that requires proactive token management",
+      D: "The tool results should be cached externally to save context space"
+    },
+    correct: "C",
+    explanations: {
+      A: "INCORRECT: This calculation is for a single clean session but does not account for the case facts block, summarized history from earlier in long conversations, system prompt additions for escalation examples, and the reality that some tool calls return far more than the average.",
+      B: "INCORRECT: The math does not show a single-session overflow. The concern is about efficient budget allocation and resilience to variation, not about exceeding the raw limit.",
+      C: "CORRECT: Even when a session fits in the window, proactive token management is important. Case facts blocks grow as issues accumulate, some tool calls will exceed the 2K average, and long conversations may require summarized history from earlier turns. Designing for the average case leaves no margin for above-average sessions, which are precisely the complex interactions that matter most.",
+      D: "INCORRECT: External caching of tool results means the model cannot reference them during generation. The relevant fields need to be in-context, but trimmed to only relevant fields to optimize the budget."
+    }
+  },
+  {
+    id: "d5-073",
+    domain: "D5",
+    taskStatement: "5.5",
+    topic: "Continuous Monitoring vs One-Time Validation",
+    difficulty: "hard",
+    scenario: 6,
+    importance: "A document extraction system validated once before launch gradually degrades over 8 months as vendors change invoice formats, with accuracy dropping from 97% to 82% without detection because no ongoing monitoring is in place, causing $1.4M in accumulated processing errors.",
+    question: "Your extraction system passed validation with 96% accuracy and has been in production for 4 months. A product manager asks if the validation set from pre-launch can be reused to confirm accuracy is still 96%. What is the correct response?",
+    choices: {
+      A: "Yes, reusing the same validation set provides an exact comparison to the original benchmark",
+      B: "No, the same validation set should not be the sole source of ongoing validation. Document formats, quality, and types evolve in production. Ongoing monitoring requires fresh stratified samples from current production documents to detect format drift and new failure modes",
+      C: "Yes, but supplement it with a small sample of recent documents for good measure",
+      D: "No, the original validation set is now contaminated because the model may have been trained on it"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: Using the same validation set only tells you if the model still performs well on the exact same documents it was validated against. It does not detect accuracy degradation from new document formats, layout changes, or new document types that have entered production since launch.",
+      B: "CORRECT: Production document characteristics drift over time. Vendors update invoice formats, new document types are onboarded, scanning quality varies seasonally, and data patterns change. Ongoing monitoring must use fresh samples from current production to detect these changes. The original validation set is useful as a regression baseline but insufficient as the sole ongoing validation mechanism.",
+      C: "INCORRECT: 'A small sample for good measure' suggests the original set is primary and fresh samples are supplementary. The priority should be reversed: fresh production samples are primary for ongoing monitoring, and the original set serves as a regression check.",
+      D: "INCORRECT: The model is not retrained on the validation set during production operation. The issue is not contamination but representativeness. The original validation set may no longer represent current production documents."
+    }
+  },
+  {
+    id: "d5-074",
+    domain: "D5",
+    taskStatement: "5.6",
+    topic: "Multi-Format Report Generation",
+    difficulty: "medium",
+    scenario: 3,
+    importance: "A quarterly investment research report that presents all 200 data points as running prose requires analysts to spend 3 hours extracting comparable figures, while the same data presented in appropriate formats (tables for financials, prose for qualitative analysis, charts for trends) enables 20-minute review sessions.",
+    question: "Your research synthesis produces a report covering financial performance data, industry trend analysis, and regulatory changes. All three sections are currently rendered as uniform prose paragraphs. Users report difficulty comparing financial metrics and finding specific regulatory requirements. What should change?",
+    choices: {
+      A: "Add an executive summary at the top with key metrics highlighted",
+      B: "Render financial performance as comparison tables, industry trends as narrative prose with embedded data, and regulatory changes as a structured checklist with effective dates and requirements",
+      C: "Convert everything to bullet points for easy scanning",
+      D: "Add a searchable index at the end of the report"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: An executive summary helps with overview but does not fix the underlying format problem. Users who need to dig into financial details still face prose paragraphs that make comparison difficult.",
+      B: "CORRECT: Each content type has an optimal format. Financial data needs tables for comparison (revenue, margins, ratios across quarters or companies). Industry trends are narrative by nature and benefit from prose that conveys causation and context. Regulatory changes need structured format with key fields (what, when, who is affected, what action is required). Matching format to content type serves each section's information retrieval purpose.",
+      C: "INCORRECT: Uniform bullet points work for some content but are poor for others. Financial comparisons need tabular structure (rows and columns). Narrative trends lose their causal flow when bulletized. Bullet points are a single format applied uniformly, which is the same underlying problem as uniform prose.",
+      D: "INCORRECT: An index helps with navigation but does not address the fundamental readability issue. Finding the right section is only half the problem; the section itself must be formatted for its content type."
+    }
+  },
+  {
+    id: "d5-075",
+    domain: "D5",
+    taskStatement: "5.4",
+    topic: "Agent State Export for Recovery",
+    difficulty: "hard",
+    scenario: 2,
+    importance: "A 12-hour codebase migration session using Claude Code crashes at 75% completion. Without a structured state export, the developer spends 4 hours trying to determine which of 200 files were already migrated and which decisions were made about naming conventions and dependency updates.",
+    question: "You are designing a structured state export for a long-running code migration using Claude Code. The migration involves converting 200 files from JavaScript to TypeScript, updating imports, and adding type definitions. What should the state export contain to enable effective crash recovery?",
+    choices: {
+      A: "A list of all 200 file paths, which is sufficient to re-examine each file and determine its state",
+      B: "A manifest with: (1) files completed with their conversion details, (2) files in progress with current state, (3) files not yet started, (4) architectural decisions made (type naming conventions, import patterns, shared type definitions), and (5) discovered issues/blockers",
+      C: "The complete conversation history so a new session can replay the migration from the beginning",
+      D: "A git diff of all changes made so far, which captures the complete state of the migration"
+    },
+    correct: "B",
+    explanations: {
+      A: "INCORRECT: A list of file paths provides no information about migration state. A new session would need to examine each file to determine whether it has been migrated, which is nearly as much work as starting over. It also loses all architectural decisions and discovered patterns.",
+      B: "CORRECT: This manifest enables a new session to resume exactly where the previous one stopped. Completed files do not need re-examination. In-progress files can be completed. Queued files maintain priority order. Architectural decisions ensure consistency without re-derivation. Discovered issues prevent the new session from encountering the same surprises. This is comprehensive crash recovery state.",
+      C: "INCORRECT: Replaying a 12-hour conversation is impractical. It would exceed context limits, and much of the conversation is exploratory content that does not need to be replayed. The conclusions and decisions matter, not the journey.",
+      D: "INCORRECT: A git diff captures the code changes but not the decision-making context. Why was a particular naming convention chosen? What patterns were discovered that influence future files? What blockers were identified? The diff lacks the architectural decisions and discovery context that the manifest captures."
+    }
+  }
+];
