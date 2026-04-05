@@ -15,17 +15,19 @@ A week-by-week battle plan covering all 5 exam domains, organized into 4 phases:
 
 ### Features
 
-- **5 tabs**: Weekly Plan, Concepts (31 nodes), Projects, Decision Rules (11 rules), Cheat Sheet
+- **6 tabs**: Weekly Plan, **Brain Map**, Concepts (30 nodes), Projects, Decision Rules (11 rules), Cheat Sheet
 - **Daily KPIs** with measurable targets for each study day
 - **Daily closure assessments** linking to specific quiz engine modes
 - **Progress tracking** with localStorage-persisted checkboxes on tasks and concepts
 - **Completion percentages** per tab displayed in the header
 
-### The 5 tabs
+### The 6 tabs
 
 **Weekly Plan** -- Expand any week, then individual days. Each day lists what to study, a KPI, and a closure quiz reference. Colored borders indicate the domain.
 
-**Concepts** -- 31 testable concepts organized by domain with weight percentages. Your self-test: explain any leaf node from memory.
+**Brain Map** -- Radial SVG view of all 30 concepts across 5 domains with cross-domain connection arcs. Click any concept to see why it matters in production, related concepts across domains, curated learning resources, common failure modes, and exam distractor-trap phrases. Designed for scenario questions that span multiple domains.
+
+**Concepts** -- 30 testable concepts organized by domain with weight percentages. Your self-test: explain any leaf node from memory.
 
 **Projects** -- 4 production-style apps mapped to exam scenarios.
 
