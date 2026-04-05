@@ -2,11 +2,49 @@ import { useState, useEffect, useMemo } from "react";
 
 /* ─── localStorage progress tracking ─── */
 const STORAGE_KEY = "cca-study-progress";
+const THEME_KEY = "cca-theme";
 function loadProgress() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
   catch { return {}; }
 }
 function saveProgress(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+function loadTheme() {
+  try { return localStorage.getItem(THEME_KEY) || "dark"; }
+  catch { return "dark"; }
+}
+function saveTheme(t) { try { localStorage.setItem(THEME_KEY, t); } catch {} }
+
+/* ─── THEMES: three palettes (dark / grey / light) driving CSS variables ─── */
+const THEMES = {
+  dark: {
+    bgRoot: "#0c0c10", bgPanel: "var(--bg-panel)", bgPanelAlt: "var(--bg-panel-alt)",
+    border: "#1c1c28", borderSoft: "var(--border-soft)", borderMed: "var(--border-med)",
+    textPrimary: "var(--text-primary)", textBody: "var(--text-body)", textSoft: "var(--text-soft)",
+    textMuted: "var(--text-muted)", textFaint: "var(--text-faint)", textDim: "var(--text-dim)",
+  },
+  grey: {
+    bgRoot: "#1f2026", bgPanel: "#272830", bgPanelAlt: "#2e2f38",
+    border: "#363742", borderSoft: "#323340", borderMed: "#3e3f4c",
+    textPrimary: "#f5f5f7", textBody: "#d8d8dd", textSoft: "#a8a8b0",
+    textMuted: "#888892", textFaint: "#666670", textDim: "#4a4a55",
+  },
+  light: {
+    bgRoot: "#fafafa", bgPanel: "#ffffff", bgPanelAlt: "#f2f2f4",
+    border: "#d8d8dd", borderSoft: "#e4e4e8", borderMed: "var(--text-body)",
+    textPrimary: "#0c0c10", textBody: "#2a2a32", textSoft: "#4a4a55",
+    textMuted: "#6a6a75", textFaint: "#8a8a95", textDim: "#b0b0b8",
+  },
+};
+
+function themeVars(theme) {
+  const t = THEMES[theme] || THEMES.dark;
+  return {
+    "--bg-root": t.bgRoot, "--bg-panel": t.bgPanel, "--bg-panel-alt": t.bgPanelAlt,
+    "--border": t.border, "--border-soft": t.borderSoft, "--border-med": t.borderMed,
+    "--text-primary": t.textPrimary, "--text-body": t.textBody, "--text-soft": t.textSoft,
+    "--text-muted": t.textMuted, "--text-faint": t.textFaint, "--text-dim": t.textDim,
+  };
+}
 
 /* ─── WEEKS ─── */
 const WEEKS = [
@@ -14,7 +52,7 @@ const WEEKS = [
     id: 1,
     title: "Foundation Sprint",
     subtitle: "Core mental models + baseline diagnostic",
-    theme: "Build the skeleton — understand HOW Claude thinks",
+    theme: "Build the skeleton — understand HOW the system thinks",
     days: [
       {
         day: "Days 1–2",
@@ -35,7 +73,7 @@ const WEEKS = [
         focus: "Tool Design + MCP Foundations",
         domain: "D2",
         tasks: [
-          "Study tool descriptions as THE mechanism for LLM tool selection",
+          "Study tool descriptions as THE mechanism for tool selection",
           "Learn tool splitting: generic → purpose-specific (analyze_document → extract_data_points + summarize_content + verify_claim)",
           "MCP: tools (actions) vs resources (content catalogs) — resources reduce exploratory calls",
           "Config: .mcp.json (project/shared) vs ~/.claude.json (user/personal), env var expansion ${TOKEN}",
@@ -311,7 +349,7 @@ const CONCEPT_TREE = [
     weight: "18%",
     accent: "#d35400",
     concepts: [
-      { name: "Tool Interface Design", children: ["descriptions drive LLM tool selection", "include input formats, examples, edge cases, boundaries", "rename + update descriptions to eliminate overlap", "splitting generic → purpose-specific tools"] },
+      { name: "Tool Interface Design", children: ["descriptions drive tool selection", "include input formats, examples, edge cases, boundaries", "rename + update descriptions to eliminate overlap", "splitting generic → purpose-specific tools"] },
       { name: "Structured Error Responses", children: ["errorCategory: transient/validation/permission", "isRetryable boolean prevents wasted retries", "isError flag in MCP for tool failures", "access failure vs valid empty result distinction"] },
       { name: "Tool Distribution & tool_choice", children: ["4-5 tools per agent; 18 degrades selection", "scoped cross-role tools for high-frequency needs", "tool_choice: auto / any / forced selection", "forced tool for sequencing (extract before enrich)"] },
       { name: "MCP Integration", children: [".mcp.json (project) vs ~/.claude.json (user)", "env var expansion ${TOKEN} for credentials", "community servers over custom for standard integrations", "resources = content catalogs; tools = actions"] },
@@ -327,7 +365,7 @@ const CONCEPT_TREE = [
       { name: "Commands & Skills", children: [".claude/commands/ (project) vs ~/.claude/commands/ (personal)", ".claude/skills/ + SKILL.md with frontmatter config", "context: fork isolates verbose skill output", "allowed-tools + argument-hint in frontmatter"] },
       { name: "Path-Specific Rules", children: [".claude/rules/ with YAML frontmatter glob patterns", "paths: ['src/api/**/*'] for conditional loading", "glob patterns span directories (e.g., **/*.test.tsx)", "path rules > directory CLAUDE.md for cross-directory conventions"] },
       { name: "Plan vs Direct Execution", children: ["plan mode: large-scale, multiple approaches, architectural", "direct: well-scoped single-file changes", "Explore subagent isolates verbose discovery", "combine: plan for investigation, direct for implementation"] },
-      { name: "Iterative Refinement", children: ["concrete input/output examples > prose descriptions", "test-driven: write tests first, share failures to iterate", "interview pattern: Claude asks questions before implementing", "single message for interacting issues; sequential for independent"] },
+      { name: "Iterative Refinement", children: ["concrete input/output examples > prose descriptions", "test-driven: write tests first, share failures to iterate", "interview pattern: agent asks questions before implementing", "single message for interacting issues; sequential for independent"] },
       { name: "CLI for CI/CD", children: ["-p / --print: non-interactive mode", "--output-format json + --json-schema", "CLAUDE.md provides project context to CI-invoked Claude", "session isolation: separate instance for review vs generation"] },
     ],
   },
@@ -366,12 +404,12 @@ const ENRICHED_CONCEPTS = [
   // ═══════════════════════════════════════════════════════════
   {
     id: "d1-agentic-loop", name: "Agentic Loop", domain: "D1", task: "1.1",
-    whyItMatters: "The loop is Claude's execution model. Check text content instead of stop_reason and your agent stops mid-workflow — claims don't get approved, support tickets sit half-resolved, extraction pipelines go silent. Tested heavily because it breaks quietly in prod.",
+    whyItMatters: "The loop is the core execution model. Check text content instead of stop_reason and your agent stops mid-workflow — claims don't get approved, support tickets sit half-resolved, extraction pipelines go silent. Tested heavily because it breaks quietly in prod.",
     productionExamples: ["Customer support ticket resolution", "Insurance claims processing (retrieve → assess → approve)", "Document extraction pipelines"],
     relatedConcepts: ["d2-structured-errors", "d4-structured-output", "d5-error-propagation"],
     resources: [
-      { label: "Anthropic Academy: Building with the Claude API", url: "https://anthropic.skilljar.com", type: "course" },
-      { label: "Agent SDK Overview", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "Building with the API (Skilljar Course)", url: "https://anthropic.skilljar.com", type: "course" },
+      { label: "SDK Overview", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
     ],
     failureModes: ["Checking text content for termination → stops before tools finish", "NL parsing of tool results → brittle, unreliable routing", "Iteration cap without monitoring → silent task truncation"],
     examSignals: ["agent stops mid-workflow", "reliability issue", "loop termination", "not calling expected tool"],
@@ -382,8 +420,8 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Research systems querying multiple sources", "Codebase-wide refactors (per-file + cross-file passes)", "Compliance sweeps across heterogeneous datastores"],
     relatedConcepts: ["d1-subagent-mgmt", "d1-task-decomp", "d5-context-mgmt"],
     resources: [
-      { label: "Agent SDK: Subagents", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
-      { label: "Claude Code Full Stack Guide", url: "https://alexop.dev/posts/understanding-claude-code-full-stack/", type: "blog" },
+      { label: "Subagent Docs", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "Full Stack Guide (alexop.dev)", url: "https://alexop.dev/posts/understanding-claude-code-full-stack/", type: "blog" },
     ],
     failureModes: ["Too-narrow subagents → fragmented context, no synthesis possible", "Coordinator doing execution work instead of delegating", "Bypassing the coordinator for inter-subagent chat"],
     examSignals: ["hub-and-spoke", "coordinator", "subagent selection", "complex investigation"],
@@ -394,7 +432,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Parallel codebase investigations", "Cross-department research (legal + finance + ops)", "Per-file review + cross-file integration review"],
     relatedConcepts: ["d1-multi-agent", "d5-context-mgmt", "d5-provenance"],
     resources: [
-      { label: "Agent SDK: Task tool", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "Task Tool Docs", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
     ],
     failureModes: ["Assuming context inheritance → synthesis agent lacks info", "Sequential Task calls when they could run in parallel", "Over-broad allowedTools → subagent drifts out of scope"],
     examSignals: ["subagent", "context passing", "synthesis agent lacks info", "parallel Task"],
@@ -405,7 +443,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["KYC checks before account creation", "Policy validation before refund", "PII redaction before logging"],
     relatedConcepts: ["d1-hooks", "d2-tool-design", "d3-claude-md"],
     resources: [
-      { label: "Agent SDK: Hooks", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "Hooks Docs", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
     ],
     failureModes: ["Relying on prompts for compliance → 5% failure rate compounds", "Hook runs after the tool, not before → irreversible damage done", "Redundant prompt-and-hook instructions → confusion, not safety"],
     examSignals: ["reliability issue", "occasionally", "non-zero failure rate", "compliance must be guaranteed"],
@@ -416,8 +454,8 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["PII scrubbing on every file read", "Audit logging every DB write", "Blocking writes to protected paths"],
     relatedConcepts: ["d1-workflow-enforce", "d3-claude-md", "d2-tool-design"],
     resources: [
-      { label: "Agent SDK: Hooks reference", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
-      { label: "Claude Code Features Explained", url: "https://muneebsa.medium.com/claude-code-extensions-explained-skills-mcp-hooks-subagents-agent-teams-plugins-9294907e84ff", type: "blog" },
+      { label: "Hooks Reference", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "Features Explained (Medium)", url: "https://muneebsa.medium.com/claude-code-extensions-explained-skills-mcp-hooks-subagents-agent-teams-plugins-9294907e84ff", type: "blog" },
     ],
     failureModes: ["Using prompts to enforce what hooks should enforce", "Hooks with side effects + retries → double writes", "Forgetting hooks run in subagents too"],
     examSignals: ["policy enforcement", "deterministic compliance", "tool call interception", "data normalization"],
@@ -428,7 +466,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Codebase security audits (adaptive)", "ETL pipelines (fixed chain)", "Incident investigations (adaptive)"],
     relatedConcepts: ["d1-multi-agent", "d3-plan-vs-direct", "d4-multi-pass-review"],
     resources: [
-      { label: "Anthropic: Prompt chaining", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Prompt Chaining Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Fixed chain on open-ended task → misses the point", "Adaptive decomposition on a deterministic pipeline → wasted planning", "Per-file only (no cross-file pass) → integration bugs missed"],
     examSignals: ["adaptive decomposition", "per-file + cross-file", "prompt chaining", "map structure first"],
@@ -439,7 +477,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Architecture exploration (fork for alternatives)", "Long debugging sessions", "A/B comparing refactors from a checkpoint"],
     relatedConcepts: ["d5-context-mgmt", "d5-codebase-exploration", "d3-iterative-refinement"],
     resources: [
-      { label: "Claude Code: Resume sessions", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Resume Sessions Docs", url: "https://code.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Always resuming → context degrades permanently", "Always starting fresh → losing valuable context repeatedly", "Forking without informing about diverged changes"],
     examSignals: ["--resume", "fork_session", "divergent exploration", "session merging"],
@@ -449,11 +487,11 @@ const ENRICHED_CONCEPTS = [
   // ═══════════════════════════════════════════════════════════
   {
     id: "d2-tool-design", name: "Tool Interface Design", domain: "D2", task: "2.1",
-    whyItMatters: "Claude picks tools based on DESCRIPTIONS, not names. If two tools have overlapping descriptions, selection becomes unreliable and wrong tools fire. Splitting a generic tool into purpose-specific ones (with boundaries spelled out) fixes this.",
+    whyItMatters: "Tools are selected based on DESCRIPTIONS, not names. If two tools have overlapping descriptions, selection becomes unreliable and wrong tools fire. Splitting a generic tool into purpose-specific ones (with boundaries spelled out) fixes this.",
     productionExamples: ["Billing API with separate refund/adjustment/dispute endpoints", "Knowledge base tools split by authoritativeness", "Split read-only vs write-allowed file tools"],
     relatedConcepts: ["d2-tool-distribution", "d2-structured-errors", "d1-hooks"],
     resources: [
-      { label: "Agent SDK: Tool design", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "Tool Design Docs", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
     ],
     failureModes: ["Overlapping tool descriptions → wrong tool called", "Ghost associations from system prompt keywords", "Generic tools used in specialized contexts → incorrect operations"],
     examSignals: ["wrong tool called", "tool selection unreliable", "descriptions drive selection", "tool boundaries"],
@@ -464,7 +502,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Compliance monitoring (empty ≠ access failure)", "Retry logic with exponential backoff", "Escalation routing by error category"],
     relatedConcepts: ["d5-error-propagation", "d1-agentic-loop", "d5-escalation"],
     resources: [
-      { label: "Agent SDK: Error handling", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "Error Handling Docs", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
     ],
     failureModes: ["Access failure reported as 'no results' → false all-clear", "isRetryable=true on deterministic failures → infinite loops", "Generic errors → coordinator makes blind decisions"],
     examSignals: ["error handling", "recovery", "coordinator decisions", "access failure vs empty"],
@@ -475,7 +513,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Customer support agent (5 tools)", "Research agent (7 scoped tools)", "Forced 'verify_identity' before 'process_refund'"],
     relatedConcepts: ["d2-tool-design", "d4-structured-output", "d1-subagent-mgmt"],
     resources: [
-      { label: "Agent SDK: tool_choice", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
+      { label: "tool_choice Docs", url: "https://platform.claude.com/docs/en/agent-sdk/overview", type: "docs" },
     ],
     failureModes: ["18+ tools per agent → selection unreliable", "tool_choice='any' when you need 'forced'", "Cross-role tools everywhere → drift from role"],
     examSignals: ["too many tools", "tool selection unreliable", "wrong tool called", "forced tool sequencing"],
@@ -487,7 +525,7 @@ const ENRICHED_CONCEPTS = [
     relatedConcepts: ["d2-tool-design", "d3-claude-md", "d2-builtin-tools"],
     resources: [
       { label: "Model Context Protocol Docs", url: "https://modelcontextprotocol.io/docs", type: "docs" },
-      { label: "MCP: Universal Connectivity for LLMs", url: "https://www.zenml.io/llmops-database/model-context-protocol-mcp-building-universal-connectivity-for-llms-in-production", type: "blog" },
+      { label: "MCP: Universal Connectivity (ZenML)", url: "https://www.zenml.io/llmops-database/model-context-protocol-mcp-building-universal-connectivity-for-llms-in-production", type: "blog" },
     ],
     failureModes: ["Credentials in .mcp.json committed to git", "Custom MCP server for standard integration → maintenance burden", "Using tools when resources would work better"],
     examSignals: ["content catalog", "reduce tool calls", "give visibility", "project vs user config"],
@@ -498,21 +536,21 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Codebase search workflows", "Large-file editing via surgical Edits", "Tracing symbol usage via Grep chains"],
     relatedConcepts: ["d2-tool-distribution", "d3-plan-vs-direct", "d5-codebase-exploration"],
     resources: [
-      { label: "Claude Code: Built-in tools", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Built-in Tools Docs", url: "https://code.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Reading whole files instead of Grep → context waste", "Edit when string not unique → silent failure, use Read+Write", "Glob for content search (wrong tool)"],
     examSignals: ["Grep", "Glob", "Edit fails", "fallback pattern", "incremental tracing"],
   },
   // ═══════════════════════════════════════════════════════════
-  // D3 — Claude Code Config (6 concepts, 20% weight)
+  // D3 — Config & Workflows (6 concepts, 20% weight)
   // ═══════════════════════════════════════════════════════════
   {
     id: "d3-claude-md", name: "CLAUDE.md Hierarchy", domain: "D3", task: "3.1",
-    whyItMatters: "User (~/.claude/) → project (.claude/) → directory CLAUDE.md files merge into Claude's working context. User-level is NOT version-controlled (private, per-dev). Project-level is team-shared. Get this wrong and teammates diverge silently.",
+    whyItMatters: "User (~/.claude/) → project (.claude/) → directory CLAUDE.md files merge into working context. User-level is NOT version-controlled (private, per-dev). Project-level is team-shared. Get this wrong and teammates diverge silently.",
     productionExamples: ["60-person team with shared .claude/ rules", "Personal tool preferences in ~/.claude/", "Directory-scoped rules for legacy code"],
     relatedConcepts: ["d3-path-rules", "d3-commands-skills", "d1-workflow-enforce"],
     resources: [
-      { label: "Claude Code: CLAUDE.md reference", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "CLAUDE.md Reference", url: "https://code.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Committing ~/.claude/ config to git", "Relying on user-level for team standards", "Monolithic CLAUDE.md when modular @imports would be cleaner"],
     examSignals: ["CLAUDE.md hierarchy", "version control", "team-shared rules", "merging behavior"],
@@ -523,19 +561,19 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Custom /commit slash command", "A /review-pr skill forked to avoid context bloat", "Personal ~/.claude/commands/ for solo workflows"],
     relatedConcepts: ["d3-claude-md", "d3-cli-cicd", "d1-subagent-mgmt"],
     resources: [
-      { label: "Claude Code: Skills and commands", url: "https://code.claude.com/docs", type: "docs" },
-      { label: "Claude Code Extensions Explained", url: "https://muneebsa.medium.com/claude-code-extensions-explained-skills-mcp-hooks-subagents-agent-teams-plugins-9294907e84ff", type: "blog" },
+      { label: "Skills & Commands Docs", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Extensions Explained (Medium)", url: "https://muneebsa.medium.com/claude-code-extensions-explained-skills-mcp-hooks-subagents-agent-teams-plugins-9294907e84ff", type: "blog" },
     ],
     failureModes: ["Verbose skill without context: fork → parent conversation drowns", "Personal commands committed to project repo", "Missing allowed-tools frontmatter → permission errors"],
     examSignals: ["context: fork", "allowed-tools", "argument-hint", "SKILL.md"],
   },
   {
     id: "d3-path-rules", name: "Path-Specific Rules", domain: "D3", task: "3.3",
-    whyItMatters: ".claude/rules/ files with YAML frontmatter glob patterns conditionally load rules based on which file Claude is touching. Cross-directory conventions (e.g., all **/*.test.tsx) work here better than scattered directory-level CLAUDE.md files.",
+    whyItMatters: ".claude/rules/ files with YAML frontmatter glob patterns conditionally load rules based on which file is being touched. Cross-directory conventions (e.g., all **/*.test.tsx) work here better than scattered directory-level CLAUDE.md files.",
     productionExamples: ["Test-file conventions across entire repo", "API-layer rules for src/api/**/*", "Security rules only for auth code"],
     relatedConcepts: ["d3-claude-md", "d3-commands-skills", "d1-workflow-enforce"],
     resources: [
-      { label: "Claude Code: Path-specific rules", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Path-Specific Rules Docs", url: "https://code.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Monolithic CLAUDE.md with rules for every path → noise", "Globs too broad → rules fire in wrong contexts", "Directory CLAUDE.md duplicates path-rule content"],
     examSignals: ["glob patterns", "path-scoped", "cross-directory conventions", "conditional loading"],
@@ -546,30 +584,30 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Architecture refactor → plan mode", "Typo fix → direct", "Research task → Explore subagent, then plan"],
     relatedConcepts: ["d1-task-decomp", "d3-iterative-refinement", "d1-subagent-mgmt"],
     resources: [
-      { label: "Claude Code: Planning mode", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Planning Mode Docs", url: "https://code.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Plan mode for trivial fixes → overhead", "Direct mode for architectural changes → half-done work", "Skipping Explore → verbose output pollutes plan context"],
     examSignals: ["plan mode", "direct execution", "architectural", "single-file change", "Explore subagent"],
   },
   {
     id: "d3-iterative-refinement", name: "Iterative Refinement", domain: "D3", task: "3.5",
-    whyItMatters: "Concrete input/output examples beat prose descriptions. Test-driven iteration (write tests first, share failures) makes ambiguity visible. Interview pattern (Claude asks questions before implementing) avoids wrong assumptions. Independent issues → sequential messages; interacting issues → one combined message.",
-    productionExamples: ["TDD loops with Claude writing to pass your tests", "Interview pattern for underspecified tickets", "Concrete JSON examples over prose schema descriptions"],
+    whyItMatters: "Concrete input/output examples beat prose descriptions. Test-driven iteration (write tests first, share failures) makes ambiguity visible. Interview pattern (agent asks clarifying questions before implementing) avoids wrong assumptions. Independent issues → sequential messages; interacting issues → one combined message.",
+    productionExamples: ["TDD loops with agents writing to pass your tests", "Interview pattern for underspecified tickets", "Concrete JSON examples over prose schema descriptions"],
     relatedConcepts: ["d4-explicit-criteria", "d4-few-shot", "d3-plan-vs-direct"],
     resources: [
-      { label: "Claude Code: Best practices", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Best Practices Docs", url: "https://code.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Prose descriptions when examples would clarify", "Skipping interview → wrong assumptions baked in", "Batched independent issues → tangled fixes"],
     examSignals: ["input/output examples", "test-driven", "interview pattern", "sequential vs single message"],
   },
   {
     id: "d3-cli-cicd", name: "CLI for CI/CD", domain: "D3", task: "3.6",
-    whyItMatters: "`-p` / `--print` runs Claude Code non-interactively. `--output-format json` + `--json-schema` makes output machine-parseable. CLAUDE.md still applies. Session isolation matters: separate Claude instance for generation vs review prevents self-confirmation bias.",
+    whyItMatters: "`-p` / `--print` runs the CLI non-interactively. `--output-format json` + `--json-schema` makes output machine-parseable. CLAUDE.md still applies. Session isolation matters: separate instance for generation vs review prevents self-confirmation bias.",
     productionExamples: ["PR review bot", "Release notes generator", "Automated test-failure triage"],
     relatedConcepts: ["d4-multi-pass-review", "d4-structured-output", "d3-claude-md"],
     resources: [
-      { label: "Claude Code: CLI reference", url: "https://code.claude.com/docs", type: "docs" },
-      { label: "Claude Code Deployment Patterns (AWS)", url: "https://aws.amazon.com/blogs/machine-learning/claude-code-deployment-patterns-and-best-practices-with-amazon-bedrock/", type: "blog" },
+      { label: "CLI Reference Docs", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Deployment Patterns (AWS Blog)", url: "https://aws.amazon.com/blogs/machine-learning/claude-code-deployment-patterns-and-best-practices-with-amazon-bedrock/", type: "blog" },
     ],
     failureModes: ["Same session for generate + review → biased review", "No --output-format json → unparseable output in CI", "Forgetting CLAUDE.md still loads in -p mode"],
     examSignals: ["-p", "--print", "non-interactive", "--output-format json", "CI/CD integration"],
@@ -583,18 +621,18 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Static analysis rules", "Content moderation thresholds", "Code review linters"],
     relatedConcepts: ["d4-few-shot", "d4-schema-design", "d5-confidence-review"],
     resources: [
-      { label: "Anthropic: Prompt engineering", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Prompt Engineering Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Vague 'be careful' instructions → inconsistent output", "High FP rate destroys trust even at high recall", "Disabling whole categories instead of tightening criteria"],
     examSignals: ["improve precision", "reduce false positives", "developer trust", "vague instructions"],
   },
   {
     id: "d4-few-shot", name: "Few-Shot Prompting", domain: "D4", task: "4.2",
-    whyItMatters: "2-4 examples targeting AMBIGUOUS scenarios teach the model to generalize. Show WHY one action beats alternatives — demonstrate reasoning, not just format. This is how you handle edge cases you can't pre-enumerate.",
+    whyItMatters: "2-4 examples targeting AMBIGUOUS scenarios teach generalization. Show WHY one action beats alternatives — demonstrate reasoning, not just format. This is how you handle edge cases you can't pre-enumerate.",
     productionExamples: ["Classification with unusual edge cases", "Format demonstrations for custom output", "Reasoning patterns for judgment calls"],
     relatedConcepts: ["d4-explicit-criteria", "d4-schema-design", "d3-iterative-refinement"],
     resources: [
-      { label: "Anthropic: Few-shot prompting", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Few-Shot Prompting Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Examples only showing easy cases → fails on hard ones", "Examples showing output without reasoning → no generalization", "Too many examples (20+) → context bloat + overfitting"],
     examSignals: ["ambiguous cases", "show reasoning", "demonstrate format", "generalize to novel patterns"],
@@ -605,14 +643,14 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Document extraction to structured DBs", "API-response normalization", "Invoice field extraction"],
     relatedConcepts: ["d4-schema-design", "d2-tool-distribution", "d4-batch-validation"],
     resources: [
-      { label: "Anthropic: Tool use & structured outputs", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Tool Use & Structured Outputs Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Required fields on optional data → fabricated values", "Trusting schema compliance for semantic correctness", "tool_choice='auto' when you need 'any' or 'forced'"],
     examSignals: ["JSON schema", "tool_use", "guaranteed compliance", "semantic errors persist"],
   },
   {
     id: "d4-schema-design", name: "Schema Design", domain: "D4", task: "4.4",
-    whyItMatters: "Required vs optional fields matter: required fields on absent data force the model to fabricate. Enum + 'other' + detail string keeps categories extensible. Pydantic (or similar) adds semantic validation the JSON schema can't.",
+    whyItMatters: "Required vs optional fields matter: required fields on absent data force fabrication. Enum + 'other' + detail string keeps categories extensible. Pydantic (or similar) adds semantic validation the JSON schema can't.",
     productionExamples: ["Extensible categorization (enum + other + free text)", "Nullable fields for optional source data", "Pydantic models for cross-field validation"],
     relatedConcepts: ["d4-structured-output", "d4-batch-validation", "d5-error-propagation"],
     resources: [
@@ -627,18 +665,18 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Overnight batch classification of tickets", "Pre-merge blocking checks (sync, not batch)", "Validation-retry on failed extractions"],
     relatedConcepts: ["d4-structured-output", "d4-schema-design", "d2-structured-errors"],
     resources: [
-      { label: "Anthropic: Message Batches API", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Message Batches API Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Batch for blocking checks → devs wait 24hr", "Generic 'try again' retry → same failure", "Missing custom_id → can't correlate"],
     examSignals: ["cost savings", "pre-merge", "overnight", "batch processing", "validation-retry"],
   },
   {
     id: "d4-multi-pass-review", name: "Multi-Pass Review", domain: "D4", task: "4.6",
-    whyItMatters: "A model that generated output retains reasoning context — it's biased toward its own work. An independent instance (without that context) catches what the generator missed. Per-file passes catch local issues; a cross-file pass catches integration bugs.",
-    productionExamples: ["Code review with separate Claude instance", "Per-file linting + cross-file consistency", "Confidence-based routing to human review"],
+    whyItMatters: "The generator retains its reasoning context — it's biased toward its own work. An independent review instance (without that context) catches what the generator missed. Per-file passes catch local issues; a cross-file pass catches integration bugs.",
+    productionExamples: ["Code review with a separate instance", "Per-file linting + cross-file consistency", "Confidence-based routing to human review"],
     relatedConcepts: ["d1-task-decomp", "d3-cli-cicd", "d5-confidence-review"],
     resources: [
-      { label: "Anthropic: Self-review limitations", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Self-Review Limitations Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Self-review in same session → confirms own reasoning", "Per-file only → integration bugs slip through", "No confidence routing → low-confidence outputs auto-accepted"],
     examSignals: ["review quality", "same session", "independent instance", "per-file + cross-file", "confidence routing"],
@@ -652,7 +690,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Support tickets with preserved case facts", "Long debugging sessions with distilled findings", "Multi-issue conversations with structured layers"],
     relatedConcepts: ["d5-codebase-exploration", "d5-provenance", "d1-session-state"],
     resources: [
-      { label: "Anthropic: Long context handling", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Long Context Handling Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Progressive summarization → refund amounts go vague", "Accumulating verbose tool output → token bloat", "Key findings buried in middle → ignored"],
     examSignals: ["case facts block", "lost-in-the-middle", "progressive summarization", "trim before accumulate"],
@@ -663,7 +701,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Support agents with clear escalation triggers", "Claims systems escalating on policy gaps", "Identity systems asking for specific IDs on collision"],
     relatedConcepts: ["d5-error-propagation", "d2-structured-errors", "d4-explicit-criteria"],
     resources: [
-      { label: "Anthropic: Agent escalation patterns", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Escalation Patterns Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Sentiment-based escalation → unreliable", "Heuristic-matching on ambiguous identifiers → wrong records", "Not honoring explicit human requests immediately"],
     examSignals: ["escalation triggers", "customer demands human", "policy gaps", "sentiment-based anti-pattern"],
@@ -674,18 +712,18 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Research pipelines with coverage annotations", "Local retry + propagated-failure patterns", "Contested-findings sections in reports"],
     relatedConcepts: ["d2-structured-errors", "d5-provenance", "d1-agentic-loop"],
     resources: [
-      { label: "Anthropic: Error handling patterns", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Error Handling Patterns Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Generic 'failed' error → coordinator blind", "Propagating recoverable errors → unnecessary escalation", "No coverage annotations → findings indistinguishable from gaps"],
     examSignals: ["structured errors", "access failure vs empty", "local recovery", "coverage annotations"],
   },
   {
     id: "d5-codebase-exploration", name: "Codebase Exploration Context", domain: "D5", task: "5.4",
-    whyItMatters: "Long exploration sessions degrade: Claude starts referencing 'typical patterns' instead of what it actually found. Scratchpad files persist key findings across context boundaries. `/compact` reduces context mid-session. State manifests enable crash recovery.",
+    whyItMatters: "Long exploration sessions degrade: answers start referencing 'typical patterns' instead of actual findings. Scratchpad files persist key findings across context boundaries. `/compact` reduces context mid-session. State manifests enable crash recovery.",
     productionExamples: ["Large codebase audits with scratchpads", "Long investigations using /compact", "Crash-recovery manifests for agent state"],
     relatedConcepts: ["d5-context-mgmt", "d1-session-state", "d2-builtin-tools"],
     resources: [
-      { label: "Claude Code: Managing context", url: "https://code.claude.com/docs", type: "docs" },
+      { label: "Managing Context Docs", url: "https://code.claude.com/docs", type: "docs" },
     ],
     failureModes: ["No scratchpad → findings evaporate after /compact", "Inconsistent answers in extended sessions", "No crash recovery → restart from scratch"],
     examSignals: ["inconsistent answers", "typical patterns", "context degradation", "extended session", "scratchpad"],
@@ -696,7 +734,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Stratified random sampling of extractions", "Per-doc-type accuracy dashboards", "Human review routing by confidence threshold"],
     relatedConcepts: ["d4-multi-pass-review", "d5-provenance", "d4-explicit-criteria"],
     resources: [
-      { label: "Anthropic: Evaluating model outputs", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Evaluating Outputs Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Aggregate accuracy hides per-type failures", "Trusting self-reported confidence without calibration", "No stratified sampling → systemic errors invisible"],
     examSignals: ["aggregate accuracy", "stratified sampling", "field-level confidence", "calibration"],
@@ -707,7 +745,7 @@ const ENRICHED_CONCEPTS = [
     productionExamples: ["Research reports with citation tracking", "Temporal-sensitive analysis with dates", "Contested-findings sections for disputed claims"],
     relatedConcepts: ["d5-error-propagation", "d5-confidence-review", "d1-subagent-mgmt"],
     resources: [
-      { label: "Anthropic: Provenance & citations", url: "https://platform.claude.com/docs", type: "docs" },
+      { label: "Provenance & Citations Docs", url: "https://platform.claude.com/docs", type: "docs" },
     ],
     failureModes: ["Synthesis drops source attribution → unverifiable claims", "Arbitrary conflict resolution → silent bias", "No temporal data → stale findings presented as current"],
     examSignals: ["claim-source mappings", "temporal data", "conflict annotation", "contested findings"],
@@ -767,7 +805,7 @@ const RULES = [
   {
     num: 9,
     rule: "Independent Review > Self-Review",
-    detail: "A model retains reasoning context from generation, making it less likely to question its own decisions. A separate Claude instance (without prior reasoning) catches issues the generator misses.",
+    detail: "The generator retains reasoning context, making it less likely to question its own decisions. A separate instance (without prior reasoning) catches issues the generator misses.",
     signal: "Look for: 'review quality', 'same session', 'missed issues', 'inconsistent feedback'",
   },
   {
@@ -939,6 +977,9 @@ export default function App() {
   const [openDomain, setOpenDomain] = useState(0);
   const [openDay, setOpenDay] = useState(null);
   const [progress, setProgress] = useState(loadProgress);
+  const [theme, setTheme] = useState(loadTheme);
+  useEffect(() => { saveTheme(theme); }, [theme]);
+  const cycleTheme = () => setTheme(t => t === "dark" ? "grey" : t === "grey" ? "light" : "dark");
 
   const toggleProgress = (key) => {
     setProgress(prev => {
@@ -965,15 +1006,17 @@ export default function App() {
   const s = {
     root: {
       fontFamily: "'IBM Plex Mono', 'Menlo', 'Consolas', monospace",
-      background: "#0c0c10",
-      color: "#c8c8d0",
+      background: "var(--bg-root)",
+      color: "var(--text-body)",
       minHeight: "100vh",
       maxWidth: 520,
       margin: "0 auto",
+      ...themeVars(theme),
     },
     header: {
       padding: "20px 16px 12px",
-      borderBottom: "1px solid #1c1c28",
+      borderBottom: "1px solid var(--border)",
+      position: "relative",
     },
     tag: {
       display: "inline-block",
@@ -987,18 +1030,18 @@ export default function App() {
     h1: {
       fontSize: 18,
       fontWeight: 700,
-      color: "#f0f0f0",
+      color: "var(--text-primary)",
       margin: 0,
       lineHeight: 1.3,
     },
     sub: {
       fontSize: 11,
-      color: "#555",
+      color: "var(--text-faint)",
       marginTop: 4,
     },
     tabs: {
       display: "flex",
-      borderBottom: "1px solid #1c1c28",
+      borderBottom: "1px solid var(--border)",
       padding: "0 4px",
       overflowX: "auto",
     },
@@ -1009,7 +1052,7 @@ export default function App() {
       fontFamily: "inherit",
       fontWeight: active ? 600 : 400,
       background: "none",
-      color: active ? "#f0f0f0" : "#4a4a58",
+      color: active ? "var(--text-primary)" : "var(--text-faint)",
       border: "none",
       borderBottom: active ? "2px solid #c0392b" : "2px solid transparent",
       cursor: "pointer",
@@ -1022,10 +1065,26 @@ export default function App() {
     },
     progressBar: {
       height: 3,
-      background: "#1a1a26",
+      background: "var(--border-soft)",
       borderRadius: 2,
       overflow: "hidden",
       marginTop: 8,
+    },
+    themeBtn: {
+      position: "absolute",
+      top: 16,
+      right: 14,
+      padding: "4px 8px",
+      fontSize: 9,
+      fontFamily: "inherit",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      fontWeight: 600,
+      background: "var(--bg-panel)",
+      color: "var(--text-soft)",
+      border: "1px solid var(--border)",
+      borderRadius: 3,
+      cursor: "pointer",
     },
   };
 
@@ -1036,13 +1095,21 @@ export default function App() {
   return (
     <div style={s.root}>
       <div style={s.header}>
+        <button
+          onClick={cycleTheme}
+          style={s.themeBtn}
+          title="Cycle theme: dark → grey → light"
+          aria-label={`Current theme: ${theme}. Click to cycle.`}
+        >
+          {theme === "dark" ? "◐ DARK" : theme === "grey" ? "◑ GREY" : "◯ LIGHT"}
+        </button>
         <div style={s.tag}>CCA-F Study Plan</div>
         <h1 style={s.h1}>4 Weeks to 900+</h1>
         <p style={s.sub}>Scaled 100–1000 / 720 pass / 60 questions / 4 random scenarios</p>
         <div style={s.progressBar}>
           <div style={{ height: "100%", width: `${pct}%`, background: "#c0392b", transition: "width 0.3s" }} />
         </div>
-        <div style={{ fontSize: 9, color: "#4a4a58", marginTop: 4, display: "flex", justifyContent: "space-between" }}>
+        <div style={{ fontSize: 9, color: "var(--text-faint)", marginTop: 4, display: "flex", justifyContent: "space-between" }}>
           <span>Overall: {overallDone}/{overallTotal} ({pct}%)</span>
           <span>Tasks: {tasksDone}/{tasksTotal} | Concepts: {conceptsDone}/{conceptsTotal}</span>
         </div>
@@ -1070,10 +1137,10 @@ export default function App() {
         borderTop: "1px solid #1c1c28",
         textAlign: "center",
       }}>
-        <div style={{ fontSize: 9, color: "#3a3a48", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
+        <div style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
           Free resources only
         </div>
-        <div style={{ fontSize: 10, color: "#3a3a48", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 10, color: "var(--text-dim)", lineHeight: 1.6 }}>
           Anthropic Skilljar &middot; CertSafari &middot; ClaudeCertifications &middot; ReadRoost &middot; Claude Partner Network &middot; Anthropic GitHub
         </div>
       </div>
@@ -1114,7 +1181,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
     <div>
       {/* Weight bar */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 9, color: "#4a4a58", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+        <div style={{ fontSize: 9, color: "var(--text-faint)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
           Domain weights
         </div>
         <div style={{ display: "flex", gap: 2, height: 4, borderRadius: 2, overflow: "hidden" }}>
@@ -1123,7 +1190,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
             { w: 20, c: "#2980b9" }, { w: 15, c: "#8e44ad" },
           ].map((d, i) => <div key={i} style={{ width: `${d.w}%`, background: d.c }} />)}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: "#3a3a48" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: "var(--text-dim)" }}>
           <span>D1 27%</span><span>D2 18%</span><span>D3 20%</span><span>D4 20%</span><span>D5 15%</span>
         </div>
       </div>
@@ -1137,13 +1204,13 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
               style={{
                 width: "100%",
                 padding: "12px 14px",
-                background: isOpen ? "#12121a" : "#0f0f16",
+                background: isOpen ? "var(--bg-panel-alt)" : "var(--bg-panel)",
                 border: isOpen ? "1px solid #262636" : "1px solid #1a1a26",
                 borderRadius: 6,
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "inherit",
-                color: "#f0f0f0",
+                color: "var(--text-primary)",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1152,9 +1219,9 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                     Week {week.id}
                   </span>
                   <div style={{ fontSize: 14, fontWeight: 600, marginTop: 3 }}>{week.title}</div>
-                  <div style={{ fontSize: 11, color: "#5a5a68", marginTop: 2 }}>{week.subtitle}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 2 }}>{week.subtitle}</div>
                 </div>
-                <span style={{ fontSize: 14, color: "#3a3a48", marginTop: 2 }}>{isOpen ? "−" : "+"}</span>
+                <span style={{ fontSize: 14, color: "var(--text-dim)", marginTop: 2 }}>{isOpen ? "−" : "+"}</span>
               </div>
               <div style={{ fontSize: 10, color: "#c0392b55", marginTop: 6, fontStyle: "italic" }}>
                 {week.theme}
@@ -1175,21 +1242,21 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                           width: "100%",
                           padding: "10px 12px",
                           background: dayOpen ? "#141420" : "#0e0e15",
-                          border: `1px solid ${dayOpen ? "#262636" : "#1a1a26"}`,
+                          border: `1px solid ${dayOpen ? "var(--border-med)" : "var(--border-soft)"}`,
                           borderLeft: `3px solid ${dc}`,
                           borderRadius: 4,
                           cursor: "pointer",
                           textAlign: "left",
                           fontFamily: "inherit",
-                          color: "#d0d0d8",
+                          color: "var(--text-body)",
                         }}
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
                             <span style={{ fontSize: 10, color: dc, fontWeight: 600 }}>{day.day}</span>
-                            <span style={{ fontSize: 10, color: "#3a3a48", marginLeft: 8 }}>{day.domain}</span>
+                            <span style={{ fontSize: 10, color: "var(--text-dim)", marginLeft: 8 }}>{day.domain}</span>
                           </div>
-                          <span style={{ fontSize: 12, color: "#3a3a48" }}>{dayOpen ? "−" : "+"}</span>
+                          <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{dayOpen ? "−" : "+"}</span>
                         </div>
                         <div style={{ fontSize: 12, fontWeight: 500, marginTop: 4, color: "#b0b0bc" }}>
                           {day.focus}
@@ -1204,7 +1271,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                             return (
                               <div key={ti} style={{
                                 fontSize: 11,
-                                color: progress[key] ? "#4a4a58" : "#7a7a8a",
+                                color: progress[key] ? "var(--text-faint)" : "var(--text-muted)",
                                 padding: "5px 0 5px 0",
                                 borderLeft: `1px solid ${dc}33`,
                                 paddingLeft: 10,
@@ -1298,7 +1365,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
 function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         Every testable concept organized by domain. Check off leaf nodes as you master them.
       </p>
       {domains.map((d, di) => {
@@ -1313,14 +1380,14 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
               style={{
                 width: "100%",
                 padding: "11px 14px",
-                background: "#0f0f16",
+                background: "var(--bg-panel)",
                 border: `1px solid ${d.accent}22`,
                 borderLeft: `3px solid ${d.accent}`,
                 borderRadius: 5,
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "inherit",
-                color: "#e0e0e8",
+                color: "var(--text-primary)",
                 fontSize: 12,
                 fontWeight: 600,
               }}
@@ -1329,8 +1396,8 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
                 <span>{d.domain}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 10, color: d.accent, fontWeight: 400 }}>{d.weight}</span>
-                  <span style={{ fontSize: 9, color: "#4a4a58" }}>{domainDone}/{domainTotal}</span>
-                  <span style={{ color: "#3a3a48", fontSize: 14 }}>{isOpen ? "−" : "+"}</span>
+                  <span style={{ fontSize: 9, color: "var(--text-faint)" }}>{domainDone}/{domainTotal}</span>
+                  <span style={{ color: "var(--text-dim)", fontSize: 14 }}>{isOpen ? "−" : "+"}</span>
                 </div>
               </div>
             </button>
@@ -1357,7 +1424,7 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
                         return (
                           <div key={ki} style={{
                             fontSize: 10,
-                            color: progress[key] ? "#3a3a48" : "#6a6a78",
+                            color: progress[key] ? "var(--text-dim)" : "var(--text-muted)",
                             padding: "2px 0",
                             lineHeight: 1.4,
                             display: "flex",
@@ -1469,7 +1536,7 @@ function BrainMapTab({ progress, toggle }) {
 
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 10, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 10, lineHeight: 1.5 }}>
         Radial view of all 30 concepts across 5 domains. Arcs show cross-domain relationships. Click any concept for production context.
       </p>
       <div style={{ position: "relative" }}>
@@ -1482,8 +1549,8 @@ function BrainMapTab({ progress, toggle }) {
           aria-label="CCA Foundations concept brain map"
         >
           {/* Background rings (faint guides) */}
-          <circle cx={cx} cy={cy} r={245} fill="none" stroke="#1a1a26" strokeWidth={1} />
-          <circle cx={cx} cy={cy} r={130} fill="none" stroke="#1a1a26" strokeWidth={1} strokeDasharray="2 4" />
+          <circle cx={cx} cy={cy} r={245} fill="none" stroke="var(--border-soft)" strokeWidth={1} />
+          <circle cx={cx} cy={cy} r={130} fill="none" stroke="var(--border-soft)" strokeWidth={1} strokeDasharray="2 4" />
 
           {/* Cross-domain arcs */}
           {arcs.map((arc, i) => {
@@ -1493,7 +1560,7 @@ function BrainMapTab({ progress, toggle }) {
             const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
             const pullX = cx + (mx - cx) * 0.25;
             const pullY = cy + (my - cy) * 0.25;
-            const stroke = isActive ? LABEL_COLORS[a.domain] : "#2a2a38";
+            const stroke = isActive ? LABEL_COLORS[a.domain] : "var(--border-med)";
             const opacity = activeId ? (isActive ? 0.55 : 0.05) : 0.15;
             return (
               <path
@@ -1559,9 +1626,9 @@ function BrainMapTab({ progress, toggle }) {
 
           {/* Root node (center) */}
           <g>
-            <circle cx={cx} cy={cy} r={36} fill="#0f0f16" stroke="#2a2a38" strokeWidth={1.5} />
-            <text x={cx} y={cy - 4} textAnchor="middle" fill="#f0f0f0" fontSize={10} fontWeight={700} style={{ pointerEvents: "none", fontFamily: "inherit" }}>CCA-F</text>
-            <text x={cx} y={cy + 10} textAnchor="middle" fill="#6a6a78" fontSize={8} style={{ pointerEvents: "none", fontFamily: "inherit", letterSpacing: 0.5 }}>FOUNDATIONS</text>
+            <circle cx={cx} cy={cy} r={36} fill="var(--bg-panel)" stroke="var(--border-med)" strokeWidth={1.5} />
+            <text x={cx} y={cy - 4} textAnchor="middle" fill="var(--text-primary)" fontSize={10} fontWeight={700} style={{ pointerEvents: "none", fontFamily: "inherit" }}>CCA-F</text>
+            <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--text-muted)" fontSize={8} style={{ pointerEvents: "none", fontFamily: "inherit", letterSpacing: 0.5 }}>FOUNDATIONS</text>
           </g>
 
           {/* Concept nodes */}
@@ -1572,7 +1639,7 @@ function BrainMapTab({ progress, toggle }) {
             const dim = activeId && !(activeId === c.id || isRelated);
             const isComplete = !!progress[`bm-${c.id}`];
             const nodeR = isSelected ? 10 : isHovered ? 9 : 7;
-            const fill = isComplete ? "#0c0c10" : DOMAIN_FILL[c.domain];
+            const fill = isComplete ? "var(--bg-root)" : DOMAIN_FILL[c.domain];
             const strokeW = isSelected ? 2.5 : isComplete ? 2 : 1;
             const labelOutside = c.x >= cx - 20;
             return (
@@ -1594,7 +1661,7 @@ function BrainMapTab({ progress, toggle }) {
                   y={c.y}
                   textAnchor={labelOutside ? "start" : "end"}
                   dominantBaseline="middle"
-                  fill={isSelected || isHovered ? "#f0f0f0" : "#9a9aa8"}
+                  fill={isSelected || isHovered ? "var(--text-primary)" : "var(--text-soft)"}
                   fontSize={9}
                   fontWeight={isSelected || isHovered ? 600 : 400}
                   style={{ pointerEvents: "none", fontFamily: "inherit" }}
@@ -1607,14 +1674,14 @@ function BrainMapTab({ progress, toggle }) {
         </svg>
 
         {/* Legend */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12, fontSize: 9, color: "#5a5a68" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12, fontSize: 9, color: "var(--text-faint)" }}>
           {domainIds.map(did => (
             <span key={did} style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: DOMAIN_FILL[did] }} />
               {did} {DOMAIN_WEIGHTS[did]}%
             </span>
           ))}
-          <span style={{ marginLeft: "auto", color: "#3a3a48" }}>
+          <span style={{ marginLeft: "auto", color: "var(--text-dim)" }}>
             Hollow = mastered · Click a node
           </span>
         </div>
@@ -1649,7 +1716,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
       style={{
         marginTop: 16,
         padding: "16px",
-        background: "#0f0f16",
+        background: "var(--bg-panel)",
         border: `1px solid ${domainFill}33`,
         borderLeft: `3px solid ${domainFill}`,
         borderRadius: 6,
@@ -1663,9 +1730,9 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
               color: "#0c0c10", background: labelColor,
               padding: "2px 6px", borderRadius: 3,
             }}>{concept.domain}</span>
-            <span style={{ fontSize: 9, color: "#5a5a68", letterSpacing: 0.5 }}>TASK {concept.task}</span>
+            <span style={{ fontSize: 9, color: "var(--text-faint)", letterSpacing: 0.5 }}>TASK {concept.task}</span>
           </div>
-          <h3 id={`bm-title-${concept.id}`} style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0", margin: 0, lineHeight: 1.3 }}>
+          <h3 id={`bm-title-${concept.id}`} style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0, lineHeight: 1.3 }}>
             {concept.name}
           </h3>
         </div>
@@ -1676,8 +1743,8 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
             style={{
               fontSize: 9, padding: "4px 8px",
               background: isComplete ? `${domainFill}22` : "transparent",
-              color: isComplete ? labelColor : "#5a5a68",
-              border: `1px solid ${isComplete ? domainFill : "#2a2a38"}`,
+              color: isComplete ? labelColor : "var(--text-faint)",
+              border: `1px solid ${isComplete ? domainFill : "var(--border-med)"}`,
               borderRadius: 3, cursor: "pointer", fontFamily: "inherit",
             }}
           >
@@ -1688,7 +1755,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
             aria-label="Close details"
             style={{
               fontSize: 14, padding: "2px 8px",
-              background: "transparent", color: "#5a5a68",
+              background: "transparent", color: "var(--text-faint)",
               border: "1px solid #2a2a38", borderRadius: 3, cursor: "pointer",
               fontFamily: "inherit",
             }}
@@ -1697,11 +1764,11 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
       </div>
 
       <DetailSection label="Why it matters" color={labelColor}>
-        <p style={{ fontSize: 11, color: "#c8c8d0", lineHeight: 1.55, margin: 0 }}>{concept.whyItMatters}</p>
+        <p style={{ fontSize: 11, color: "var(--text-body)", lineHeight: 1.55, margin: 0 }}>{concept.whyItMatters}</p>
       </DetailSection>
 
       <DetailSection label="Used in" color={labelColor}>
-        <ul style={{ fontSize: 10, color: "#9a9aa8", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
+        <ul style={{ fontSize: 10, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
           {concept.productionExamples.map((ex, i) => <li key={i}>{ex}</li>)}
         </ul>
       </DetailSection>
@@ -1736,25 +1803,25 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                fontSize: 10, color: "#c8c8d0",
+                fontSize: 10, color: "var(--text-body)",
                 textDecoration: "none", lineHeight: 1.4,
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
               <span style={{
                 fontSize: 8, letterSpacing: 0.5, padding: "1px 5px",
-                background: "#1a1a26", color: "#7a7a8a",
+                background: "var(--border-soft)", color: "var(--text-muted)",
                 borderRadius: 2, textTransform: "uppercase", fontWeight: 600,
               }}>{r.type}</span>
               <span style={{ borderBottom: "1px dotted #3a3a48" }}>{r.label}</span>
-              <span style={{ color: "#3a3a48", fontSize: 9 }}>↗</span>
+              <span style={{ color: "var(--text-dim)", fontSize: 9 }}>↗</span>
             </a>
           ))}
         </div>
       </DetailSection>
 
       <DetailSection label="Watch for" color={labelColor}>
-        <ul style={{ fontSize: 10, color: "#9a9aa8", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
+        <ul style={{ fontSize: 10, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
           {concept.failureModes.map((fm, i) => <li key={i}>{fm}</li>)}
         </ul>
       </DetailSection>
@@ -1764,7 +1831,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
           {concept.examSignals.map((sig, i) => (
             <span key={i} style={{
               fontSize: 9, padding: "2px 6px",
-              background: `${domainFill}15`, color: "#9a9aa8",
+              background: `${domainFill}15`, color: "var(--text-soft)",
               border: `1px solid ${domainFill}33`,
               borderRadius: 2, fontFamily: "inherit",
             }}>"{sig}"</span>
@@ -1791,29 +1858,29 @@ function DetailSection({ label, color, children, last }) {
 function BuildsTab({ projects }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         Each project maps to exam scenarios. Building these gives you muscle memory for the tradeoffs the exam tests.
       </p>
       {projects.map((p, pi) => (
         <div key={pi} style={{
           padding: "14px",
-          background: "#0f0f16",
+          background: "var(--bg-panel)",
           border: "1px solid #1a1a26",
           borderRadius: 6,
           marginBottom: 8,
         }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e8" }}>{p.name}</div>
-          <div style={{ fontSize: 10, color: "#4a4a58", marginTop: 3 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.name}</div>
+          <div style={{ fontSize: 10, color: "var(--text-faint)", marginTop: 3 }}>
             {p.scenario} &middot; {p.domains}
           </div>
-          <div style={{ fontSize: 11, color: "#7a7a8a", marginTop: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.5 }}>
             {p.desc}
           </div>
           <div style={{ marginTop: 10, borderTop: "1px solid #1a1a26", paddingTop: 8 }}>
             {p.skills.map((sk, si) => (
               <div key={si} style={{
                 fontSize: 10,
-                color: "#5a5a68",
+                color: "var(--text-faint)",
                 padding: "3px 0 3px 10px",
                 borderLeft: "2px solid #c0392b22",
                 marginBottom: 1,
@@ -1832,13 +1899,13 @@ function BuildsTab({ projects }) {
 function RulesTab({ rules }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         These 11 decision rules help eliminate distractors instantly. Internalize them as reflexes.
       </p>
       {rules.map((r) => (
         <div key={r.num} style={{
           padding: "14px",
-          background: "#0f0f16",
+          background: "var(--bg-panel)",
           border: "1px solid #1a1a26",
           borderRadius: 6,
           marginBottom: 8,
@@ -1854,9 +1921,9 @@ function RulesTab({ rules }) {
             }}>
               {r.num}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e8" }}>{r.rule}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{r.rule}</span>
           </div>
-          <div style={{ fontSize: 11, color: "#7a7a8a", lineHeight: 1.6, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 8 }}>
             {r.detail}
           </div>
           <div style={{
@@ -1880,7 +1947,7 @@ function RulesTab({ rules }) {
 function CheatSheetTab({ data }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         Quick-scan decision reference aligned with the 30 exam task statements. If X → then Y.
       </p>
       {data.map((section, si) => (
@@ -1896,7 +1963,7 @@ function CheatSheetTab({ data }) {
             {section.category}
           </div>
           <div style={{
-            background: "#0f0f16",
+            background: "var(--bg-panel)",
             border: "1px solid #1a1a26",
             borderRadius: 6,
             padding: "10px 12px",
@@ -1904,7 +1971,7 @@ function CheatSheetTab({ data }) {
             {section.items.map((item, ii) => (
               <div key={ii} style={{
                 fontSize: 10,
-                color: "#7a7a8a",
+                color: "var(--text-muted)",
                 padding: "4px 0 4px 10px",
                 borderLeft: "2px solid #c0392b22",
                 marginBottom: 2,
