@@ -16,6 +16,7 @@ A week-by-week battle plan covering all 5 exam domains, organized into 4 phases:
 ### Features
 
 - **6 tabs**: Weekly Plan, **Brain Map**, Concepts (30 nodes), Projects, Decision Rules (11 rules), Cheat Sheet
+- **Theme toggle** (top-right): cycle dark → grey → light; choice persists in localStorage
 - **Daily KPIs** with measurable targets for each study day
 - **Daily closure assessments** linking to specific quiz engine modes
 - **Progress tracking** with localStorage-persisted checkboxes on tasks and concepts

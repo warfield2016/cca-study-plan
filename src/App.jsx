@@ -2,11 +2,49 @@ import { useState, useEffect, useMemo } from "react";
 
 /* ─── localStorage progress tracking ─── */
 const STORAGE_KEY = "cca-study-progress";
+const THEME_KEY = "cca-theme";
 function loadProgress() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
   catch { return {}; }
 }
 function saveProgress(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+function loadTheme() {
+  try { return localStorage.getItem(THEME_KEY) || "dark"; }
+  catch { return "dark"; }
+}
+function saveTheme(t) { try { localStorage.setItem(THEME_KEY, t); } catch {} }
+
+/* ─── THEMES: three palettes (dark / grey / light) driving CSS variables ─── */
+const THEMES = {
+  dark: {
+    bgRoot: "#0c0c10", bgPanel: "var(--bg-panel)", bgPanelAlt: "var(--bg-panel-alt)",
+    border: "#1c1c28", borderSoft: "var(--border-soft)", borderMed: "var(--border-med)",
+    textPrimary: "var(--text-primary)", textBody: "var(--text-body)", textSoft: "var(--text-soft)",
+    textMuted: "var(--text-muted)", textFaint: "var(--text-faint)", textDim: "var(--text-dim)",
+  },
+  grey: {
+    bgRoot: "#1f2026", bgPanel: "#272830", bgPanelAlt: "#2e2f38",
+    border: "#363742", borderSoft: "#323340", borderMed: "#3e3f4c",
+    textPrimary: "#f5f5f7", textBody: "#d8d8dd", textSoft: "#a8a8b0",
+    textMuted: "#888892", textFaint: "#666670", textDim: "#4a4a55",
+  },
+  light: {
+    bgRoot: "#fafafa", bgPanel: "#ffffff", bgPanelAlt: "#f2f2f4",
+    border: "#d8d8dd", borderSoft: "#e4e4e8", borderMed: "var(--text-body)",
+    textPrimary: "#0c0c10", textBody: "#2a2a32", textSoft: "#4a4a55",
+    textMuted: "#6a6a75", textFaint: "#8a8a95", textDim: "#b0b0b8",
+  },
+};
+
+function themeVars(theme) {
+  const t = THEMES[theme] || THEMES.dark;
+  return {
+    "--bg-root": t.bgRoot, "--bg-panel": t.bgPanel, "--bg-panel-alt": t.bgPanelAlt,
+    "--border": t.border, "--border-soft": t.borderSoft, "--border-med": t.borderMed,
+    "--text-primary": t.textPrimary, "--text-body": t.textBody, "--text-soft": t.textSoft,
+    "--text-muted": t.textMuted, "--text-faint": t.textFaint, "--text-dim": t.textDim,
+  };
+}
 
 /* ─── WEEKS ─── */
 const WEEKS = [
@@ -939,6 +977,9 @@ export default function App() {
   const [openDomain, setOpenDomain] = useState(0);
   const [openDay, setOpenDay] = useState(null);
   const [progress, setProgress] = useState(loadProgress);
+  const [theme, setTheme] = useState(loadTheme);
+  useEffect(() => { saveTheme(theme); }, [theme]);
+  const cycleTheme = () => setTheme(t => t === "dark" ? "grey" : t === "grey" ? "light" : "dark");
 
   const toggleProgress = (key) => {
     setProgress(prev => {
@@ -965,15 +1006,17 @@ export default function App() {
   const s = {
     root: {
       fontFamily: "'IBM Plex Mono', 'Menlo', 'Consolas', monospace",
-      background: "#0c0c10",
-      color: "#c8c8d0",
+      background: "var(--bg-root)",
+      color: "var(--text-body)",
       minHeight: "100vh",
       maxWidth: 520,
       margin: "0 auto",
+      ...themeVars(theme),
     },
     header: {
       padding: "20px 16px 12px",
-      borderBottom: "1px solid #1c1c28",
+      borderBottom: "1px solid var(--border)",
+      position: "relative",
     },
     tag: {
       display: "inline-block",
@@ -987,18 +1030,18 @@ export default function App() {
     h1: {
       fontSize: 18,
       fontWeight: 700,
-      color: "#f0f0f0",
+      color: "var(--text-primary)",
       margin: 0,
       lineHeight: 1.3,
     },
     sub: {
       fontSize: 11,
-      color: "#555",
+      color: "var(--text-faint)",
       marginTop: 4,
     },
     tabs: {
       display: "flex",
-      borderBottom: "1px solid #1c1c28",
+      borderBottom: "1px solid var(--border)",
       padding: "0 4px",
       overflowX: "auto",
     },
@@ -1009,7 +1052,7 @@ export default function App() {
       fontFamily: "inherit",
       fontWeight: active ? 600 : 400,
       background: "none",
-      color: active ? "#f0f0f0" : "#4a4a58",
+      color: active ? "var(--text-primary)" : "var(--text-faint)",
       border: "none",
       borderBottom: active ? "2px solid #c0392b" : "2px solid transparent",
       cursor: "pointer",
@@ -1022,10 +1065,26 @@ export default function App() {
     },
     progressBar: {
       height: 3,
-      background: "#1a1a26",
+      background: "var(--border-soft)",
       borderRadius: 2,
       overflow: "hidden",
       marginTop: 8,
+    },
+    themeBtn: {
+      position: "absolute",
+      top: 16,
+      right: 14,
+      padding: "4px 8px",
+      fontSize: 9,
+      fontFamily: "inherit",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      fontWeight: 600,
+      background: "var(--bg-panel)",
+      color: "var(--text-soft)",
+      border: "1px solid var(--border)",
+      borderRadius: 3,
+      cursor: "pointer",
     },
   };
 
@@ -1036,13 +1095,21 @@ export default function App() {
   return (
     <div style={s.root}>
       <div style={s.header}>
+        <button
+          onClick={cycleTheme}
+          style={s.themeBtn}
+          title="Cycle theme: dark → grey → light"
+          aria-label={`Current theme: ${theme}. Click to cycle.`}
+        >
+          {theme === "dark" ? "◐ DARK" : theme === "grey" ? "◑ GREY" : "◯ LIGHT"}
+        </button>
         <div style={s.tag}>CCA-F Study Plan</div>
         <h1 style={s.h1}>4 Weeks to 900+</h1>
         <p style={s.sub}>Scaled 100–1000 / 720 pass / 60 questions / 4 random scenarios</p>
         <div style={s.progressBar}>
           <div style={{ height: "100%", width: `${pct}%`, background: "#c0392b", transition: "width 0.3s" }} />
         </div>
-        <div style={{ fontSize: 9, color: "#4a4a58", marginTop: 4, display: "flex", justifyContent: "space-between" }}>
+        <div style={{ fontSize: 9, color: "var(--text-faint)", marginTop: 4, display: "flex", justifyContent: "space-between" }}>
           <span>Overall: {overallDone}/{overallTotal} ({pct}%)</span>
           <span>Tasks: {tasksDone}/{tasksTotal} | Concepts: {conceptsDone}/{conceptsTotal}</span>
         </div>
@@ -1070,10 +1137,10 @@ export default function App() {
         borderTop: "1px solid #1c1c28",
         textAlign: "center",
       }}>
-        <div style={{ fontSize: 9, color: "#3a3a48", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
+        <div style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
           Free resources only
         </div>
-        <div style={{ fontSize: 10, color: "#3a3a48", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 10, color: "var(--text-dim)", lineHeight: 1.6 }}>
           Anthropic Skilljar &middot; CertSafari &middot; ClaudeCertifications &middot; ReadRoost &middot; Claude Partner Network &middot; Anthropic GitHub
         </div>
       </div>
@@ -1114,7 +1181,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
     <div>
       {/* Weight bar */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 9, color: "#4a4a58", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+        <div style={{ fontSize: 9, color: "var(--text-faint)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
           Domain weights
         </div>
         <div style={{ display: "flex", gap: 2, height: 4, borderRadius: 2, overflow: "hidden" }}>
@@ -1123,7 +1190,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
             { w: 20, c: "#2980b9" }, { w: 15, c: "#8e44ad" },
           ].map((d, i) => <div key={i} style={{ width: `${d.w}%`, background: d.c }} />)}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: "#3a3a48" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: "var(--text-dim)" }}>
           <span>D1 27%</span><span>D2 18%</span><span>D3 20%</span><span>D4 20%</span><span>D5 15%</span>
         </div>
       </div>
@@ -1137,13 +1204,13 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
               style={{
                 width: "100%",
                 padding: "12px 14px",
-                background: isOpen ? "#12121a" : "#0f0f16",
+                background: isOpen ? "var(--bg-panel-alt)" : "var(--bg-panel)",
                 border: isOpen ? "1px solid #262636" : "1px solid #1a1a26",
                 borderRadius: 6,
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "inherit",
-                color: "#f0f0f0",
+                color: "var(--text-primary)",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1152,9 +1219,9 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                     Week {week.id}
                   </span>
                   <div style={{ fontSize: 14, fontWeight: 600, marginTop: 3 }}>{week.title}</div>
-                  <div style={{ fontSize: 11, color: "#5a5a68", marginTop: 2 }}>{week.subtitle}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 2 }}>{week.subtitle}</div>
                 </div>
-                <span style={{ fontSize: 14, color: "#3a3a48", marginTop: 2 }}>{isOpen ? "−" : "+"}</span>
+                <span style={{ fontSize: 14, color: "var(--text-dim)", marginTop: 2 }}>{isOpen ? "−" : "+"}</span>
               </div>
               <div style={{ fontSize: 10, color: "#c0392b55", marginTop: 6, fontStyle: "italic" }}>
                 {week.theme}
@@ -1175,21 +1242,21 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                           width: "100%",
                           padding: "10px 12px",
                           background: dayOpen ? "#141420" : "#0e0e15",
-                          border: `1px solid ${dayOpen ? "#262636" : "#1a1a26"}`,
+                          border: `1px solid ${dayOpen ? "var(--border-med)" : "var(--border-soft)"}`,
                           borderLeft: `3px solid ${dc}`,
                           borderRadius: 4,
                           cursor: "pointer",
                           textAlign: "left",
                           fontFamily: "inherit",
-                          color: "#d0d0d8",
+                          color: "var(--text-body)",
                         }}
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
                             <span style={{ fontSize: 10, color: dc, fontWeight: 600 }}>{day.day}</span>
-                            <span style={{ fontSize: 10, color: "#3a3a48", marginLeft: 8 }}>{day.domain}</span>
+                            <span style={{ fontSize: 10, color: "var(--text-dim)", marginLeft: 8 }}>{day.domain}</span>
                           </div>
-                          <span style={{ fontSize: 12, color: "#3a3a48" }}>{dayOpen ? "−" : "+"}</span>
+                          <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{dayOpen ? "−" : "+"}</span>
                         </div>
                         <div style={{ fontSize: 12, fontWeight: 500, marginTop: 4, color: "#b0b0bc" }}>
                           {day.focus}
@@ -1204,7 +1271,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                             return (
                               <div key={ti} style={{
                                 fontSize: 11,
-                                color: progress[key] ? "#4a4a58" : "#7a7a8a",
+                                color: progress[key] ? "var(--text-faint)" : "var(--text-muted)",
                                 padding: "5px 0 5px 0",
                                 borderLeft: `1px solid ${dc}33`,
                                 paddingLeft: 10,
@@ -1298,7 +1365,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
 function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         Every testable concept organized by domain. Check off leaf nodes as you master them.
       </p>
       {domains.map((d, di) => {
@@ -1313,14 +1380,14 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
               style={{
                 width: "100%",
                 padding: "11px 14px",
-                background: "#0f0f16",
+                background: "var(--bg-panel)",
                 border: `1px solid ${d.accent}22`,
                 borderLeft: `3px solid ${d.accent}`,
                 borderRadius: 5,
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "inherit",
-                color: "#e0e0e8",
+                color: "var(--text-primary)",
                 fontSize: 12,
                 fontWeight: 600,
               }}
@@ -1329,8 +1396,8 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
                 <span>{d.domain}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 10, color: d.accent, fontWeight: 400 }}>{d.weight}</span>
-                  <span style={{ fontSize: 9, color: "#4a4a58" }}>{domainDone}/{domainTotal}</span>
-                  <span style={{ color: "#3a3a48", fontSize: 14 }}>{isOpen ? "−" : "+"}</span>
+                  <span style={{ fontSize: 9, color: "var(--text-faint)" }}>{domainDone}/{domainTotal}</span>
+                  <span style={{ color: "var(--text-dim)", fontSize: 14 }}>{isOpen ? "−" : "+"}</span>
                 </div>
               </div>
             </button>
@@ -1357,7 +1424,7 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
                         return (
                           <div key={ki} style={{
                             fontSize: 10,
-                            color: progress[key] ? "#3a3a48" : "#6a6a78",
+                            color: progress[key] ? "var(--text-dim)" : "var(--text-muted)",
                             padding: "2px 0",
                             lineHeight: 1.4,
                             display: "flex",
@@ -1469,7 +1536,7 @@ function BrainMapTab({ progress, toggle }) {
 
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 10, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 10, lineHeight: 1.5 }}>
         Radial view of all 30 concepts across 5 domains. Arcs show cross-domain relationships. Click any concept for production context.
       </p>
       <div style={{ position: "relative" }}>
@@ -1482,8 +1549,8 @@ function BrainMapTab({ progress, toggle }) {
           aria-label="CCA Foundations concept brain map"
         >
           {/* Background rings (faint guides) */}
-          <circle cx={cx} cy={cy} r={245} fill="none" stroke="#1a1a26" strokeWidth={1} />
-          <circle cx={cx} cy={cy} r={130} fill="none" stroke="#1a1a26" strokeWidth={1} strokeDasharray="2 4" />
+          <circle cx={cx} cy={cy} r={245} fill="none" stroke="var(--border-soft)" strokeWidth={1} />
+          <circle cx={cx} cy={cy} r={130} fill="none" stroke="var(--border-soft)" strokeWidth={1} strokeDasharray="2 4" />
 
           {/* Cross-domain arcs */}
           {arcs.map((arc, i) => {
@@ -1493,7 +1560,7 @@ function BrainMapTab({ progress, toggle }) {
             const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
             const pullX = cx + (mx - cx) * 0.25;
             const pullY = cy + (my - cy) * 0.25;
-            const stroke = isActive ? LABEL_COLORS[a.domain] : "#2a2a38";
+            const stroke = isActive ? LABEL_COLORS[a.domain] : "var(--border-med)";
             const opacity = activeId ? (isActive ? 0.55 : 0.05) : 0.15;
             return (
               <path
@@ -1559,9 +1626,9 @@ function BrainMapTab({ progress, toggle }) {
 
           {/* Root node (center) */}
           <g>
-            <circle cx={cx} cy={cy} r={36} fill="#0f0f16" stroke="#2a2a38" strokeWidth={1.5} />
-            <text x={cx} y={cy - 4} textAnchor="middle" fill="#f0f0f0" fontSize={10} fontWeight={700} style={{ pointerEvents: "none", fontFamily: "inherit" }}>CCA-F</text>
-            <text x={cx} y={cy + 10} textAnchor="middle" fill="#6a6a78" fontSize={8} style={{ pointerEvents: "none", fontFamily: "inherit", letterSpacing: 0.5 }}>FOUNDATIONS</text>
+            <circle cx={cx} cy={cy} r={36} fill="var(--bg-panel)" stroke="var(--border-med)" strokeWidth={1.5} />
+            <text x={cx} y={cy - 4} textAnchor="middle" fill="var(--text-primary)" fontSize={10} fontWeight={700} style={{ pointerEvents: "none", fontFamily: "inherit" }}>CCA-F</text>
+            <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--text-muted)" fontSize={8} style={{ pointerEvents: "none", fontFamily: "inherit", letterSpacing: 0.5 }}>FOUNDATIONS</text>
           </g>
 
           {/* Concept nodes */}
@@ -1572,7 +1639,7 @@ function BrainMapTab({ progress, toggle }) {
             const dim = activeId && !(activeId === c.id || isRelated);
             const isComplete = !!progress[`bm-${c.id}`];
             const nodeR = isSelected ? 10 : isHovered ? 9 : 7;
-            const fill = isComplete ? "#0c0c10" : DOMAIN_FILL[c.domain];
+            const fill = isComplete ? "var(--bg-root)" : DOMAIN_FILL[c.domain];
             const strokeW = isSelected ? 2.5 : isComplete ? 2 : 1;
             const labelOutside = c.x >= cx - 20;
             return (
@@ -1594,7 +1661,7 @@ function BrainMapTab({ progress, toggle }) {
                   y={c.y}
                   textAnchor={labelOutside ? "start" : "end"}
                   dominantBaseline="middle"
-                  fill={isSelected || isHovered ? "#f0f0f0" : "#9a9aa8"}
+                  fill={isSelected || isHovered ? "var(--text-primary)" : "var(--text-soft)"}
                   fontSize={9}
                   fontWeight={isSelected || isHovered ? 600 : 400}
                   style={{ pointerEvents: "none", fontFamily: "inherit" }}
@@ -1607,14 +1674,14 @@ function BrainMapTab({ progress, toggle }) {
         </svg>
 
         {/* Legend */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12, fontSize: 9, color: "#5a5a68" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12, fontSize: 9, color: "var(--text-faint)" }}>
           {domainIds.map(did => (
             <span key={did} style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: DOMAIN_FILL[did] }} />
               {did} {DOMAIN_WEIGHTS[did]}%
             </span>
           ))}
-          <span style={{ marginLeft: "auto", color: "#3a3a48" }}>
+          <span style={{ marginLeft: "auto", color: "var(--text-dim)" }}>
             Hollow = mastered · Click a node
           </span>
         </div>
@@ -1649,7 +1716,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
       style={{
         marginTop: 16,
         padding: "16px",
-        background: "#0f0f16",
+        background: "var(--bg-panel)",
         border: `1px solid ${domainFill}33`,
         borderLeft: `3px solid ${domainFill}`,
         borderRadius: 6,
@@ -1663,9 +1730,9 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
               color: "#0c0c10", background: labelColor,
               padding: "2px 6px", borderRadius: 3,
             }}>{concept.domain}</span>
-            <span style={{ fontSize: 9, color: "#5a5a68", letterSpacing: 0.5 }}>TASK {concept.task}</span>
+            <span style={{ fontSize: 9, color: "var(--text-faint)", letterSpacing: 0.5 }}>TASK {concept.task}</span>
           </div>
-          <h3 id={`bm-title-${concept.id}`} style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0", margin: 0, lineHeight: 1.3 }}>
+          <h3 id={`bm-title-${concept.id}`} style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0, lineHeight: 1.3 }}>
             {concept.name}
           </h3>
         </div>
@@ -1676,8 +1743,8 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
             style={{
               fontSize: 9, padding: "4px 8px",
               background: isComplete ? `${domainFill}22` : "transparent",
-              color: isComplete ? labelColor : "#5a5a68",
-              border: `1px solid ${isComplete ? domainFill : "#2a2a38"}`,
+              color: isComplete ? labelColor : "var(--text-faint)",
+              border: `1px solid ${isComplete ? domainFill : "var(--border-med)"}`,
               borderRadius: 3, cursor: "pointer", fontFamily: "inherit",
             }}
           >
@@ -1688,7 +1755,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
             aria-label="Close details"
             style={{
               fontSize: 14, padding: "2px 8px",
-              background: "transparent", color: "#5a5a68",
+              background: "transparent", color: "var(--text-faint)",
               border: "1px solid #2a2a38", borderRadius: 3, cursor: "pointer",
               fontFamily: "inherit",
             }}
@@ -1697,11 +1764,11 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
       </div>
 
       <DetailSection label="Why it matters" color={labelColor}>
-        <p style={{ fontSize: 11, color: "#c8c8d0", lineHeight: 1.55, margin: 0 }}>{concept.whyItMatters}</p>
+        <p style={{ fontSize: 11, color: "var(--text-body)", lineHeight: 1.55, margin: 0 }}>{concept.whyItMatters}</p>
       </DetailSection>
 
       <DetailSection label="Used in" color={labelColor}>
-        <ul style={{ fontSize: 10, color: "#9a9aa8", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
+        <ul style={{ fontSize: 10, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
           {concept.productionExamples.map((ex, i) => <li key={i}>{ex}</li>)}
         </ul>
       </DetailSection>
@@ -1736,25 +1803,25 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                fontSize: 10, color: "#c8c8d0",
+                fontSize: 10, color: "var(--text-body)",
                 textDecoration: "none", lineHeight: 1.4,
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
               <span style={{
                 fontSize: 8, letterSpacing: 0.5, padding: "1px 5px",
-                background: "#1a1a26", color: "#7a7a8a",
+                background: "var(--border-soft)", color: "var(--text-muted)",
                 borderRadius: 2, textTransform: "uppercase", fontWeight: 600,
               }}>{r.type}</span>
               <span style={{ borderBottom: "1px dotted #3a3a48" }}>{r.label}</span>
-              <span style={{ color: "#3a3a48", fontSize: 9 }}>↗</span>
+              <span style={{ color: "var(--text-dim)", fontSize: 9 }}>↗</span>
             </a>
           ))}
         </div>
       </DetailSection>
 
       <DetailSection label="Watch for" color={labelColor}>
-        <ul style={{ fontSize: 10, color: "#9a9aa8", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
+        <ul style={{ fontSize: 10, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
           {concept.failureModes.map((fm, i) => <li key={i}>{fm}</li>)}
         </ul>
       </DetailSection>
@@ -1764,7 +1831,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
           {concept.examSignals.map((sig, i) => (
             <span key={i} style={{
               fontSize: 9, padding: "2px 6px",
-              background: `${domainFill}15`, color: "#9a9aa8",
+              background: `${domainFill}15`, color: "var(--text-soft)",
               border: `1px solid ${domainFill}33`,
               borderRadius: 2, fontFamily: "inherit",
             }}>"{sig}"</span>
@@ -1791,29 +1858,29 @@ function DetailSection({ label, color, children, last }) {
 function BuildsTab({ projects }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         Each project maps to exam scenarios. Building these gives you muscle memory for the tradeoffs the exam tests.
       </p>
       {projects.map((p, pi) => (
         <div key={pi} style={{
           padding: "14px",
-          background: "#0f0f16",
+          background: "var(--bg-panel)",
           border: "1px solid #1a1a26",
           borderRadius: 6,
           marginBottom: 8,
         }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e8" }}>{p.name}</div>
-          <div style={{ fontSize: 10, color: "#4a4a58", marginTop: 3 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.name}</div>
+          <div style={{ fontSize: 10, color: "var(--text-faint)", marginTop: 3 }}>
             {p.scenario} &middot; {p.domains}
           </div>
-          <div style={{ fontSize: 11, color: "#7a7a8a", marginTop: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.5 }}>
             {p.desc}
           </div>
           <div style={{ marginTop: 10, borderTop: "1px solid #1a1a26", paddingTop: 8 }}>
             {p.skills.map((sk, si) => (
               <div key={si} style={{
                 fontSize: 10,
-                color: "#5a5a68",
+                color: "var(--text-faint)",
                 padding: "3px 0 3px 10px",
                 borderLeft: "2px solid #c0392b22",
                 marginBottom: 1,
@@ -1832,13 +1899,13 @@ function BuildsTab({ projects }) {
 function RulesTab({ rules }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         These 11 decision rules help eliminate distractors instantly. Internalize them as reflexes.
       </p>
       {rules.map((r) => (
         <div key={r.num} style={{
           padding: "14px",
-          background: "#0f0f16",
+          background: "var(--bg-panel)",
           border: "1px solid #1a1a26",
           borderRadius: 6,
           marginBottom: 8,
@@ -1854,9 +1921,9 @@ function RulesTab({ rules }) {
             }}>
               {r.num}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e8" }}>{r.rule}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{r.rule}</span>
           </div>
-          <div style={{ fontSize: 11, color: "#7a7a8a", lineHeight: 1.6, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 8 }}>
             {r.detail}
           </div>
           <div style={{
@@ -1880,7 +1947,7 @@ function RulesTab({ rules }) {
 function CheatSheetTab({ data }) {
   return (
     <div>
-      <p style={{ fontSize: 11, color: "#5a5a68", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
         Quick-scan decision reference aligned with the 30 exam task statements. If X → then Y.
       </p>
       {data.map((section, si) => (
@@ -1896,7 +1963,7 @@ function CheatSheetTab({ data }) {
             {section.category}
           </div>
           <div style={{
-            background: "#0f0f16",
+            background: "var(--bg-panel)",
             border: "1px solid #1a1a26",
             borderRadius: 6,
             padding: "10px 12px",
@@ -1904,7 +1971,7 @@ function CheatSheetTab({ data }) {
             {section.items.map((item, ii) => (
               <div key={ii} style={{
                 fontSize: 10,
-                color: "#7a7a8a",
+                color: "var(--text-muted)",
                 padding: "4px 0 4px 10px",
                 borderLeft: "2px solid #c0392b22",
                 marginBottom: 2,
