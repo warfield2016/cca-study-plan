@@ -787,7 +787,7 @@ const RULES = [
   {
     num: 6,
     rule: "Nullable Prevents Hallucination",
-    detail: "Make schema fields optional/nullable when the source may not contain the info. Required fields on absent data forces the model to fabricate values to satisfy the schema.",
+    detail: "Make schema fields optional/nullable when the source may not contain the info. Required fields on absent data forces fabrication to satisfy the schema.",
     signal: "Look for: 'fabricated values', 'hallucination', 'missing information'",
   },
   {
@@ -849,11 +849,11 @@ const PROJECTS = [
     name: "CI/CD Code Review Pipeline",
     scenario: "Scenario 5",
     domains: "D3 + D4",
-    desc: "Claude Code in non-interactive CI mode with structured output, explicit review criteria, and multi-pass architecture",
+    desc: "Non-interactive CI mode with structured output, explicit review criteria, and multi-pass architecture",
     skills: ["-p flag non-interactive mode", "--output-format json", "Explicit review criteria", "Multi-pass: per-file + cross-file", "False positive category management"],
   },
   {
-    name: "Claude Code Team Workflow",
+    name: "Team Workflow",
     scenario: "Scenario 2",
     domains: "D3 + D5",
     desc: "Configure CLAUDE.md hierarchy, path-scoped rules, custom skills with context: fork, MCP server integration, and iterative refinement patterns",
@@ -877,7 +877,7 @@ const CHEAT_SHEET = [
   {
     category: "Tool Design Decisions",
     items: [
-      "Generic tool confusing the model → split into purpose-specific tools with distinct descriptions",
+      "Generic tool causing confusion → split into purpose-specific tools with distinct descriptions",
       "Similar tools misrouted → rename + expand descriptions with boundaries and examples",
       "Agent has 18 tools → scope to 4-5 per role; add cross-role tools for high-frequency needs only",
       "MCP tools = actions (create, update, query); MCP resources = content catalogs (browse without calling)",
@@ -1009,46 +1009,48 @@ export default function App() {
       background: "var(--bg-root)",
       color: "var(--text-body)",
       minHeight: "100vh",
-      maxWidth: 520,
+      maxWidth: 860,
       margin: "0 auto",
+      padding: "0 24px",
       ...themeVars(theme),
     },
     header: {
-      padding: "20px 16px 12px",
+      padding: "28px 0 16px",
       borderBottom: "1px solid var(--border)",
       position: "relative",
     },
     tag: {
       display: "inline-block",
-      fontSize: 9,
+      fontSize: 11,
       letterSpacing: 2.5,
       color: "#c0392b",
       textTransform: "uppercase",
       fontWeight: 600,
-      marginBottom: 6,
+      marginBottom: 8,
     },
     h1: {
-      fontSize: 18,
+      fontSize: 24,
       fontWeight: 700,
       color: "var(--text-primary)",
       margin: 0,
       lineHeight: 1.3,
     },
     sub: {
-      fontSize: 11,
+      fontSize: 15,
       color: "var(--text-faint)",
-      marginTop: 4,
+      marginTop: 6,
     },
     tabs: {
       display: "flex",
       borderBottom: "1px solid var(--border)",
-      padding: "0 4px",
+      padding: "0 0",
       overflowX: "auto",
+      gap: 4,
     },
     tabBtn: (active) => ({
       flex: 1,
-      padding: "10px 4px",
-      fontSize: 9,
+      padding: "12px 8px",
+      fontSize: 12,
       fontFamily: "inherit",
       fontWeight: active ? 600 : 400,
       background: "none",
@@ -1061,21 +1063,21 @@ export default function App() {
       whiteSpace: "nowrap",
     }),
     content: {
-      padding: "12px 16px 24px",
+      padding: "20px 0 32px",
     },
     progressBar: {
-      height: 3,
+      height: 4,
       background: "var(--border-soft)",
       borderRadius: 2,
       overflow: "hidden",
-      marginTop: 8,
+      marginTop: 10,
     },
     themeBtn: {
       position: "absolute",
-      top: 16,
-      right: 14,
-      padding: "4px 8px",
-      fontSize: 9,
+      top: 24,
+      right: 0,
+      padding: "6px 12px",
+      fontSize: 11,
       fontFamily: "inherit",
       letterSpacing: 1,
       textTransform: "uppercase",
@@ -1083,7 +1085,7 @@ export default function App() {
       background: "var(--bg-panel)",
       color: "var(--text-soft)",
       border: "1px solid var(--border)",
-      borderRadius: 3,
+      borderRadius: 4,
       cursor: "pointer",
     },
   };
@@ -1109,7 +1111,7 @@ export default function App() {
         <div style={s.progressBar}>
           <div style={{ height: "100%", width: `${pct}%`, background: "#c0392b", transition: "width 0.3s" }} />
         </div>
-        <div style={{ fontSize: 9, color: "var(--text-faint)", marginTop: 4, display: "flex", justifyContent: "space-between" }}>
+        <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 4, display: "flex", justifyContent: "space-between" }}>
           <span>Overall: {overallDone}/{overallTotal} ({pct}%)</span>
           <span>Tasks: {tasksDone}/{tasksTotal} | Concepts: {conceptsDone}/{conceptsTotal}</span>
         </div>
@@ -1133,15 +1135,15 @@ export default function App() {
       </div>
 
       <div style={{
-        padding: "16px",
-        borderTop: "1px solid #1c1c28",
+        padding: "24px 0",
+        borderTop: "1px solid var(--border)",
         textAlign: "center",
       }}>
-        <div style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: "var(--text-dim)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>
           Free resources only
         </div>
-        <div style={{ fontSize: 10, color: "var(--text-dim)", lineHeight: 1.6 }}>
-          Anthropic Skilljar &middot; CertSafari &middot; ClaudeCertifications &middot; ReadRoost &middot; Claude Partner Network &middot; Anthropic GitHub
+        <div style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.7 }}>
+          Skilljar &middot; CertSafari &middot; CCA Certifications &middot; ReadRoost &middot; Partner Network &middot; GitHub
         </div>
       </div>
     </div>
@@ -1164,7 +1166,7 @@ function Check({ checked, onToggle }) {
         background: checked ? "#c0392b22" : "transparent",
         cursor: "pointer",
         flexShrink: 0,
-        fontSize: 9,
+        fontSize: 11,
         color: checked ? "#c0392b" : "transparent",
         marginRight: 8,
         transition: "all 0.15s",
@@ -1181,7 +1183,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
     <div>
       {/* Weight bar */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 9, color: "var(--text-faint)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: "var(--text-faint)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
           Domain weights
         </div>
         <div style={{ display: "flex", gap: 2, height: 4, borderRadius: 2, overflow: "hidden" }}>
@@ -1190,7 +1192,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
             { w: 20, c: "#2980b9" }, { w: 15, c: "#8e44ad" },
           ].map((d, i) => <div key={i} style={{ width: `${d.w}%`, background: d.c }} />)}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: "var(--text-dim)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 11, color: "var(--text-dim)" }}>
           <span>D1 27%</span><span>D2 18%</span><span>D3 20%</span><span>D4 20%</span><span>D5 15%</span>
         </div>
       </div>
@@ -1198,15 +1200,15 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
       {weeks.map(week => {
         const isOpen = openWeek === week.id;
         return (
-          <div key={week.id} style={{ marginBottom: 8 }}>
+          <div key={week.id} style={{ marginBottom: 10 }}>
             <button
               onClick={() => setOpenWeek(isOpen ? null : week.id)}
               style={{
                 width: "100%",
-                padding: "12px 14px",
+                padding: "16px 20px",
                 background: isOpen ? "var(--bg-panel-alt)" : "var(--bg-panel)",
-                border: isOpen ? "1px solid #262636" : "1px solid #1a1a26",
-                borderRadius: 6,
+                border: isOpen ? "1px solid var(--border-med)" : "1px solid var(--border-soft)",
+                borderRadius: 8,
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "inherit",
@@ -1215,15 +1217,15 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
-                  <span style={{ fontSize: 9, color: "#c0392b", letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 600 }}>
+                  <span style={{ fontSize: 11, color: "#c0392b", letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 600 }}>
                     Week {week.id}
                   </span>
-                  <div style={{ fontSize: 14, fontWeight: 600, marginTop: 3 }}>{week.title}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, marginTop: 3 }}>{week.title}</div>
                   <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 2 }}>{week.subtitle}</div>
                 </div>
-                <span style={{ fontSize: 14, color: "var(--text-dim)", marginTop: 2 }}>{isOpen ? "−" : "+"}</span>
+                <span style={{ fontSize: 15, color: "var(--text-dim)", marginTop: 2 }}>{isOpen ? "−" : "+"}</span>
               </div>
-              <div style={{ fontSize: 10, color: "#c0392b55", marginTop: 6, fontStyle: "italic" }}>
+              <div style={{ fontSize: 12, color: "#c0392b55", marginTop: 6, fontStyle: "italic" }}>
                 {week.theme}
               </div>
             </button>
@@ -1240,11 +1242,11 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                         onClick={() => setOpenDay(dayOpen ? null : dayKey)}
                         style={{
                           width: "100%",
-                          padding: "10px 12px",
-                          background: dayOpen ? "#141420" : "#0e0e15",
+                          padding: "12px 16px",
+                          background: dayOpen ? "var(--bg-panel-alt)" : "var(--bg-panel)",
                           border: `1px solid ${dayOpen ? "var(--border-med)" : "var(--border-soft)"}`,
                           borderLeft: `3px solid ${dc}`,
-                          borderRadius: 4,
+                          borderRadius: 6,
                           cursor: "pointer",
                           textAlign: "left",
                           fontFamily: "inherit",
@@ -1253,8 +1255,8 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
-                            <span style={{ fontSize: 10, color: dc, fontWeight: 600 }}>{day.day}</span>
-                            <span style={{ fontSize: 10, color: "var(--text-dim)", marginLeft: 8 }}>{day.domain}</span>
+                            <span style={{ fontSize: 12, color: dc, fontWeight: 600 }}>{day.day}</span>
+                            <span style={{ fontSize: 12, color: "var(--text-dim)", marginLeft: 8 }}>{day.domain}</span>
                           </div>
                           <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{dayOpen ? "−" : "+"}</span>
                         </div>
@@ -1311,11 +1313,11 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                               background: "#f39c120a",
                               border: "1px solid #f39c1218",
                               borderRadius: 4,
-                              fontSize: 10,
+                              fontSize: 12,
                               color: "#f39c12",
                               lineHeight: 1.5,
                             }}>
-                              <span style={{ fontWeight: 700, fontSize: 9, letterSpacing: 0.5 }}>KPI: </span>
+                              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: 0.5 }}>KPI: </span>
                               {day.kpi}
                             </div>
                           )}
@@ -1328,7 +1330,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                               background: "#2980b90a",
                               border: "1px solid #2980b918",
                               borderRadius: 4,
-                              fontSize: 10,
+                              fontSize: 12,
                               color: "#2980b9",
                               lineHeight: 1.5,
                               display: "flex",
@@ -1337,7 +1339,7 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                             }}>
                               <span>{day.closure.label}</span>
                               <span style={{
-                                fontSize: 9,
+                                fontSize: 11,
                                 background: "#2980b922",
                                 padding: "2px 6px",
                                 borderRadius: 3,
@@ -1379,7 +1381,7 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
               onClick={() => setOpenDomain(isOpen ? null : di)}
               style={{
                 width: "100%",
-                padding: "11px 14px",
+                padding: "14px 18px",
                 background: "var(--bg-panel)",
                 border: `1px solid ${d.accent}22`,
                 borderLeft: `3px solid ${d.accent}`,
@@ -1395,8 +1397,8 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>{d.domain}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 10, color: d.accent, fontWeight: 400 }}>{d.weight}</span>
-                  <span style={{ fontSize: 9, color: "var(--text-faint)" }}>{domainDone}/{domainTotal}</span>
+                  <span style={{ fontSize: 12, color: d.accent, fontWeight: 400 }}>{d.weight}</span>
+                  <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{domainDone}/{domainTotal}</span>
                   <span style={{ color: "var(--text-dim)", fontSize: 14 }}>{isOpen ? "−" : "+"}</span>
                 </div>
               </div>
@@ -1423,7 +1425,7 @@ function TreeTab({ domains, openDomain, setOpenDomain, progress, toggle }) {
                         const key = `c-${di}-${ci}-${ki}`;
                         return (
                           <div key={ki} style={{
-                            fontSize: 10,
+                            fontSize: 12,
                             color: progress[key] ? "var(--text-dim)" : "var(--text-muted)",
                             padding: "2px 0",
                             lineHeight: 1.4,
@@ -1674,7 +1676,7 @@ function BrainMapTab({ progress, toggle }) {
         </svg>
 
         {/* Legend */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12, fontSize: 9, color: "var(--text-faint)" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12, fontSize: 11, color: "var(--text-faint)" }}>
           {domainIds.map(did => (
             <span key={did} style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: DOMAIN_FILL[did] }} />
@@ -1714,8 +1716,8 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
       role="dialog"
       aria-labelledby={`bm-title-${concept.id}`}
       style={{
-        marginTop: 16,
-        padding: "16px",
+        marginTop: 20,
+        padding: "20px 24px",
         background: "var(--bg-panel)",
         border: `1px solid ${domainFill}33`,
         borderLeft: `3px solid ${domainFill}`,
@@ -1730,7 +1732,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
               color: "#0c0c10", background: labelColor,
               padding: "2px 6px", borderRadius: 3,
             }}>{concept.domain}</span>
-            <span style={{ fontSize: 9, color: "var(--text-faint)", letterSpacing: 0.5 }}>TASK {concept.task}</span>
+            <span style={{ fontSize: 11, color: "var(--text-faint)", letterSpacing: 0.5 }}>TASK {concept.task}</span>
           </div>
           <h3 id={`bm-title-${concept.id}`} style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0, lineHeight: 1.3 }}>
             {concept.name}
@@ -1741,7 +1743,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
             onClick={() => toggle(`bm-${concept.id}`)}
             aria-label={isComplete ? "Mark incomplete" : "Mark complete"}
             style={{
-              fontSize: 9, padding: "4px 8px",
+              fontSize: 11, padding: "4px 8px",
               background: isComplete ? `${domainFill}22` : "transparent",
               color: isComplete ? labelColor : "var(--text-faint)",
               border: `1px solid ${isComplete ? domainFill : "var(--border-med)"}`,
@@ -1754,7 +1756,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
             onClick={onClose}
             aria-label="Close details"
             style={{
-              fontSize: 14, padding: "2px 8px",
+              fontSize: 15, padding: "2px 8px",
               background: "transparent", color: "var(--text-faint)",
               border: "1px solid #2a2a38", borderRadius: 3, cursor: "pointer",
               fontFamily: "inherit",
@@ -1768,7 +1770,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
       </DetailSection>
 
       <DetailSection label="Used in" color={labelColor}>
-        <ul style={{ fontSize: 10, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
+        <ul style={{ fontSize: 12, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
           {concept.productionExamples.map((ex, i) => <li key={i}>{ex}</li>)}
         </ul>
       </DetailSection>
@@ -1781,7 +1783,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
                 key={r.id}
                 onClick={() => onNavigate(r.id)}
                 style={{
-                  fontSize: 9, padding: "3px 7px",
+                  fontSize: 11, padding: "3px 7px",
                   background: "transparent", color: LABEL_COLORS[r.domain],
                   border: `1px solid ${DOMAIN_FILL[r.domain]}55`,
                   borderRadius: 3, cursor: "pointer", fontFamily: "inherit",
@@ -1803,7 +1805,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                fontSize: 10, color: "var(--text-body)",
+                fontSize: 12, color: "var(--text-body)",
                 textDecoration: "none", lineHeight: 1.4,
                 display: "flex", alignItems: "center", gap: 6,
               }}
@@ -1821,7 +1823,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
       </DetailSection>
 
       <DetailSection label="Watch for" color={labelColor}>
-        <ul style={{ fontSize: 10, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
+        <ul style={{ fontSize: 12, color: "var(--text-soft)", margin: 0, paddingLeft: 16, lineHeight: 1.6 }}>
           {concept.failureModes.map((fm, i) => <li key={i}>{fm}</li>)}
         </ul>
       </DetailSection>
@@ -1830,7 +1832,7 @@ function DetailPanel({ concept, concepts, progress, toggle, onClose, onNavigate 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {concept.examSignals.map((sig, i) => (
             <span key={i} style={{
-              fontSize: 9, padding: "2px 6px",
+              fontSize: 11, padding: "2px 6px",
               background: `${domainFill}15`, color: "var(--text-soft)",
               border: `1px solid ${domainFill}33`,
               borderRadius: 2, fontFamily: "inherit",
@@ -1863,14 +1865,14 @@ function BuildsTab({ projects }) {
       </p>
       {projects.map((p, pi) => (
         <div key={pi} style={{
-          padding: "14px",
+          padding: "18px",
           background: "var(--bg-panel)",
           border: "1px solid #1a1a26",
           borderRadius: 6,
           marginBottom: 8,
         }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.name}</div>
-          <div style={{ fontSize: 10, color: "var(--text-faint)", marginTop: 3 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{p.name}</div>
+          <div style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 3 }}>
             {p.scenario} &middot; {p.domains}
           </div>
           <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.5 }}>
@@ -1879,7 +1881,7 @@ function BuildsTab({ projects }) {
           <div style={{ marginTop: 10, borderTop: "1px solid #1a1a26", paddingTop: 8 }}>
             {p.skills.map((sk, si) => (
               <div key={si} style={{
-                fontSize: 10,
+                fontSize: 12,
                 color: "var(--text-faint)",
                 padding: "3px 0 3px 10px",
                 borderLeft: "2px solid #c0392b22",
@@ -1904,7 +1906,7 @@ function RulesTab({ rules }) {
       </p>
       {rules.map((r) => (
         <div key={r.num} style={{
-          padding: "14px",
+          padding: "18px",
           background: "var(--bg-panel)",
           border: "1px solid #1a1a26",
           borderRadius: 6,
@@ -1912,7 +1914,7 @@ function RulesTab({ rules }) {
         }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
             <span style={{
-              fontSize: 9,
+              fontSize: 11,
               color: "#0c0c10",
               background: "#c0392b",
               padding: "2px 5px",
@@ -1921,13 +1923,13 @@ function RulesTab({ rules }) {
             }}>
               {r.num}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{r.rule}</span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{r.rule}</span>
           </div>
           <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 8 }}>
             {r.detail}
           </div>
           <div style={{
-            fontSize: 10,
+            fontSize: 12,
             color: "#d35400",
             padding: "6px 10px",
             background: "#d354000a",
@@ -1953,7 +1955,7 @@ function CheatSheetTab({ data }) {
       {data.map((section, si) => (
         <div key={si} style={{ marginBottom: 12 }}>
           <div style={{
-            fontSize: 9,
+            fontSize: 11,
             fontWeight: 700,
             color: "#c0392b",
             letterSpacing: 0.5,
@@ -1970,7 +1972,7 @@ function CheatSheetTab({ data }) {
           }}>
             {section.items.map((item, ii) => (
               <div key={ii} style={{
-                fontSize: 10,
+                fontSize: 12,
                 color: "var(--text-muted)",
                 padding: "4px 0 4px 10px",
                 borderLeft: "2px solid #c0392b22",
