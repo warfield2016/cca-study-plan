@@ -13,12 +13,13 @@
  */
 
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
+  apiKey: "AIzaSyAFf9eGCsFBL3AIdtpUb_CqzzJS_RhEXn0",
+  authDomain: "cca-study-plan.firebaseapp.com",
+  projectId: "cca-study-plan",
+  storageBucket: "cca-study-plan.firebasestorage.app",
+  messagingSenderId: "378298798232",
+  appId: "1:378298798232:web:b37cd47a165fb59974c0ed",
+  measurementId: "G-5TKPJKCN75",
 };
 
 export function isFirebaseConfigured() {
