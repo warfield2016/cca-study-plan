@@ -91,6 +91,15 @@ export default function QuizEngine({ userEmail }) {
     return () => clearInterval(interval);
   }, [isTimed, view]);
 
+  // Browser back button support
+  useEffect(() => {
+    const onPop = () => {
+      if (view === "quiz" || view === "results") setView("home");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [view]);
+
   const syncToFirebase = useCallback((nextState) => {
     if (userEmail) {
       saveUserProgress(userEmail, {
@@ -113,6 +122,7 @@ export default function QuizEngine({ userEmail }) {
     setTimerSeconds(0);
     setIsTimed(timed);
     setView("quiz");
+    try { window.history.pushState({ quiz: true }, ""); } catch {}
   }, []);
 
   const handleSubmit = useCallback(() => {

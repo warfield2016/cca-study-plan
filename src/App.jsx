@@ -25,10 +25,10 @@ function saveEmail(e) { try { localStorage.setItem(EMAIL_KEY, e); } catch {} }
 /* ─── THEMES: grey + light ─── */
 const THEMES = {
   grey: {
-    bgRoot: "#1f2026", bgPanel: "#272830", bgPanelAlt: "#2e2f38",
+    bgRoot: "#1f2026", bgPanel: "#24252e", bgPanelAlt: "#2c2d36",
     border: "#363742", borderSoft: "#323340", borderMed: "#3e3f4c",
-    textPrimary: "#f5f5f7", textBody: "#d8d8dd", textSoft: "#a8a8b0",
-    textMuted: "#888892", textFaint: "#666670", textDim: "#4a4a55",
+    textPrimary: "#f5f5f7", textBody: "#e0e0e6", textSoft: "#b8b8c2",
+    textMuted: "#9a9aa6", textFaint: "#8a8a96", textDim: "#6a6a76",
   },
   light: {
     bgRoot: "#fafafa", bgPanel: "#ffffff", bgPanelAlt: "#f2f2f4",
@@ -868,70 +868,70 @@ const CHEAT_SHEET = [
   {
     category: "Architecture Decisions",
     items: [
-      "Compliance MUST be guaranteed → programmatic hooks/prerequisites, never prompt-only",
-      "Style/tone/formatting → prompt instructions are sufficient",
-      "Complex multi-file changes → plan mode; single-file fix → direct execution",
-      "Verbose discovery phase → Explore subagent to isolate context",
-      "Single agent hitting limits → decompose into coordinator + scoped subagents",
-      "Fixed known steps → prompt chaining; open-ended investigation → adaptive decomposition",
+      { rule: "Compliance MUST be guaranteed → programmatic hooks/prerequisites, never prompt-only", detail: "Prompt-based instructions have a non-zero failure rate. For financial ops, identity checks, or policy enforcement, a hook that runs deterministic code is the only reliable path.", example: "KYC verification: a PreToolUse hook checks the ID API before create_account can execute." },
+      { rule: "Style/tone/formatting → prompt instructions are sufficient", detail: "When the stakes are low (formatting, tone), prompt guidance works fine. Save hooks for compliance-critical flows.", example: "Asking for bullet-point output or a friendly tone — no hook needed." },
+      { rule: "Complex multi-file changes → plan mode; single-file fix → direct execution", detail: "Plan mode prevents half-done refactors by getting alignment before writing code. Direct mode is faster for scoped changes.", example: "Renaming a variable across 20 files: plan. Fixing a typo in one file: direct." },
+      { rule: "Verbose discovery → Explore subagent to isolate context", detail: "Exploration output (searching files, reading code) fills context fast. The Explore subagent runs in isolation so verbose results don't pollute the main conversation.", example: "Understanding a new codebase before planning a refactor — Explore first, then plan." },
+      { rule: "Single agent hitting limits → decompose into coordinator + scoped subagents", detail: "One agent with 18 tools and a sprawling task will pick the wrong tool and lose track of context. A coordinator delegating to 3-4 focused subagents scales better.", example: "Research task: coordinator spawns legal-subagent, finance-subagent, ops-subagent in parallel." },
+      { rule: "Fixed known steps → prompt chaining; open-ended investigation → adaptive decomposition", detail: "Prompt chains are deterministic pipelines for predictable flows. Adaptive decomposition maps the problem first, then decides what to investigate.", example: "ETL: fixed chain (extract → transform → load). Security audit: adaptive (scan → identify → prioritize)." },
     ],
   },
   {
     category: "Tool Design Decisions",
     items: [
-      "Generic tool causing confusion → split into purpose-specific tools with distinct descriptions",
-      "Similar tools misrouted → rename + expand descriptions with boundaries and examples",
-      "Agent has 18 tools → scope to 4-5 per role; add cross-role tools for high-frequency needs only",
-      "MCP tools = actions (create, update, query); MCP resources = content catalogs (browse without calling)",
-      "Project-shared tooling → .mcp.json; personal/experimental → ~/.claude.json",
-      "Need guaranteed first tool call → tool_choice forced; need any tool → 'any'; flexible → 'auto'",
+      { rule: "Generic tool causing confusion → split into purpose-specific tools", detail: "Tools are selected by description, not name. If two tools sound similar, the wrong one gets called. Splitting a generic tool into purpose-specific ones with clear boundaries fixes this.", example: "One 'process_payment' tool → split into 'refund_payment', 'charge_payment', 'adjust_payment' with distinct descriptions." },
+      { rule: "Similar tools misrouted → rename + expand descriptions with boundaries", detail: "When renaming isn't enough, add explicit boundaries: 'Use this tool ONLY for X. Do NOT use for Y.' in the description.", example: "'billing_lookup' description: 'Look up invoice status. Do NOT use for payment processing — use process_payment instead.'" },
+      { rule: "Agent has 18 tools → scope to 4-5 per role", detail: "Selection reliability degrades sharply above 5 tools. Give each agent only the tools for its role. Add cross-role tools only for genuinely high-frequency needs.", example: "Support agent: lookup_customer, search_knowledge_base, create_ticket, escalate. Not 18 tools." },
+      { rule: "MCP tools = actions; MCP resources = content catalogs", detail: "Tools perform operations (create, update, query). Resources expose browsable content (doc listings, schemas, issue catalogs) — they reduce unnecessary tool calls by letting the agent see what's available.", example: "Tool: create_jira_issue. Resource: list of all Jira projects and their schemas." },
+      { rule: "Project-shared tooling → .mcp.json; personal → ~/.claude.json", detail: "Team tools go in .mcp.json (version-controlled, everyone gets them). Personal tokens and experimental tools go in ~/.claude.json (private, per-developer).", example: "Shared database MCP in .mcp.json. Your personal Notion integration in ~/.claude.json." },
+      { rule: "Guaranteed first tool call → forced; any tool → 'any'; flexible → 'auto'", detail: "tool_choice modes control sequencing. 'Forced' makes a specific tool run first (verify before act). 'Any' requires at least one tool call. 'Auto' lets the agent decide.", example: "Forced verify_identity before process_refund ensures identity is always checked." },
     ],
   },
   {
     category: "Context Management",
     items: [
-      "Long conversation losing facts → extract amounts/dates/IDs into persistent case facts block",
-      "Tool returns 40 fields → trim to 5 relevant fields BEFORE accumulation",
-      "Key findings getting missed → put summaries at START; critical data at END (lost-in-the-middle)",
-      "Subagent output → structured data (facts, citations, scores), NOT verbose reasoning chains",
-      "Extended session degrading → use scratchpad files + /compact to manage context",
-      "Resuming session → fresh + summary if tool results stale; --resume if context mostly valid",
+      { rule: "Losing facts in long conversations → persistent case facts block", detail: "Progressive summarization drops specifics. Key facts (amounts, dates, IDs, policy numbers) should be extracted into a structured block that's excluded from summarization.", example: "Support ticket with $2,340.56 refund amount — if summarized, it becomes 'a refund' with no amount." },
+      { rule: "Tool returns 40 fields → trim to 5 relevant BEFORE accumulation", detail: "Verbose tool output fills the context window fast. Trim to only the fields you need before adding to the conversation. Accumulating raw output is the #1 context-budget killer.", example: "API returns full customer profile — trim to name, email, account status before passing to the next step." },
+      { rule: "Key findings missed → put summaries at START; critical data at END", detail: "The lost-in-the-middle effect: content in the middle of long inputs gets underweighted. Structure important information at the beginning and end.", example: "Report structure: executive summary first, detailed findings in the body, critical recommendations last." },
+      { rule: "Subagent output → structured data, NOT verbose reasoning", detail: "Subagents should return facts, citations, and scores — not their entire chain of thought. The coordinator needs data to synthesize, not reasoning to re-read.", example: "Research subagent returns { findings: [...], sources: [...], confidence: 0.85 } not a 500-word narrative." },
+      { rule: "Extended session degrading → scratchpad files + /compact", detail: "When answers start referencing 'typical patterns' instead of actual findings, the context is saturated. Persist key findings to a scratchpad file and use /compact to reclaim space.", example: "After 2 hours of codebase exploration, save key findings to SCRATCHPAD.md, run /compact, continue." },
+      { rule: "Resuming session → fresh + summary if stale; --resume if still valid", detail: "Stale sessions (tool results changed since last run) need a fresh start with a summary of prior findings. Recent sessions where context is still accurate benefit from --resume.", example: "Left a session overnight after code was merged → fresh + summary. Paused for lunch → --resume." },
     ],
   },
   {
     category: "Error & Escalation",
     items: [
-      "Customer demands human → honor immediately, no investigation first",
-      "Policy gap/exception → escalate (not within agent capability by design)",
-      "Sentiment-based escalation → anti-pattern (doesn't correlate with complexity)",
-      "Multiple customer matches → ask for identifiers, never heuristic selection",
-      "Subagent error → return structured context (type + query + partial results + alternatives)",
-      "Access failure vs empty result → different; coordinator must distinguish for recovery",
-      "Transient failure → local retry in subagent; only propagate if unresolvable",
+      { rule: "Customer demands human → honor immediately", detail: "No investigation, no 'let me try one more thing.' When someone explicitly asks for a human, route them immediately. Anything else violates trust.", example: "Customer: 'I want to speak to a person.' Agent: routes to human queue instantly, no further questions." },
+      { rule: "Policy gap/exception → escalate", detail: "If the situation falls outside the agent's designed capabilities or policy boundaries, escalate. Agents should not improvise on edge cases.", example: "Refund amount exceeds policy limit → escalate to supervisor, don't process anyway." },
+      { rule: "Sentiment-based escalation → anti-pattern", detail: "Angry doesn't mean complex. Calm doesn't mean simple. Sentiment analysis is unreliable for routing decisions. Use explicit triggers (human request, policy gap, stuck) instead.", example: "Frustrated customer with a simple billing question → resolve, don't escalate. Calm customer with a regulatory exception → escalate." },
+      { rule: "Multiple customer matches → ask for identifiers, never guess", detail: "When a name matches 3 accounts, ask for the account number or email. Never pick the 'most likely' one — heuristic selection causes wrong-account actions.", example: "'John Smith' matches 3 accounts. Ask: 'Can you share your account number or the email on file?'" },
+      { rule: "Subagent error → return structured context for recovery", detail: "Return { failure_type, attempted_query, partial_results, alternatives } so the coordinator can decide: retry, fall back, or escalate. Generic 'failed' errors leave the coordinator blind.", example: "Database timeout → { failure_type: 'transient', attempted_query: 'SELECT ...', partial_results: null, alternatives: ['retry', 'cache'] }" },
+      { rule: "Access failure ≠ empty result — must distinguish", detail: "If the database is down, that's an access failure (retry or escalate). If the query returned zero rows, that's a valid empty result (report it). Treating both as 'no results' hides infrastructure failures.", example: "Compliance check: DB timeout reported as 'no violations found' → $2.3M regulatory penalty." },
+      { rule: "Transient failure → local retry; unresolvable → propagate", detail: "Transient errors (timeouts, rate limits) should be retried locally in the subagent. Only propagate to the coordinator if the error persists after retries.", example: "API rate limit → wait 2 seconds, retry. API key revoked → propagate immediately." },
     ],
   },
   {
     category: "Output & Review",
     items: [
-      "Guaranteed schema compliance → tool_use + JSON schema (eliminates syntax errors, NOT semantic)",
-      "Source may lack info → make field nullable/optional (required forces fabrication)",
-      "enum categories → add 'other' + detail string for extensibility",
-      "Same-session self-review → limited (retained reasoning context); use independent instance",
-      "Large PR (14+ files) → per-file local passes + separate cross-file integration pass",
-      "Few-shot: 2-4 examples targeting ambiguous cases, showing WHY one choice beats alternatives",
-      "Vague criteria ('be conservative') → replace with specific categorical criteria",
+      { rule: "tool_use + JSON schema → guaranteed schema compliance", detail: "Using tool_use with a JSON schema eliminates syntax/structural errors in the output. But it doesn't fix semantic errors — the fields will be present, but the values may still be wrong.", example: "Schema requires a 'date' field → it'll always be there. But it might contain the wrong date." },
+      { rule: "Source may lack info → make fields nullable/optional", detail: "Required fields on absent data force fabrication. If the source document might not have a phone number, make the phone field nullable. Otherwise the output will contain an invented number.", example: "Invoice extraction: not all invoices have a PO number. Make po_number optional, not required." },
+      { rule: "enum categories → add 'other' + detail string", detail: "Locked enums fail on novel cases. Adding an 'other' option with a free-text detail field keeps categorization extensible without losing structure.", example: "Issue type: ['bug', 'feature', 'improvement', 'other'] + detail_if_other: 'infrastructure migration'" },
+      { rule: "Self-review in same session → biased; use independent instance", detail: "The generator retains its reasoning context and is unlikely to question its own decisions. A fresh instance without that context catches issues the generator missed.", example: "Code generation in session A → code review in session B (separate instance, no shared context)." },
+      { rule: "Large PR → per-file passes + cross-file integration pass", detail: "Per-file reviews catch local issues (logic bugs, style). A separate cross-file pass catches integration bugs (broken imports, inconsistent naming, missing error handling across boundaries).", example: "14-file PR: review each file individually, then run a second pass looking at how they interact." },
+      { rule: "Few-shot: 2-4 examples targeting ambiguous cases", detail: "Show WHY one choice beats alternatives, not just the output format. Examples should target the edge cases that are genuinely ambiguous, not the easy cases.", example: "Classification task: include an example where the category is non-obvious and explain the reasoning." },
+      { rule: "Vague criteria → replace with specific categorical criteria", detail: "Instructions like 'be conservative' or 'only flag high-confidence issues' are subjective and produce inconsistent results. Specific criteria like 'flag when described behavior directly contradicts actual code behavior' are testable.", example: "'Be careful about false positives' → 'Flag only when the documented behavior directly contradicts the tested behavior.'" },
     ],
   },
   {
     category: "Config & CI/CD",
     items: [
-      "Team-wide command → .claude/commands/ (version-controlled); personal → ~/.claude/commands/",
-      "Cross-directory convention (all test files) → .claude/rules/ with glob, NOT directory CLAUDE.md",
-      "Skill produces verbose output → context: fork to isolate from main conversation",
-      "CI pipeline → -p flag (non-interactive); --output-format json for machine parsing",
-      "Self-review in CI → use separate instance (not the generator) for code review",
-      "Batch processing → overnight reports (50% cost); sync API → pre-merge blocking checks",
-      "Re-running review after commits → include prior findings; report only new/unaddressed issues",
+      { rule: "Team commands → .claude/commands/ (versioned); personal → ~/.claude/commands/", detail: "Project-level commands are shared with the team via version control. Personal workflow commands (your own shortcuts) go in the user-level directory.", example: "Team /review-pr command in .claude/commands/. Your personal /quick-deploy in ~/.claude/commands/." },
+      { rule: "Cross-directory convention → .claude/rules/ with glob patterns", detail: "Rules that apply across directories (e.g., all test files) work better as glob-patterned rules than scattered directory-level CLAUDE.md files. One rule file covers the whole pattern.", example: "Test conventions for **/*.test.tsx → one rule in .claude/rules/testing.md, not 15 directory CLAUDE.md files." },
+      { rule: "Verbose skill output → context: fork to isolate", detail: "Skills that produce a lot of output (code generation, analysis) should run with context: fork so they don't pollute the parent conversation's context window.", example: "A /review-pr skill that reads 20 files and produces detailed feedback — fork it so the main conversation stays clean." },
+      { rule: "CI pipeline → -p flag (non-interactive); --output-format json", detail: "The -p/--print flag runs non-interactively (no user prompts). Combined with --output-format json and --json-schema, the output is machine-parseable for CI integration.", example: "GitHub Action: claude -p 'review this PR' --output-format json | jq '.issues'" },
+      { rule: "CI review → separate instance from generator", detail: "If the same agent generated the code AND reviews it, the review is biased. Use a separate instance for the review step so it evaluates the code without the reasoning context that produced it.", example: "Step 1: generate code (instance A). Step 2: review code (instance B, fresh context)." },
+      { rule: "Batch → overnight reports (50% cost); sync → pre-merge blocking", detail: "The Message Batches API saves 50% but has up to 24-hour latency. Use it for overnight batch jobs (report generation, classification). Never use it for blocking checks where developers are waiting.", example: "Overnight ticket classification: batch. Pre-merge code review: sync (developers are waiting)." },
+      { rule: "Re-running review → include prior findings; report only new issues", detail: "When a review runs again after commits, include the previous review's findings so the agent knows what was already flagged. Only report new or unaddressed issues.", example: "Second review pass: 'Previous review flagged X and Y. X was fixed. Y is still present. New issue: Z.'" },
     ],
   },
 ];
@@ -1048,8 +1048,9 @@ export default function App() {
       background: "var(--bg-root)",
       color: "var(--text-body)",
       minHeight: "100vh",
-      margin: 0,
-      padding: "0 5vw",
+      maxWidth: 960,
+      margin: "0 auto",
+      padding: "0 32px",
       ...themeVars(theme),
     },
     header: {
@@ -1210,7 +1211,7 @@ export default function App() {
       </div>
 
       <div style={s.content}>
-        {tab === "plan" && <PlanTab weeks={WEEKS} openWeek={openWeek} setOpenWeek={setOpenWeek} openDay={openDay} setOpenDay={setOpenDay} progress={progress} toggle={toggleProgress} />}
+        {tab === "plan" && <PlanTab weeks={WEEKS} openWeek={openWeek} setOpenWeek={setOpenWeek} openDay={openDay} setOpenDay={setOpenDay} progress={progress} toggle={toggleProgress} onStartQuiz={() => setTab("quiz")} />}
         {tab === "brain" && <BrainMapTab progress={progress} toggle={toggleProgress} />}
         {tab === "tree" && <TreeTab domains={CONCEPT_TREE} openDomain={openDomain} setOpenDomain={setOpenDomain} progress={progress} toggle={toggleProgress} />}
         {tab === "builds" && <BuildsTab projects={PROJECTS} />}
@@ -1263,7 +1264,7 @@ function Check({ checked, onToggle }) {
 }
 
 /* ─── PlanTab ─── */
-function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, toggle }) {
+function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, toggle, onStartQuiz }) {
   return (
     <div>
       {/* Weight bar */}
@@ -1407,32 +1408,39 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                             </div>
                           )}
 
-                          {/* Daily Closure / Quiz Reference */}
+                          {/* Daily Quiz Button */}
                           {day.closure && (
-                            <div style={{
-                              marginTop: 6,
-                              padding: "8px 10px",
-                              background: "#2980b90a",
-                              border: "1px solid #2980b918",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              color: "#2980b9",
-                              lineHeight: 1.5,
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}>
+                            <button
+                              onClick={onStartQuiz}
+                              style={{
+                                marginTop: 8,
+                                padding: "10px 14px",
+                                background: "#2980b90a",
+                                border: "1px solid #2980b930",
+                                borderRadius: 6,
+                                fontSize: 13,
+                                color: "#2980b9",
+                                lineHeight: 1.5,
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                width: "100%",
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                textAlign: "left",
+                              }}>
                               <span>{day.closure.label}</span>
                               <span style={{
-                                fontSize: 11,
-                                background: "#2980b922",
-                                padding: "2px 6px",
-                                borderRadius: 3,
+                                fontSize: 12,
+                                background: "#2980b9",
+                                color: "#fff",
+                                padding: "4px 10px",
+                                borderRadius: 4,
                                 fontWeight: 600,
                               }}>
-                                Target: {day.closure.target}%
+                                Start Quiz
                               </span>
-                            </div>
+                            </button>
                           )}
                         </div>
                       )}
@@ -2032,41 +2040,80 @@ function RulesTab({ rules }) {
 
 /* ─── CheatSheetTab ─── */
 function CheatSheetTab({ data }) {
+  const [expandedKey, setExpandedKey] = useState(null);
   return (
     <div>
-      <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 0, marginBottom: 14, lineHeight: 1.5 }}>
-        Quick-scan decision reference aligned with the 30 exam task statements. If X → then Y.
+      <p style={{ fontSize: 13, color: "var(--text-faint)", marginTop: 0, marginBottom: 16, lineHeight: 1.6 }}>
+        Quick-scan decision reference aligned with the 30 exam task statements. Click any rule for the full explanation and a concrete example.
       </p>
       {data.map((section, si) => (
-        <div key={si} style={{ marginBottom: 12 }}>
+        <div key={si} style={{ marginBottom: 16 }}>
           <div style={{
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             color: "#c0392b",
             letterSpacing: 0.5,
-            marginBottom: 6,
+            marginBottom: 8,
             textTransform: "uppercase",
           }}>
             {section.category}
           </div>
           <div style={{
             background: "var(--bg-panel)",
-            border: "1px solid #1a1a26",
-            borderRadius: 6,
-            padding: "10px 12px",
+            border: "1px solid var(--border-soft)",
+            borderRadius: 8,
+            overflow: "hidden",
           }}>
-            {section.items.map((item, ii) => (
-              <div key={ii} style={{
-                fontSize: 12,
-                color: "var(--text-muted)",
-                padding: "4px 0 4px 10px",
-                borderLeft: "2px solid #c0392b22",
-                marginBottom: 2,
-                lineHeight: 1.5,
-              }}>
-                {item}
-              </div>
-            ))}
+            {section.items.map((item, ii) => {
+              const key = `${si}-${ii}`;
+              const isOpen = expandedKey === key;
+              const rule = typeof item === "string" ? item : item.rule;
+              const detail = typeof item === "object" ? item.detail : null;
+              const example = typeof item === "object" ? item.example : null;
+              return (
+                <div key={ii}>
+                  <button
+                    onClick={() => setExpandedKey(isOpen ? null : key)}
+                    style={{
+                      width: "100%",
+                      fontSize: 14,
+                      color: "var(--text-body)",
+                      padding: "12px 16px",
+                      borderLeft: `3px solid ${isOpen ? "#c0392b" : "#c0392b44"}`,
+                      borderBottom: `1px solid var(--border-soft)`,
+                      background: isOpen ? "var(--bg-panel-alt)" : "transparent",
+                      lineHeight: 1.6,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                      border: "none",
+                      borderLeft: `3px solid ${isOpen ? "#c0392b" : "#c0392b44"}`,
+                      borderBottom: `1px solid var(--border-soft)`,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      gap: 12,
+                    }}
+                  >
+                    <span>{rule}</span>
+                    <span style={{ color: "var(--text-dim)", fontSize: 12, flexShrink: 0, marginTop: 2 }}>{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && detail && (
+                    <div style={{ padding: "12px 16px 14px 19px", borderLeft: "3px solid #c0392b", background: "var(--bg-panel-alt)" }}>
+                      <div style={{ fontSize: 13, color: "var(--text-soft)", lineHeight: 1.7, marginBottom: example ? 10 : 0 }}>
+                        {detail}
+                      </div>
+                      {example && (
+                        <div style={{ fontSize: 13, color: "#2980b9", padding: "8px 12px", background: "#2980b90a", border: "1px solid #2980b918", borderRadius: 4, lineHeight: 1.6 }}>
+                          <span style={{ fontWeight: 600, fontSize: 11, letterSpacing: 0.5 }}>EXAMPLE: </span>
+                          {example}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
