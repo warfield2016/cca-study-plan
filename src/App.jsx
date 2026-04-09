@@ -1,6 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { loadUserProgress, saveUserProgress, isFirebaseConfigured } from "./firebase.js";
 import QuizEngine from "./QuizEngine.jsx";
+import { d1Questions } from "./data/d1-agentic-architecture";
+import { d2Questions } from "./data/d2-tool-design-mcp";
+import { d3Questions } from "./data/d3-claude-code-config";
+import { d4Questions } from "./data/d4-prompt-engineering";
+import { d5Questions } from "./data/d5-context-reliability";
 
 /* ─── localStorage helpers ─── */
 const STORAGE_KEY = "cca-study-progress";
@@ -1217,7 +1222,7 @@ export default function App() {
       <HowToUse />
 
       <div style={s.content}>
-        {tab === "plan" && <PlanTab weeks={WEEKS} openWeek={openWeek} setOpenWeek={setOpenWeek} openDay={openDay} setOpenDay={setOpenDay} progress={progress} toggle={toggleProgress} onStartQuiz={() => setTab("quiz")} />}
+        {tab === "plan" && <PlanTab weeks={WEEKS} openWeek={openWeek} setOpenWeek={setOpenWeek} openDay={openDay} setOpenDay={setOpenDay} progress={progress} toggle={toggleProgress} />}
         {tab === "brain" && <BrainMapTab progress={progress} toggle={toggleProgress} />}
         {tab === "tree" && <TreeTab domains={CONCEPT_TREE} openDomain={openDomain} setOpenDomain={setOpenDomain} progress={progress} toggle={toggleProgress} />}
         {tab === "builds" && <BuildsTab projects={PROJECTS} />}
@@ -1352,8 +1357,177 @@ function HowToUse() {
   );
 }
 
+/* ─── InlineDayQuiz: quiz that appears right inside the day card ─── */
+const DAY_QUIZ_POOL = [...d1Questions, ...d2Questions, ...d3Questions, ...d4Questions, ...d5Questions];
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function InlineDayQuiz({ closure, domainColor }) {
+  const [active, setActive] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const startQuiz = () => {
+    let pool = DAY_QUIZ_POOL;
+    if (closure.domain && closure.domain !== "ALL" && closure.domain !== "WEAK") {
+      pool = pool.filter(q => q.domain === closure.domain);
+    }
+    if (closure.topic) {
+      const topicPool = pool.filter(q => q.topic === closure.topic);
+      if (topicPool.length > 0) pool = topicPool;
+    }
+    const count = Math.min(parseInt(closure.label.match(/(\d+)\s*Qs/)?.[1]) || 15, pool.length);
+    setQuestions(shuffleArray(pool).slice(0, count));
+    setIdx(0);
+    setSelected(null);
+    setSubmitted(false);
+    setScore(0);
+    setDone(false);
+    setActive(true);
+  };
+
+  if (!active) {
+    return (
+      <button onClick={startQuiz} style={{
+        marginTop: 10, padding: "12px 16px", background: "#2980b90a", border: "1px solid #2980b930",
+        borderRadius: 8, fontSize: 14, color: "#2980b9", lineHeight: 1.5, display: "flex",
+        justifyContent: "space-between", alignItems: "center", width: "100%", cursor: "pointer",
+        fontFamily: "inherit", textAlign: "left",
+      }}>
+        <span>{closure.label}</span>
+        <span style={{ fontSize: 13, background: "#2980b9", color: "#fff", padding: "5px 14px", borderRadius: 6, fontWeight: 600 }}>Start Quiz</span>
+      </button>
+    );
+  }
+
+  if (done) {
+    const pct = questions.length ? Math.round((score / questions.length) * 100) : 0;
+    const passed = pct >= (closure.target || 70);
+    return (
+      <div style={{ marginTop: 10, padding: "20px", background: "var(--bg-panel)", border: `1px solid ${passed ? "#27ae6044" : "#e74c3c44"}`, borderRadius: 8 }}>
+        <div style={{ fontSize: 28, fontWeight: 800, color: passed ? "#27ae60" : "#e74c3c", marginBottom: 4 }}>{pct}%</div>
+        <div style={{ fontSize: 14, color: "var(--text-faint)", marginBottom: 4 }}>{score}/{questions.length} correct</div>
+        <div style={{ fontSize: 13, color: passed ? "#27ae60" : "#e74c3c", fontWeight: 600, marginBottom: 16 }}>
+          {passed ? "Passed — nice work" : `Below target (${closure.target}%) — review and retry`}
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={startQuiz} style={{ padding: "8px 16px", fontSize: 13, fontWeight: 600, background: "var(--bg-panel-alt)", color: "var(--text-body)", border: "1px solid var(--border)", borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>Retry</button>
+          <button onClick={() => setActive(false)} style={{ padding: "8px 16px", fontSize: 13, background: "none", color: "var(--text-faint)", border: "1px solid var(--border)", borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>Close</button>
+        </div>
+      </div>
+    );
+  }
+
+  const q = questions[idx];
+  if (!q) return null;
+
+  const handleChoice = (letter) => {
+    if (submitted) return;
+    setSelected(letter);
+    setSubmitted(true);
+    if (letter === q.correct) setScore(s => s + 1);
+  };
+
+  const handleNext = () => {
+    if (idx + 1 >= questions.length) {
+      setDone(true);
+    } else {
+      setIdx(i => i + 1);
+      setSelected(null);
+      setSubmitted(false);
+    }
+  };
+
+  const isCorrect = submitted && selected === q.correct;
+  const isWrong = submitted && selected !== q.correct;
+
+  return (
+    <div style={{ marginTop: 10, padding: "16px", background: "var(--bg-panel)", border: "1px solid var(--border)", borderRadius: 8 }}>
+      {/* Progress */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, fontSize: 13, color: "var(--text-faint)" }}>
+        <span>Question {idx + 1} of {questions.length}</span>
+        <span>{score}/{idx + (submitted ? 1 : 0)} correct</span>
+      </div>
+      <div style={{ height: 4, background: "var(--border-soft)", borderRadius: 2, marginBottom: 16, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${((idx + 1) / questions.length) * 100}%`, background: domainColor || "#2980b9", transition: "width 0.3s" }} />
+      </div>
+
+      {/* Question */}
+      <div style={{ fontSize: 15, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 16, fontWeight: 500 }}>{q.question}</div>
+
+      {/* Choices */}
+      {["A", "B", "C", "D"].map(letter => {
+        const isThis = selected === letter;
+        const isRight = letter === q.correct;
+        let bg = "var(--bg-panel-alt)";
+        let border = "var(--border-soft)";
+        let color = "var(--text-body)";
+        if (submitted && isRight) { bg = "#27ae600a"; border = "#27ae60"; color = "#27ae60"; }
+        else if (submitted && isThis && !isRight) { bg = "#e74c3c0a"; border = "#e74c3c"; color = "#e74c3c"; }
+        else if (!submitted && isThis) { bg = "#2980b90a"; border = "#2980b9"; }
+        return (
+          <div key={letter} style={{ marginBottom: 6 }}>
+            <button onClick={() => handleChoice(letter)} style={{
+              width: "100%", padding: "12px 16px", background: bg, border: `1px solid ${border}`,
+              borderRadius: 6, cursor: submitted ? "default" : "pointer", textAlign: "left",
+              fontFamily: "inherit", color, fontSize: 14, lineHeight: 1.6, display: "flex", gap: 10,
+            }}>
+              <span style={{ fontWeight: 700, flexShrink: 0, color: submitted && isRight ? "#27ae60" : submitted && isThis ? "#e74c3c" : "#c0392b" }}>{letter})</span>
+              <span>{q.choices[letter]}</span>
+            </button>
+            {/* Show explanation only for the selected answer */}
+            {submitted && isThis && (
+              <div style={{
+                marginLeft: 24, marginTop: 4, marginBottom: 4, padding: "10px 14px",
+                background: isRight ? "#27ae600a" : "#e74c3c0a",
+                borderLeft: `3px solid ${isRight ? "#27ae60" : "#e74c3c"}`,
+                borderRadius: "0 6px 6px 0", fontSize: 13, color: isRight ? "#27ae60" : "var(--text-muted)", lineHeight: 1.7,
+              }}>
+                {q.explanations[letter]}
+              </div>
+            )}
+            {/* If wrong, also show the correct answer's explanation */}
+            {submitted && isWrong && isRight && (
+              <div style={{
+                marginLeft: 24, marginTop: 4, marginBottom: 4, padding: "10px 14px",
+                background: "#27ae600a", borderLeft: "3px solid #27ae60",
+                borderRadius: "0 6px 6px 0", fontSize: 13, color: "#27ae60", lineHeight: 1.7,
+              }}>
+                {q.explanations[letter]}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Next button */}
+      {submitted && (
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={handleNext} style={{
+            padding: "10px 24px", background: "#27ae60", color: "#fff", border: "none",
+            borderRadius: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 600,
+          }}>
+            {idx + 1 >= questions.length ? "See Results" : "Next"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── PlanTab ─── */
-function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, toggle, onStartQuiz }) {
+function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, toggle }) {
   return (
     <div>
       {/* Weight bar */}
@@ -1497,39 +1671,9 @@ function PlanTab({ weeks, openWeek, setOpenWeek, openDay, setOpenDay, progress, 
                             </div>
                           )}
 
-                          {/* Daily Quiz Button */}
+                          {/* Inline Daily Quiz */}
                           {day.closure && (
-                            <button
-                              onClick={onStartQuiz}
-                              style={{
-                                marginTop: 8,
-                                padding: "10px 14px",
-                                background: "#2980b90a",
-                                border: "1px solid #2980b930",
-                                borderRadius: 6,
-                                fontSize: 13,
-                                color: "#2980b9",
-                                lineHeight: 1.5,
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                width: "100%",
-                                cursor: "pointer",
-                                fontFamily: "inherit",
-                                textAlign: "left",
-                              }}>
-                              <span>{day.closure.label}</span>
-                              <span style={{
-                                fontSize: 12,
-                                background: "#2980b9",
-                                color: "#fff",
-                                padding: "4px 10px",
-                                borderRadius: 4,
-                                fontWeight: 600,
-                              }}>
-                                Start Quiz
-                              </span>
-                            </button>
+                            <InlineDayQuiz closure={day.closure} domainColor={dc} />
                           )}
                         </div>
                       )}
