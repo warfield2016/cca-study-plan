@@ -1044,41 +1044,44 @@ export default function App() {
 
   const s = {
     root: {
-      fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       background: "var(--bg-root)",
       color: "var(--text-body)",
       minHeight: "100vh",
-      fontSize: 15,
-      lineHeight: 1.6,
-      padding: "0 clamp(20px, 4vw, 60px)",
+      fontSize: 16,
+      lineHeight: 1.7,
+      padding: "0 clamp(24px, 5vw, 80px)",
+      letterSpacing: -0.01 + "em",
+      WebkitFontSmoothing: "antialiased",
       ...themeVars(theme),
     },
     header: {
-      padding: "36px 0 20px",
+      padding: "40px 0 24px",
       borderBottom: "1px solid var(--border)",
       position: "relative",
     },
     tag: {
       display: "inline-block",
-      fontSize: 12,
+      fontSize: 13,
       letterSpacing: 3,
       color: "#c0392b",
       textTransform: "uppercase",
       fontWeight: 700,
-      marginBottom: 10,
+      marginBottom: 12,
     },
     h1: {
-      fontSize: 32,
+      fontSize: 36,
       fontWeight: 800,
       color: "var(--text-primary)",
       margin: 0,
-      lineHeight: 1.2,
-      letterSpacing: -0.5,
+      lineHeight: 1.15,
+      letterSpacing: -0.02 + "em",
     },
     sub: {
-      fontSize: 16,
+      fontSize: 17,
       color: "var(--text-faint)",
-      marginTop: 8,
+      marginTop: 10,
+      fontWeight: 400,
     },
     tabs: {
       display: "flex",
@@ -1086,11 +1089,11 @@ export default function App() {
       padding: "0",
       overflowX: "auto",
       gap: 0,
-      marginTop: 4,
+      marginTop: 8,
     },
     tabBtn: (active) => ({
-      padding: "14px 16px",
-      fontSize: 14,
+      padding: "16px 20px",
+      fontSize: 15,
       fontFamily: "inherit",
       fontWeight: active ? 700 : 500,
       background: "none",
@@ -1103,21 +1106,21 @@ export default function App() {
       transition: "color 0.15s",
     }),
     content: {
-      padding: "28px 0 40px",
+      padding: "32px 0 48px",
     },
     progressBar: {
       height: 6,
       background: "var(--border-soft)",
       borderRadius: 3,
       overflow: "hidden",
-      marginTop: 12,
+      marginTop: 14,
     },
     themeBtn: {
       position: "absolute",
-      top: 32,
+      top: 36,
       right: 0,
-      padding: "8px 14px",
-      fontSize: 13,
+      padding: "8px 16px",
+      fontSize: 14,
       fontFamily: "inherit",
       letterSpacing: 0.5,
       textTransform: "uppercase",
@@ -1197,7 +1200,7 @@ export default function App() {
         <div style={s.progressBar}>
           <div style={{ height: "100%", width: `${pct}%`, background: "#c0392b", transition: "width 0.3s" }} />
         </div>
-        <div style={{ fontSize: 13, color: "var(--text-faint)", marginTop: 6, display: "flex", justifyContent: "space-between" }}>
+        <div style={{ fontSize: 14, color: "var(--text-faint)", marginTop: 8, display: "flex", justifyContent: "space-between" }}>
           <span>Overall: {overallDone}/{overallTotal} ({pct}%)</span>
           <span>Tasks: {tasksDone}/{tasksTotal} | Concepts: {conceptsDone}/{conceptsTotal}</span>
         </div>
