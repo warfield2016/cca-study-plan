@@ -1,27 +1,28 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { loadUserProgress, saveUserProgress, isFirebaseConfigured } from "./firebase.js";
 
-/* ─── localStorage progress tracking ─── */
+/* ─── localStorage helpers ─── */
 const STORAGE_KEY = "cca-study-progress";
 const THEME_KEY = "cca-theme";
-function loadProgress() {
+const EMAIL_KEY = "cca-user-email";
+function loadLocalProgress() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
   catch { return {}; }
 }
-function saveProgress(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+function saveLocalProgress(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
 function loadTheme() {
-  try { return localStorage.getItem(THEME_KEY) || "dark"; }
-  catch { return "dark"; }
+  try { return localStorage.getItem(THEME_KEY) || "grey"; }
+  catch { return "grey"; }
 }
 function saveTheme(t) { try { localStorage.setItem(THEME_KEY, t); } catch {} }
+function loadEmail() {
+  try { return localStorage.getItem(EMAIL_KEY) || ""; }
+  catch { return ""; }
+}
+function saveEmail(e) { try { localStorage.setItem(EMAIL_KEY, e); } catch {} }
 
-/* ─── THEMES: three palettes (dark / grey / light) driving CSS variables ─── */
+/* ─── THEMES: grey + light ─── */
 const THEMES = {
-  dark: {
-    bgRoot: "#0c0c10", bgPanel: "var(--bg-panel)", bgPanelAlt: "var(--bg-panel-alt)",
-    border: "#1c1c28", borderSoft: "var(--border-soft)", borderMed: "var(--border-med)",
-    textPrimary: "var(--text-primary)", textBody: "var(--text-body)", textSoft: "var(--text-soft)",
-    textMuted: "var(--text-muted)", textFaint: "var(--text-faint)", textDim: "var(--text-dim)",
-  },
   grey: {
     bgRoot: "#1f2026", bgPanel: "#272830", bgPanelAlt: "#2e2f38",
     border: "#363742", borderSoft: "#323340", borderMed: "#3e3f4c",
@@ -30,14 +31,14 @@ const THEMES = {
   },
   light: {
     bgRoot: "#fafafa", bgPanel: "#ffffff", bgPanelAlt: "#f2f2f4",
-    border: "#d8d8dd", borderSoft: "#e4e4e8", borderMed: "var(--text-body)",
+    border: "#d8d8dd", borderSoft: "#e4e4e8", borderMed: "#c8c8d0",
     textPrimary: "#0c0c10", textBody: "#2a2a32", textSoft: "#4a4a55",
     textMuted: "#6a6a75", textFaint: "#8a8a95", textDim: "#b0b0b8",
   },
 };
 
 function themeVars(theme) {
-  const t = THEMES[theme] || THEMES.dark;
+  const t = THEMES[theme] || THEMES.grey;
   return {
     "--bg-root": t.bgRoot, "--bg-panel": t.bgPanel, "--bg-panel-alt": t.bgPanelAlt,
     "--border": t.border, "--border-soft": t.borderSoft, "--border-med": t.borderMed,
@@ -976,15 +977,54 @@ export default function App() {
   const [openWeek, setOpenWeek] = useState(1);
   const [openDomain, setOpenDomain] = useState(0);
   const [openDay, setOpenDay] = useState(null);
-  const [progress, setProgress] = useState(loadProgress);
+  const [progress, setProgress] = useState(loadLocalProgress);
   const [theme, setTheme] = useState(loadTheme);
+  const [userEmail, setUserEmail] = useState(loadEmail);
+  const [emailInput, setEmailInput] = useState("");
+  const [showLogin, setShowLogin] = useState(!loadEmail());
+
   useEffect(() => { saveTheme(theme); }, [theme]);
-  const cycleTheme = () => setTheme(t => t === "dark" ? "grey" : t === "grey" ? "light" : "dark");
+  const cycleTheme = () => setTheme(t => t === "grey" ? "light" : "grey");
+
+  // Load progress from Firestore on login
+  useEffect(() => {
+    if (!userEmail) return;
+    loadUserProgress(userEmail).then(data => {
+      if (data && data.studyProgress) {
+        setProgress(prev => ({ ...prev, ...data.studyProgress }));
+        saveLocalProgress({ ...loadLocalProgress(), ...data.studyProgress });
+      }
+    });
+  }, [userEmail]);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const email = emailInput.trim().toLowerCase();
+    if (!email || !email.includes("@")) return;
+    saveEmail(email);
+    setUserEmail(email);
+    setShowLogin(false);
+    // Record first visit
+    saveUserProgress(email, { firstSeen: new Date().toISOString() });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(EMAIL_KEY);
+    setUserEmail("");
+    setShowLogin(true);
+  };
+
+  const handleSkip = () => {
+    setShowLogin(false);
+  };
 
   const toggleProgress = (key) => {
     setProgress(prev => {
       const next = { ...prev, [key]: !prev[key] };
-      saveProgress(next);
+      saveLocalProgress(next);
+      if (userEmail) {
+        saveUserProgress(userEmail, { studyProgress: next });
+      }
       return next;
     });
   };
@@ -1009,9 +1049,8 @@ export default function App() {
       background: "var(--bg-root)",
       color: "var(--text-body)",
       minHeight: "100vh",
-      maxWidth: 1120,
-      margin: "0 auto",
-      padding: "0 40px",
+      margin: 0,
+      padding: "0 5vw",
       ...themeVars(theme),
     },
     header: {
@@ -1094,17 +1133,72 @@ export default function App() {
   const overallTotal = tasksTotal + conceptsTotal;
   const pct = overallTotal ? Math.round((overallDone / overallTotal) * 100) : 0;
 
+  if (showLogin) {
+    return (
+      <div style={{ ...themeVars("grey"), background: "var(--bg-root)", color: "var(--text-body)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace" }}>
+        <form onSubmit={handleLogin} style={{ background: "var(--bg-panel)", border: "1px solid var(--border)", borderRadius: 8, padding: "40px 32px", maxWidth: 400, width: "90%" }}>
+          <div style={{ fontSize: 11, letterSpacing: 2.5, color: "#c0392b", textTransform: "uppercase", fontWeight: 600, marginBottom: 8 }}>CCA-F Study Plan</div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Welcome</h1>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px", lineHeight: 1.5 }}>
+            Enter your email to save progress across devices.
+          </p>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={emailInput}
+            onChange={e => setEmailInput(e.target.value)}
+            style={{
+              width: "100%", padding: "10px 12px", fontSize: 14, fontFamily: "inherit",
+              background: "var(--bg-panel-alt)", color: "var(--text-primary)",
+              border: "1px solid var(--border)", borderRadius: 4, outline: "none",
+              marginBottom: 16, boxSizing: "border-box",
+            }}
+            autoFocus
+          />
+          <button
+            type="submit"
+            style={{
+              width: "100%", padding: "10px", fontSize: 13, fontFamily: "inherit",
+              fontWeight: 600, background: "#c0392b", color: "#fff", border: "none",
+              borderRadius: 4, cursor: "pointer", marginBottom: 12,
+            }}
+          >Start studying</button>
+          <button
+            type="button"
+            onClick={handleSkip}
+            style={{
+              width: "100%", padding: "8px", fontSize: 12, fontFamily: "inherit",
+              background: "none", color: "var(--text-dim)", border: "none",
+              cursor: "pointer",
+            }}
+          >Skip — use local storage only</button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div style={s.root}>
       <div style={s.header}>
-        <button
-          onClick={cycleTheme}
-          style={s.themeBtn}
-          title="Cycle theme: dark → grey → light"
-          aria-label={`Current theme: ${theme}. Click to cycle.`}
-        >
-          {theme === "dark" ? "◐ DARK" : theme === "grey" ? "◑ GREY" : "◯ LIGHT"}
-        </button>
+        <div style={{ position: "absolute", top: 24, right: 0, display: "flex", gap: 8, alignItems: "center" }}>
+          {userEmail && (
+            <>
+              <span style={{ fontSize: 11, color: "var(--text-dim)" }}>{userEmail}</span>
+              <button onClick={handleLogout} style={{ ...s.themeBtn, padding: "4px 8px", fontSize: 10 }}>Log out</button>
+            </>
+          )}
+          {!userEmail && (
+            <button onClick={() => setShowLogin(true)} style={{ ...s.themeBtn, padding: "4px 8px", fontSize: 10 }}>Log in</button>
+          )}
+          <button
+            onClick={cycleTheme}
+            style={s.themeBtn}
+            title="Toggle theme"
+            aria-label={`Current theme: ${theme}. Click to toggle.`}
+          >
+            {theme === "grey" ? "◑ GREY" : "◯ LIGHT"}
+          </button>
+        </div>
         <div style={s.tag}>CCA-F Study Plan</div>
         <h1 style={s.h1}>4 Weeks to 900+</h1>
         <p style={s.sub}>Scaled 100–1000 / 720 pass / 60 questions / 4 random scenarios</p>
