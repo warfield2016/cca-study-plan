@@ -1139,7 +1139,7 @@ export default function App() {
 
   if (showLogin) {
     return (
-      <div style={{ ...themeVars("grey"), background: "var(--bg-root)", color: "var(--text-body)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace" }}>
+      <div style={{ ...themeVars("grey"), background: "var(--bg-root)", color: "var(--text-body)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', -apple-system, sans-serif" }}>
         <form onSubmit={handleLogin} style={{ background: "var(--bg-panel)", border: "1px solid var(--border)", borderRadius: 8, padding: "40px 32px", maxWidth: 400, width: "90%" }}>
           <div style={{ fontSize: 11, letterSpacing: 2.5, color: "#c0392b", textTransform: "uppercase", fontWeight: 600, marginBottom: 8 }}>CCA-F Study Plan</div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Welcome</h1>
@@ -1214,6 +1214,8 @@ export default function App() {
         ))}
       </div>
 
+      <HowToUse />
+
       <div style={s.content}>
         {tab === "plan" && <PlanTab weeks={WEEKS} openWeek={openWeek} setOpenWeek={setOpenWeek} openDay={openDay} setOpenDay={setOpenDay} progress={progress} toggle={toggleProgress} onStartQuiz={() => setTab("quiz")} />}
         {tab === "brain" && <BrainMapTab progress={progress} toggle={toggleProgress} />}
@@ -1264,6 +1266,89 @@ function Check({ checked, onToggle }) {
     >
       {checked ? "✓" : ""}
     </span>
+  );
+}
+
+/* ─── HowToUse ─── */
+const GUIDE_DISMISSED_KEY = "cca-guide-dismissed";
+function HowToUse() {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem(GUIDE_DISMISSED_KEY) === "1"; } catch { return false; }
+  });
+  const [open, setOpen] = useState(!dismissed);
+
+  const dismiss = () => { setOpen(false); setDismissed(true); try { localStorage.setItem(GUIDE_DISMISSED_KEY, "1"); } catch {} };
+
+  return (
+    <div style={{ borderBottom: "1px solid var(--border)", padding: open ? "24px 0" : "12px 0" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          background: "none", border: "none", cursor: "pointer", fontFamily: "inherit",
+          fontSize: 14, fontWeight: 600, color: "var(--text-faint)",
+          display: "flex", alignItems: "center", gap: 8, padding: 0, width: "100%",
+        }}
+      >
+        <span style={{ color: "#c0392b", fontSize: 16 }}>{open ? "▾" : "▸"}</span>
+        How to get the most out of this
+      </button>
+
+      {open && (
+        <div style={{ marginTop: 20, fontSize: 15, color: "var(--text-body)", lineHeight: 1.8 }}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: 16, marginBottom: 6 }}>Start with the Weekly Plan</div>
+            <p style={{ margin: 0 }}>
+              This whole thing is designed as a 4-week sprint. Week 1 builds your mental models. Week 2 has you building real projects. Week 3 closes your gaps. Week 4 is pure exam prep. Follow the order — it compounds.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: 16, marginBottom: 6 }}>Each day has a quiz — use it</div>
+            <p style={{ margin: 0 }}>
+              Every day in the plan has a "Start Quiz" button at the bottom. That's your daily check. If you can't pass it, you didn't learn the material yet. Go back, re-read, try again. Don't skip ahead hoping it'll click later — it won't.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: 16, marginBottom: 6 }}>The Brain Map shows you how everything connects</div>
+            <p style={{ margin: 0 }}>
+              The exam doesn't test domains in isolation. It throws scenarios that touch 3 domains at once. The Brain Map tab shows those connections. Click any concept and you'll see what it relates to, why it matters in production, and what to watch for on the exam. Use this when you need the big picture.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: 16, marginBottom: 6 }}>Drill your weak spots, not your strengths</div>
+            <p style={{ margin: 0 }}>
+              Go to the Quiz tab and hit "Weak Spots" mode. It finds the task statements where you're scoring lowest and drills those specifically. The exam doesn't care if you're 95% on your best domain — it cares if you're below 70% on any domain. Fix your weak spots first.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: 16, marginBottom: 6 }}>The Cheat Sheet is your exam-day weapon</div>
+            <p style={{ margin: 0 }}>
+              Every rule in the Cheat Sheet tab is expandable. Click it to see the full reasoning and a concrete example. Review these the morning of your exam. They're the decision shortcuts that let you eliminate wrong answers in seconds instead of deliberating for minutes.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: 16, marginBottom: 6 }}>Don't just read — build</div>
+            <p style={{ margin: 0 }}>
+              The Projects tab has 4 production-style builds mapped to exam scenarios. Do them in Week 2. You'll recognize the patterns on the exam because you already built them. Reading about agentic loops is one thing. Watching one break in your own code is how it sticks.
+            </p>
+          </div>
+
+          <button
+            onClick={dismiss}
+            style={{
+              marginTop: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600,
+              background: "var(--bg-panel)", color: "var(--text-faint)",
+              border: "1px solid var(--border)", borderRadius: 6, cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >Got it — don't show this again</button>
+        </div>
+      )}
+    </div>
   );
 }
 
