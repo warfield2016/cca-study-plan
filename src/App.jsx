@@ -1009,9 +1009,9 @@ export default function App() {
       background: "var(--bg-root)",
       color: "var(--text-body)",
       minHeight: "100vh",
-      maxWidth: 860,
+      maxWidth: 1120,
       margin: "0 auto",
-      padding: "0 24px",
+      padding: "0 40px",
       ...themeVars(theme),
     },
     header: {
