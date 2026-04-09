@@ -13,13 +13,13 @@
  */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAFf9eGCsFBL3AIdtpUb_CqzzJS_RhEXn0",
-  authDomain: "cca-study-plan.firebaseapp.com",
-  projectId: "cca-study-plan",
-  storageBucket: "cca-study-plan.firebasestorage.app",
-  messagingSenderId: "378298798232",
-  appId: "1:378298798232:web:b37cd47a165fb59974c0ed",
-  measurementId: "G-5TKPJKCN75",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "",
 };
 
 export function isFirebaseConfigured() {
