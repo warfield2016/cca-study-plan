@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { loadUserProgress, saveUserProgress, isFirebaseConfigured } from "./firebase.js";
+import QuizEngine from "./QuizEngine.jsx";
 
 /* ─── localStorage helpers ─── */
 const STORAGE_KEY = "cca-study-progress";
@@ -1038,6 +1039,7 @@ export default function App() {
     { id: "builds", label: "Projects" },
     { id: "rules", label: "Decision Rules" },
     { id: "cheat", label: "Cheat Sheet" },
+    { id: "quiz", label: "Quiz" },
   ];
 
   const s = {
@@ -1214,6 +1216,7 @@ export default function App() {
         {tab === "builds" && <BuildsTab projects={PROJECTS} />}
         {tab === "rules" && <RulesTab rules={RULES} />}
         {tab === "cheat" && <CheatSheetTab data={CHEAT_SHEET} />}
+        {tab === "quiz" && <QuizEngine userEmail={userEmail} />}
       </div>
 
       <div style={{
