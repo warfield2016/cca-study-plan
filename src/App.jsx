@@ -1000,7 +1000,7 @@ export default function App() {
   const handleLogin = (e) => {
     e.preventDefault();
     const email = emailInput.trim().toLowerCase();
-    if (!email || !email.includes("@")) return;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 254) return;
     saveEmail(email);
     setUserEmail(email);
     setShowLogin(false);
@@ -1014,9 +1014,6 @@ export default function App() {
     setShowLogin(true);
   };
 
-  const handleSkip = () => {
-    setShowLogin(false);
-  };
 
   const toggleProgress = (key) => {
     setProgress(prev => {
@@ -1163,15 +1160,6 @@ export default function App() {
               borderRadius: 4, cursor: "pointer", marginBottom: 12,
             }}
           >Start studying</button>
-          <button
-            type="button"
-            onClick={handleSkip}
-            style={{
-              width: "100%", padding: "8px", fontSize: 12, fontFamily: "inherit",
-              background: "none", color: "var(--text-dim)", border: "none",
-              cursor: "pointer",
-            }}
-          >Skip — use local storage only</button>
         </form>
       </div>
     );
