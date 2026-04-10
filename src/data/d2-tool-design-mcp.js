@@ -12,19 +12,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Tool description is the primary selection mechanism",
     question: "A customer support resolution agent has two tools: `search_knowledge_base` (description: 'Searches internal KB articles') and `search_tickets` (description: 'Searches past support tickets'). When a customer asks about a billing dispute, Claude consistently calls `search_tickets` instead of `search_knowledge_base`, even though the KB has the authoritative billing policy. What is the most effective fix?",
-    choices: {
-      A: "Rename `search_knowledge_base` to `search_billing_policies` so the name signals billing relevance",
-      B: "Update the `search_knowledge_base` description to explicitly mention billing policies, refund rules, and dispute resolution procedures",
-      C: "Add a few-shot example showing Claude calling `search_knowledge_base` for billing questions",
-      D: "Add a system prompt instruction: 'For billing questions, always use search_knowledge_base first'"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Tool names are not the primary mechanism Claude uses for selection. While a better name might help marginally, descriptions are the authoritative signal Claude relies on to decide which tool to invoke.",
-      B: "CORRECT: Descriptions are the ONLY reliable mechanism for tool selection. By enriching the description to explicitly mention billing policies, refund rules, and dispute procedures, Claude can match the user's billing query to the correct tool. This directly addresses the root cause.",
-      C: "INCORRECT: Few-shot examples fix invocation style (how parameters are formatted, what structure the call takes), NOT selection. They do not reliably steer Claude toward choosing one tool over another for a given query type.",
-      D: "INCORRECT: System prompt instructions about tool selection create fragile 'ghost associations' that degrade as conversation length grows. They also don't scale when you have many routing rules. The description is the canonical place for selection hints."
-    }
+    choices: { A: "Update the `search_knowledge_base` description to explicitly mention billing policies, refund rules, and dispute resolution procedures", B: "Add a few-shot example showing Claude calling `search_knowledge_base` for billing questions", C: "Add a system prompt instruction: 'For billing questions, always use search_knowledge_base first'", D: "Rename `search_knowledge_base` to `search_billing_policies` so the name signals billing relevance" },
+    correct: "A",
+    explanations: { A: "CORRECT: Descriptions are the ONLY reliable mechanism for tool selection. By enriching the description to explicitly mention billing policies, refund rules, and dispute procedures, Claude can match the user's billing query to the correct tool. This directly addresses the root cause.", B: "INCORRECT: Few-shot examples fix invocation style (how parameters are formatted, what structure the call takes), NOT selection. They do not reliably steer Claude toward choosing one tool over another for a given query type.", C: "INCORRECT: System prompt instructions about tool selection create fragile 'ghost associations' that degrade as conversation length grows. They also don't scale when you have many routing rules. The description is the canonical place for selection hints.", D: "INCORRECT: Tool names are not the primary mechanism Claude uses for selection. While a better name might help marginally, descriptions are the authoritative signal Claude relies on to decide which tool to invoke." }
   },
   {
     id: "d2-002",
@@ -35,19 +25,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Splitting overlapping tools improves selection accuracy",
     question: "A multi-agent research system has a single tool `analyze_data` with description: 'Analyzes financial data, performs statistical tests, generates visualizations, and exports reports.' Researchers report that Claude often generates a chart when they asked for a statistical test, and vice versa. What is the best architectural fix?",
-    choices: {
-      A: "Add an `action_type` enum parameter to `analyze_data` with values like 'statistics', 'visualization', 'export' to disambiguate intent",
-      B: "Split `analyze_data` into separate tools: `run_statistical_test`, `generate_visualization`, and `export_report`, each with focused descriptions",
-      C: "Add few-shot examples demonstrating the correct parameter patterns for statistical tests vs. visualizations",
-      D: "Enhance the system prompt with detailed instructions on when to use each capability of `analyze_data`"
-    },
+    choices: { A: "Add an `action_type` enum parameter to `analyze_data` with values like 'statistics', 'visualization', 'export' to disambiguate intent", B: "Split `analyze_data` into separate tools: `run_statistical_test`, `generate_visualization`, and `export_report`, each with focused descriptions", C: "Enhance the system prompt with detailed instructions on when to use each capability of `analyze_data`", D: "Add few-shot examples demonstrating the correct parameter patterns for statistical tests vs. visualizations" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: While adding an enum parameter helps, the core problem is that a single overloaded tool description makes selection ambiguous. Claude still has to parse one broad description and then also pick the right enum value — two opportunities for error instead of one.",
-      B: "CORRECT: Splitting into focused tools is the recommended pattern when tools have overlapping or multiple capabilities. Each tool gets a clear, single-purpose description, which is the primary mechanism Claude uses for selection. This eliminates ambiguity at the selection stage.",
-      C: "INCORRECT: Few-shot examples fix invocation style (how to format parameters), not tool selection logic. They won't reliably prevent Claude from choosing the wrong action within an overloaded tool.",
-      D: "INCORRECT: System prompt instructions for tool routing create brittle associations that degrade over long conversations and don't scale. The description-per-tool approach is structurally more reliable."
-    }
+    explanations: { A: "INCORRECT: While adding an enum parameter helps, the core problem is that a single overloaded tool description makes selection ambiguous. Claude still has to parse one broad description and then also pick the right enum value — two opportunities for error instead of one.", B: "CORRECT: Splitting into focused tools is the recommended pattern when tools have overlapping or multiple capabilities. Each tool gets a clear, single-purpose description, which is the primary mechanism Claude uses for selection. This eliminates ambiguity at the selection stage.", C: "INCORRECT: System prompt instructions for tool routing create brittle associations that degrade over long conversations and don't scale. The description-per-tool approach is structurally more reliable.", D: "INCORRECT: Few-shot examples fix invocation style (how to format parameters), not tool selection logic. They won't reliably prevent Claude from choosing the wrong action within an overloaded tool." }
   },
   {
     id: "d2-003",
@@ -58,19 +38,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Few-shot examples fix invocation style, not selection",
     question: "A developer productivity tool suite includes `run_test(test_path: string, flags: string[])`. Developers complain that Claude passes flags in the wrong format — using comma-separated strings like `'--verbose,--coverage'` instead of separate array elements `['--verbose', '--coverage']`. What is the most targeted fix?",
-    choices: {
-      A: "Change the parameter type from `string[]` to a single `string` to match Claude's natural formatting",
-      B: "Add few-shot examples in the system prompt showing the correct array format for the `flags` parameter",
-      C: "Update the tool description to say 'flags must be passed as individual array elements, not comma-separated'",
-      D: "Split the tool into `run_test_verbose` and `run_test_coverage` to remove the flags parameter entirely"
-    },
+    choices: { A: "Update the tool description to say 'flags must be passed as individual array elements, not comma-separated'", B: "Add few-shot examples in the system prompt showing the correct array format for the `flags` parameter", C: "Change the parameter type from `string[]` to a single `string` to match Claude's natural formatting", D: "Split the tool into `run_test_verbose` and `run_test_coverage` to remove the flags parameter entirely" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Changing the schema to accommodate Claude's mistakes degrades the API contract and pushes parsing complexity to the backend. The tool schema should reflect the correct interface.",
-      B: "CORRECT: Few-shot examples are specifically designed to fix invocation style issues — how parameters are formatted, structured, and populated. This is exactly the right use case: Claude is selecting the right tool but formatting the call incorrectly.",
-      C: "INCORRECT: Descriptions primarily drive tool selection, not parameter formatting. While adding format hints to descriptions can help marginally, few-shot examples are far more effective at demonstrating the exact call structure expected.",
-      D: "INCORRECT: This is a massive overreaction to a formatting issue. Splitting tools eliminates useful flexibility and creates tool sprawl. The problem is invocation style, which few-shot examples directly address."
-    }
+    explanations: { A: "INCORRECT: Descriptions primarily drive tool selection, not parameter formatting. While adding format hints to descriptions can help marginally, few-shot examples are far more effective at demonstrating the exact call structure expected.", B: "CORRECT: Few-shot examples are specifically designed to fix invocation style issues — how parameters are formatted, structured, and populated. This is exactly the right use case: Claude is selecting the right tool but formatting the call incorrectly.", C: "INCORRECT: Changing the schema to accommodate Claude's mistakes degrades the API contract and pushes parsing complexity to the backend. The tool schema should reflect the correct interface.", D: "INCORRECT: This is a massive overreaction to a formatting issue. Splitting tools eliminates useful flexibility and creates tool sprawl. The problem is invocation style, which few-shot examples directly address." }
   },
   {
     id: "d2-004",
@@ -81,19 +51,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "System prompt keywords create ghost tool associations",
     question: "A customer support agent's system prompt says: 'You are a helpful agent. When customers mention refunds, use the refund_processor tool to issue refunds quickly.' The agent also has a `check_eligibility` tool (description: 'Verifies whether a customer qualifies for a refund based on purchase date, product condition, and return policy'). When customers ask if they're eligible for a refund, Claude skips `check_eligibility` and goes straight to `refund_processor`. Why?",
-    choices: {
-      A: "The `refund_processor` tool has a higher priority in the tool list ordering, so Claude prefers it",
-      B: "The system prompt keyword 'refund' creates a ghost association that overrides the tool description's nuanced eligibility-checking guidance",
-      C: "Claude's context window is too small to process both tool descriptions simultaneously",
-      D: "The `check_eligibility` description is too long, causing Claude to skip reading it entirely"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Tool list ordering does not establish priority for Claude's selection. Claude evaluates all available tools based on their descriptions, not their position in the list.",
-      B: "CORRECT: System prompt keywords like 'When customers mention refunds, use refund_processor' create ghost associations — direct keyword-to-tool mappings that bypass the nuanced matching that descriptions enable. When the customer says 'refund', this association fires before Claude even evaluates `check_eligibility`'s description.",
-      C: "INCORRECT: Claude's context window is large enough to handle many tool descriptions simultaneously. The issue is not capacity but the associative shortcut created by the system prompt instruction.",
-      D: "INCORRECT: Claude does not skip reading descriptions based on length. The issue is that the system prompt instruction creates a stronger, more direct association than the description-based matching."
-    }
+    choices: { A: "The system prompt keyword 'refund' creates a ghost association that overrides the tool description's nuanced eligibility-checking guidance", B: "Claude's context window is too small to process both tool descriptions simultaneously", C: "The `refund_processor` tool has a higher priority in the tool list ordering, so Claude prefers it", D: "The `check_eligibility` description is too long, causing Claude to skip reading it entirely" },
+    correct: "A",
+    explanations: { A: "CORRECT: System prompt keywords like 'When customers mention refunds, use refund_processor' create ghost associations — direct keyword-to-tool mappings that bypass the nuanced matching that descriptions enable. When the customer says 'refund', this association fires before Claude even evaluates `check_eligibility`'s description.", B: "INCORRECT: Claude's context window is large enough to handle many tool descriptions simultaneously. The issue is not capacity but the associative shortcut created by the system prompt instruction.", C: "INCORRECT: Tool list ordering does not establish priority for Claude's selection. Claude evaluates all available tools based on their descriptions, not their position in the list.", D: "INCORRECT: Claude does not skip reading descriptions based on length. The issue is that the system prompt instruction creates a stronger, more direct association than the description-based matching." }
   },
   {
     id: "d2-005",
@@ -104,19 +64,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Description specificity drives accurate selection",
     question: "A multi-agent research system for a pharmaceutical company has tools `search_pubmed` and `search_clinical_trials`. Both tools return study data. The `search_pubmed` description says 'Searches published medical literature.' The `search_clinical_trials` description says 'Searches registered clinical trials.' When a researcher asks about Phase III trial results for a new drug, Claude calls `search_pubmed` about 40% of the time. What is the best fix?",
-    choices: {
-      A: "Merge both tools into a single `search_medical` tool and add a `source` parameter",
-      B: "Add a system prompt rule: 'For any query mentioning trial phases, always use search_clinical_trials'",
-      C: "Update `search_clinical_trials` description to: 'Searches registered clinical trials including Phase I-IV studies, enrollment data, endpoints, and regulatory status'",
-      D: "Rename `search_clinical_trials` to `search_phase_trials` to include the keyword 'phase'"
-    },
+    choices: { A: "Merge both tools into a single `search_medical` tool and add a `source` parameter", B: "Rename `search_clinical_trials` to `search_phase_trials` to include the keyword 'phase'", C: "Update `search_clinical_trials` description to: 'Searches registered clinical trials including Phase I-IV studies, enrollment data, endpoints, and regulatory status'", D: "Add a system prompt rule: 'For any query mentioning trial phases, always use search_clinical_trials'" },
     correct: "C",
-    explanations: {
-      A: "INCORRECT: Merging tools increases ambiguity. When two tools have distinct sources and use cases, keeping them separate with precise descriptions is the recommended pattern.",
-      B: "INCORRECT: System prompt routing rules create fragile ghost associations. They don't generalize well to variations (e.g., 'stage III' vs 'Phase 3' vs 'pivotal trial') and degrade over long conversations.",
-      C: "CORRECT: Enriching the description with specific terms like 'Phase I-IV studies', 'enrollment data', 'endpoints' gives Claude much stronger matching signals. Descriptions are the primary mechanism for selection, and specificity in descriptions directly improves accuracy.",
-      D: "INCORRECT: Tool names are not the primary selection mechanism. Changing the name to include 'phase' provides minimal signal compared to enriching the description with comprehensive, domain-relevant terms."
-    }
+    explanations: { A: "INCORRECT: Merging tools increases ambiguity. When two tools have distinct sources and use cases, keeping them separate with precise descriptions is the recommended pattern.", B: "INCORRECT: Tool names are not the primary selection mechanism. Changing the name to include 'phase' provides minimal signal compared to enriching the description with comprehensive, domain-relevant terms.", C: "CORRECT: Enriching the description with specific terms like 'Phase I-IV studies', 'enrollment data', 'endpoints' gives Claude much stronger matching signals. Descriptions are the primary mechanism for selection, and specificity in descriptions directly improves accuracy.", D: "INCORRECT: System prompt routing rules create fragile ghost associations. They don't generalize well to variations (e.g., 'stage III' vs 'Phase 3' vs 'pivotal trial') and degrade over long conversations." }
   },
   {
     id: "d2-006",
@@ -127,19 +77,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Tool description must differentiate overlapping capabilities",
     question: "A developer productivity platform provides Claude with `search_codebase(query: string)` (description: 'Searches the codebase for matching code') and `search_documentation(query: string)` (description: 'Searches project documentation'). When developers ask 'How does the authentication middleware work?', Claude calls both tools redundantly, increasing latency and cost. What is the root cause and fix?",
-    choices: {
-      A: "The descriptions are too similar in structure. Rewrite them to clearly differentiate: `search_codebase` for 'finding specific code implementations, function definitions, and usage patterns' vs `search_documentation` for 'finding architectural explanations, setup guides, and design decisions'",
-      B: "Set `tool_choice` to force only one tool per turn to prevent redundant calls",
-      C: "Remove `search_documentation` and rely solely on `search_codebase` since code is the source of truth",
-      D: "Add a pre-processing step that classifies the query and routes to exactly one tool before Claude sees it"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: The root cause is that both descriptions are vague enough that Claude can't differentiate when each is appropriate. By making descriptions specific about what each tool is best at — implementations vs. explanations — Claude can make informed selection decisions. This is the canonical fix for overlapping tool confusion.",
-      B: "INCORRECT: Forcing one tool per turn doesn't solve the selection problem — Claude might still pick the wrong one. And it prevents legitimate cases where both sources are genuinely needed.",
-      C: "INCORRECT: Removing documentation search eliminates a valuable resource. Many questions about 'how something works' are better answered by documentation than by raw code. The fix is better descriptions, not fewer tools.",
-      D: "INCORRECT: Adding a pre-processing classifier adds complexity and latency, and can't leverage the conversational context Claude has. Better descriptions let Claude's built-in reasoning handle routing."
-    }
+    choices: { A: "Remove `search_documentation` and rely solely on `search_codebase` since code is the source of truth", B: "Add a pre-processing step that classifies the query and routes to exactly one tool before Claude sees it", C: "The descriptions are too similar in structure. Rewrite them to clearly differentiate: `search_codebase` for 'finding specific code implementations, function definitions, and usage patterns' vs `search_documentation` for 'finding architectural explanations, setup guides, and design decisions'", D: "Set `tool_choice` to force only one tool per turn to prevent redundant calls" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Removing documentation search eliminates a valuable resource. Many questions about 'how something works' are better answered by documentation than by raw code. The fix is better descriptions, not fewer tools.", B: "INCORRECT: Adding a pre-processing classifier adds complexity and latency, and can't leverage the conversational context Claude has. Better descriptions let Claude's built-in reasoning handle routing.", C: "CORRECT: The root cause is that both descriptions are vague enough that Claude can't differentiate when each is appropriate. By making descriptions specific about what each tool is best at — implementations vs. explanations — Claude can make informed selection decisions. This is the canonical fix for overlapping tool confusion.", D: "INCORRECT: Forcing one tool per turn doesn't solve the selection problem — Claude might still pick the wrong one. And it prevents legitimate cases where both sources are genuinely needed." }
   },
   {
     id: "d2-007",
@@ -150,19 +90,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Schema design affects invocation correctness",
     question: "A customer support agent has a `create_ticket` tool with parameters: `customer_id: string`, `priority: string`, `category: string`, `description: string`. Support engineers notice Claude frequently assigns arbitrary priority values like 'medium-high' or 'somewhat urgent'. What schema improvement most directly fixes this?",
-    choices: {
-      A: "Change `priority` to an enum type with defined values: `['P1-Critical', 'P2-High', 'P3-Medium', 'P4-Low']`",
-      B: "Add validation logic on the backend to reject invalid priority values and return an error",
-      C: "Add a few-shot example showing the exact priority values to use",
-      D: "Update the tool description to list all valid priority values"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Using an enum in the JSON schema constrains Claude to only valid values at the interface level. This is the most direct and reliable fix — Claude will see the allowed values and select from them, preventing any invented values.",
-      B: "INCORRECT: Backend validation catches errors after the fact but creates a poor user experience — the tool call fails, Claude has to retry, adding latency and cost. Schema-level constraints prevent the error from occurring.",
-      C: "INCORRECT: Few-shot examples help with invocation style, but they're not as reliable as schema constraints for limiting parameter values. Claude might still interpolate between examples.",
-      D: "INCORRECT: Listing values in the description is less effective than using a schema enum. Descriptions are primarily for selection, and Claude may not consistently extract valid values from free-text descriptions."
-    }
+    choices: { A: "Update the tool description to list all valid priority values", B: "Change `priority` to an enum type with defined values: `['P1-Critical', 'P2-High', 'P3-Medium', 'P4-Low']`", C: "Add validation logic on the backend to reject invalid priority values and return an error", D: "Add a few-shot example showing the exact priority values to use" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Listing values in the description is less effective than using a schema enum. Descriptions are primarily for selection, and Claude may not consistently extract valid values from free-text descriptions.", B: "CORRECT: Using an enum in the JSON schema constrains Claude to only valid values at the interface level. This is the most direct and reliable fix — Claude will see the allowed values and select from them, preventing any invented values.", C: "INCORRECT: Backend validation catches errors after the fact but creates a poor user experience — the tool call fails, Claude has to retry, adding latency and cost. Schema-level constraints prevent the error from occurring.", D: "INCORRECT: Few-shot examples help with invocation style, but they're not as reliable as schema constraints for limiting parameter values. Claude might still interpolate between examples." }
   },
   {
     id: "d2-008",
@@ -173,19 +103,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Avoiding tool sprawl through principled design",
     question: "A multi-agent research system for a hedge fund starts with 5 well-designed tools. Over 6 months, individual analysts request specialized variants, growing to 23 tools. Analysts report that Claude now frequently selects the wrong tool or calls tools that partially overlap. What is the best remediation strategy?",
-    choices: {
-      A: "Add detailed system prompt instructions mapping each analyst's typical queries to the correct tools",
-      B: "Consolidate back to 8-10 tools by merging overlapping variants, using parameters to handle specialization, and writing precise descriptions that clearly differentiate each tool's purpose",
-      C: "Keep all 23 tools but add a pre-classifier agent that filters down to 5 relevant tools before passing to Claude",
-      D: "Keep all 23 tools and add few-shot examples for each one to improve selection accuracy"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: System prompt routing instructions for 23 tools would be extremely long, fragile, and create cascading ghost associations. This doesn't address the fundamental problem of tool sprawl degrading selection quality.",
-      B: "CORRECT: Research shows that beyond roughly 15-18 tools, selection accuracy degrades significantly. Consolidating to 8-10 tools with clear, differentiated descriptions and using parameters for specialization is the recommended approach. This restores selection quality while preserving functionality.",
-      C: "INCORRECT: While a pre-classifier can help, it adds architectural complexity and introduces its own selection errors. The root cause — too many overlapping tools — should be addressed directly through consolidation.",
-      D: "INCORRECT: Few-shot examples fix invocation style, not selection. Adding examples for 23 tools would consume enormous context and still wouldn't solve the fundamental selection degradation from tool sprawl."
-    }
+    choices: { A: "Consolidate back to 8-10 tools by merging overlapping variants, using parameters to handle specialization, and writing precise descriptions that clearly differentiate each tool's purpose", B: "Keep all 23 tools but add a pre-classifier agent that filters down to 5 relevant tools before passing to Claude", C: "Keep all 23 tools and add few-shot examples for each one to improve selection accuracy", D: "Add detailed system prompt instructions mapping each analyst's typical queries to the correct tools" },
+    correct: "A",
+    explanations: { A: "CORRECT: Research shows that beyond roughly 15-18 tools, selection accuracy degrades significantly. Consolidating to 8-10 tools with clear, differentiated descriptions and using parameters for specialization is the recommended approach. This restores selection quality while preserving functionality.", B: "INCORRECT: While a pre-classifier can help, it adds architectural complexity and introduces its own selection errors. The root cause — too many overlapping tools — should be addressed directly through consolidation.", C: "INCORRECT: Few-shot examples fix invocation style, not selection. Adding examples for 23 tools would consume enormous context and still wouldn't solve the fundamental selection degradation from tool sprawl.", D: "INCORRECT: System prompt routing instructions for 23 tools would be extremely long, fragile, and create cascading ghost associations. This doesn't address the fundamental problem of tool sprawl degrading selection quality." }
   },
   {
     id: "d2-009",
@@ -196,19 +116,9 @@ export const d2Questions = [
     scenario: 6,
     importance: "Structured output schemas improve extraction quality",
     question: "A structured data extraction pipeline uses Claude to extract financial data from invoices. The `extract_invoice` tool returns freeform JSON, and downstream systems frequently fail because field names vary ('total', 'totalAmount', 'invoice_total'). What is the best fix?",
-    choices: {
-      A: "Add a post-processing step to normalize field names after extraction",
-      B: "Define a strict output schema in the tool with required fields like `total_amount`, `vendor_name`, `line_items[]` and use JSON Schema validation",
-      C: "Add more few-shot examples showing the exact field names to use",
-      D: "Switch from JSON to CSV output to enforce column names"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Post-processing normalization is brittle and requires maintaining a mapping of all possible field name variants. It treats the symptom rather than the cause.",
-      B: "CORRECT: Defining a strict JSON Schema for the tool output constrains Claude to use exact field names and structures. This ensures consistency at the interface level and eliminates downstream parsing failures. Schema-driven design is the recommended approach for structured extraction.",
-      C: "INCORRECT: Few-shot examples help but aren't sufficient — Claude may still vary field names, especially for edge cases not covered by examples. Schema constraints are more reliable.",
-      D: "INCORRECT: CSV is less expressive than JSON for nested data like line items. This constrains capability without addressing the root issue of undefined output structure."
-    }
+    choices: { A: "Define a strict output schema in the tool with required fields like `total_amount`, `vendor_name`, `line_items[]` and use JSON Schema validation", B: "Add a post-processing step to normalize field names after extraction", C: "Add more few-shot examples showing the exact field names to use", D: "Switch from JSON to CSV output to enforce column names" },
+    correct: "A",
+    explanations: { A: "CORRECT: Defining a strict JSON Schema for the tool output constrains Claude to use exact field names and structures. This ensures consistency at the interface level and eliminates downstream parsing failures. Schema-driven design is the recommended approach for structured extraction.", B: "INCORRECT: Post-processing normalization is brittle and requires maintaining a mapping of all possible field name variants. It treats the symptom rather than the cause.", C: "INCORRECT: Few-shot examples help but aren't sufficient — Claude may still vary field names, especially for edge cases not covered by examples. Schema constraints are more reliable.", D: "INCORRECT: CSV is less expressive than JSON for nested data like line items. This constrains capability without addressing the root issue of undefined output structure." }
   },
   {
     id: "d2-010",
@@ -219,19 +129,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Parameter description clarity prevents misuse",
     question: "A developer productivity tool `deploy_service(environment: string, version: string, rollback: boolean)` is used by Claude in a CI/CD context. Engineers discover that Claude sometimes sets `rollback: true` when deploying a new version, thinking it means 'enable rollback capability' rather than 'execute a rollback now'. How should this be fixed without changing the tool's behavior?",
-    choices: {
-      A: "Rename the parameter to `execute_rollback_immediately` to make intent unambiguous",
-      B: "Remove the `rollback` parameter and create a separate `rollback_service` tool",
-      C: "Add a detailed parameter description: 'When true, IMMEDIATELY rolls back the service to the previous version instead of deploying. Does NOT enable rollback capability — it triggers an instant rollback. Default: false'",
-      D: "Add a system prompt instruction: 'The rollback parameter means execute rollback, not enable rollback'"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: While a better name helps, parameter names alone aren't as effective as parameter descriptions for conveying precise semantics. Long parameter names also reduce readability.",
-      B: "INCORRECT: Creating a separate tool is viable but overly drastic for a parameter clarity issue. This question specifically asks for a fix without changing the tool's behavior, and splitting the tool changes the interface.",
-      C: "CORRECT: A detailed parameter description is the right-level fix. It clarifies the exact semantics, addresses the specific misinterpretation, and states what the parameter does NOT mean. Parameter descriptions are how you communicate precise intent for individual fields.",
-      D: "INCORRECT: System prompt instructions for individual parameter semantics are fragile and don't scale. If you have many tools with nuanced parameters, the system prompt becomes bloated. Parameter descriptions are the canonical location for this information."
-    }
+    choices: { A: "Remove the `rollback` parameter and create a separate `rollback_service` tool", B: "Add a detailed parameter description: 'When true, IMMEDIATELY rolls back the service to the previous version instead of deploying. Does NOT enable rollback capability — it triggers an instant rollback. Default: false'", C: "Add a system prompt instruction: 'The rollback parameter means execute rollback, not enable rollback'", D: "Rename the parameter to `execute_rollback_immediately` to make intent unambiguous" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Creating a separate tool is viable but overly drastic for a parameter clarity issue. This question specifically asks for a fix without changing the tool's behavior, and splitting the tool changes the interface.", B: "CORRECT: A detailed parameter description is the right-level fix. It clarifies the exact semantics, addresses the specific misinterpretation, and states what the parameter does NOT mean. Parameter descriptions are how you communicate precise intent for individual fields.", C: "INCORRECT: System prompt instructions for individual parameter semantics are fragile and don't scale. If you have many tools with nuanced parameters, the system prompt becomes bloated. Parameter descriptions are the canonical location for this information.", D: "INCORRECT: While a better name helps, parameter names alone aren't as effective as parameter descriptions for conveying precise semantics. Long parameter names also reduce readability." }
   },
   {
     id: "d2-011",
@@ -242,19 +142,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Tools should have single clear purposes",
     question: "A customer support agent has a `manage_subscription` tool that can create, modify, cancel, pause, and resume subscriptions depending on an `action` parameter. Support staff report that Claude sometimes sends `action: 'modify'` when a customer wants to cancel, because the customer said 'change my subscription' (meaning cancel). What is the best architectural improvement?",
-    choices: {
-      A: "Add a confirmation step where Claude asks the customer to confirm the action before calling the tool",
-      B: "Add more values to the action enum to capture nuances like 'change', 'update', 'alter'",
-      C: "Split into separate tools: `create_subscription`, `modify_subscription`, `cancel_subscription`, `pause_subscription`, `resume_subscription`, each with descriptions that include common customer phrasings",
-      D: "Add few-shot examples mapping customer phrasings like 'change my subscription' to the correct action values"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: A confirmation step adds friction to every interaction and doesn't address the root cause. Claude is still making the wrong selection — you're just adding a manual catch.",
-      B: "INCORRECT: Adding more enum values increases ambiguity. 'Change' could still mean modify or cancel depending on context. More options make correct selection harder, not easier.",
-      C: "CORRECT: Splitting into separate tools with focused descriptions is the recommended pattern. Each tool's description can include the specific customer phrasings that should trigger it (e.g., cancel_subscription: 'Cancels a subscription. Use when customer wants to end, stop, discontinue, or change away from their plan'). Descriptions drive selection, and focused tools have clearer descriptions.",
-      D: "INCORRECT: Few-shot examples fix invocation style, not selection. They cannot reliably teach Claude to map ambiguous customer language to correct action parameter values."
-    }
+    choices: { A: "Add a confirmation step where Claude asks the customer to confirm the action before calling the tool", B: "Split into separate tools: `create_subscription`, `modify_subscription`, `cancel_subscription`, `pause_subscription`, `resume_subscription`, each with descriptions that include common customer phrasings", C: "Add few-shot examples mapping customer phrasings like 'change my subscription' to the correct action values", D: "Add more values to the action enum to capture nuances like 'change', 'update', 'alter'" },
+    correct: "B",
+    explanations: { A: "INCORRECT: A confirmation step adds friction to every interaction and doesn't address the root cause. Claude is still making the wrong selection — you're just adding a manual catch.", B: "CORRECT: Splitting into separate tools with focused descriptions is the recommended pattern. Each tool's description can include the specific customer phrasings that should trigger it (e.g., cancel_subscription: 'Cancels a subscription. Use when customer wants to end, stop, discontinue, or change away from their plan'). Descriptions drive selection, and focused tools have clearer descriptions.", C: "INCORRECT: Few-shot examples fix invocation style, not selection. They cannot reliably teach Claude to map ambiguous customer language to correct action parameter values.", D: "INCORRECT: Adding more enum values increases ambiguity. 'Change' could still mean modify or cancel depending on context. More options make correct selection harder, not easier." }
   },
   {
     id: "d2-012",
@@ -265,19 +155,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Tool descriptions should include negative guidance",
     question: "A research system has `query_internal_database` and `query_external_api`. For compliance reasons, certain queries containing PII must NEVER go to the external API. Claude occasionally sends PII-containing queries externally. What is the most effective tool-level mitigation?",
-    choices: {
-      A: "Add to `query_external_api` description: 'NEVER send queries containing names, SSNs, emails, or other PII. For PII-containing queries, use query_internal_database instead.'",
-      B: "Add a backend filter that strips PII from queries before they reach the external API",
-      C: "Add a system prompt instruction about PII handling across all tools",
-      D: "Remove `query_external_api` from the tool set and proxy all external queries through the internal database"
-    },
+    choices: { A: "Add to `query_external_api` description: 'NEVER send queries containing names, SSNs, emails, or other PII. For PII-containing queries, use query_internal_database instead.'", B: "Add a system prompt instruction about PII handling across all tools", C: "Remove `query_external_api` from the tool set and proxy all external queries through the internal database", D: "Add a backend filter that strips PII from queries before they reach the external API" },
     correct: "A",
-    explanations: {
-      A: "CORRECT: Adding negative guidance directly in the tool description is highly effective. Descriptions drive selection, and explicit 'do NOT use this tool when...' guidance helps Claude route correctly. This is the recommended approach for compliance-sensitive routing.",
-      B: "INCORRECT: Stripping PII at the backend is a defense-in-depth measure but doesn't prevent the tool from being called — the query still reaches the external service, just with PII removed, which may corrupt the query intent.",
-      C: "INCORRECT: System prompt instructions about PII create general awareness but don't provide the tool-specific routing guidance that descriptions offer. Tool-level guidance is more reliable for tool-level decisions.",
-      D: "INCORRECT: Removing the external API tool eliminates legitimate, non-PII queries to external sources. This is overly restrictive and reduces functionality."
-    }
+    explanations: { A: "CORRECT: Adding negative guidance directly in the tool description is highly effective. Descriptions drive selection, and explicit 'do NOT use this tool when...' guidance helps Claude route correctly. This is the recommended approach for compliance-sensitive routing.", B: "INCORRECT: System prompt instructions about PII create general awareness but don't provide the tool-specific routing guidance that descriptions offer. Tool-level guidance is more reliable for tool-level decisions.", C: "INCORRECT: Removing the external API tool eliminates legitimate, non-PII queries to external sources. This is overly restrictive and reduces functionality.", D: "INCORRECT: Stripping PII at the backend is a defense-in-depth measure but doesn't prevent the tool from being called — the query still reaches the external service, just with PII removed, which may corrupt the query intent." }
   },
   {
     id: "d2-013",
@@ -288,19 +168,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Progressive disclosure in tool parameters",
     question: "A developer productivity tool `configure_build(target: string, optimization: string, debug: boolean, cache: boolean, parallel: number, timeout: number, env_vars: object, artifacts: string[], hooks: object)` has 9 parameters. Claude frequently omits required parameters or provides defaults that don't match the project. What redesign principle best addresses this?",
-    choices: {
-      A: "Make all parameters required so Claude must explicitly set each one",
-      B: "Reduce to 3 essential required parameters (`target`, `optimization`, `debug`) with sensible server-side defaults for the rest, and group optional parameters into a single `advanced_options` object",
-      C: "Provide few-shot examples covering all common parameter combinations",
-      D: "Split into 9 separate tools, one for each configuration aspect"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Making all 9 parameters required increases cognitive load and error rate. Claude must guess values for parameters the user didn't mention, leading to incorrect configurations.",
-      B: "CORRECT: Progressive disclosure — keeping essential parameters prominent and grouping optional ones — reduces cognitive load for Claude while preserving flexibility. Server-side defaults handle the common case, and the optional `advanced_options` object is available when needed.",
-      C: "INCORRECT: Few-shot examples for 9-parameter combinations would require many examples to cover common cases and would consume significant context. This treats the symptom rather than the design issue.",
-      D: "INCORRECT: Splitting into 9 tools creates massive tool sprawl and breaks the logical cohesion of build configuration. Individual configuration aspects are not meaningful operations on their own."
-    }
+    choices: { A: "Reduce to 3 essential required parameters (`target`, `optimization`, `debug`) with sensible server-side defaults for the rest, and group optional parameters into a single `advanced_options` object", B: "Split into 9 separate tools, one for each configuration aspect", C: "Provide few-shot examples covering all common parameter combinations", D: "Make all parameters required so Claude must explicitly set each one" },
+    correct: "A",
+    explanations: { A: "CORRECT: Progressive disclosure — keeping essential parameters prominent and grouping optional ones — reduces cognitive load for Claude while preserving flexibility. Server-side defaults handle the common case, and the optional `advanced_options` object is available when needed.", B: "INCORRECT: Splitting into 9 tools creates massive tool sprawl and breaks the logical cohesion of build configuration. Individual configuration aspects are not meaningful operations on their own.", C: "INCORRECT: Few-shot examples for 9-parameter combinations would require many examples to cover common cases and would consume significant context. This treats the symptom rather than the design issue.", D: "INCORRECT: Making all 9 parameters required increases cognitive load and error rate. Claude must guess values for parameters the user didn't mention, leading to incorrect configurations." }
   },
   {
     id: "d2-014",
@@ -311,19 +181,9 @@ export const d2Questions = [
     scenario: 6,
     importance: "Return value descriptions guide Claude's response formatting",
     question: "A structured data extraction tool returns a JSON object with fields `confidence_score`, `extracted_entities`, and `validation_warnings`. Claude consistently ignores the `validation_warnings` array and presents results as if extraction was successful. What is the most targeted fix?",
-    choices: {
-      A: "Add to the tool description: 'IMPORTANT: Always check and report validation_warnings to the user before presenting extracted_entities. Warnings indicate potential extraction errors.'",
-      B: "Move warnings into the `extracted_entities` array so they can't be missed",
-      C: "Add a separate `check_warnings` tool that Claude must call after extraction",
-      D: "Change the return type to put warnings first in the JSON object ordering"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Adding explicit guidance in the tool description about how to handle return values — especially which fields require attention — is the right approach. Descriptions guide both selection and post-call behavior.",
-      B: "INCORRECT: Mixing warnings into entity data pollutes the data structure, complicates downstream processing, and conflates two different types of information.",
-      C: "INCORRECT: Adding a separate tool for warning checks adds unnecessary roundtrips and complexity. The warnings are already in the response — Claude just needs guidance to surface them.",
-      D: "INCORRECT: JSON object field ordering does not affect how Claude processes the response. Claude reads the full response regardless of field order."
-    }
+    choices: { A: "Add a separate `check_warnings` tool that Claude must call after extraction", B: "Add to the tool description: 'IMPORTANT: Always check and report validation_warnings to the user before presenting extracted_entities. Warnings indicate potential extraction errors.'", C: "Move warnings into the `extracted_entities` array so they can't be missed", D: "Change the return type to put warnings first in the JSON object ordering" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Adding a separate tool for warning checks adds unnecessary roundtrips and complexity. The warnings are already in the response — Claude just needs guidance to surface them.", B: "CORRECT: Adding explicit guidance in the tool description about how to handle return values — especially which fields require attention — is the right approach. Descriptions guide both selection and post-call behavior.", C: "INCORRECT: Mixing warnings into entity data pollutes the data structure, complicates downstream processing, and conflates two different types of information.", D: "INCORRECT: JSON object field ordering does not affect how Claude processes the response. Claude reads the full response regardless of field order." }
   },
   {
     id: "d2-015",
@@ -334,19 +194,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Tool versioning and backward compatibility",
     question: "A customer support platform is upgrading its `lookup_customer` tool to return additional fields (loyalty_tier, lifetime_value). The new schema is backward-compatible but adds optional fields. 200 deployed agent instances use this tool. What is the safest deployment approach?",
-    choices: {
-      A: "Deploy the new schema to all instances simultaneously since it's backward-compatible",
-      B: "Create a new tool `lookup_customer_v2` and gradually migrate agents while keeping v1 available",
-      C: "Update the existing tool's schema and description to mention the new fields, deploy to all instances, and let Claude discover the new fields organically",
-      D: "Add the new fields to the backend response without updating the schema, so Claude receives them but isn't told about them"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: While technically backward-compatible, deploying without updating descriptions means Claude won't know about the new fields and can't leverage them. Description updates are needed for Claude to use new capabilities.",
-      B: "INCORRECT: Creating a v2 tool doubles the tool count and creates confusion about which version to use. Backward-compatible additions don't require a new tool — they can be added to the existing schema.",
-      C: "CORRECT: Since the schema change is backward-compatible (adding optional fields), the right approach is to update the schema and description together so Claude knows about the new fields. The description should mention how to use loyalty_tier and lifetime_value. This is a safe single deployment since nothing breaks for existing queries.",
-      D: "INCORRECT: Adding fields without updating the schema means Claude has no guidance on what the fields mean or when to use them. While Claude might notice extra fields in responses, without schema and description support, usage will be inconsistent."
-    }
+    choices: { A: "Add the new fields to the backend response without updating the schema, so Claude receives them but isn't told about them", B: "Update the existing tool's schema and description to mention the new fields, deploy to all instances, and let Claude discover the new fields organically", C: "Create a new tool `lookup_customer_v2` and gradually migrate agents while keeping v1 available", D: "Deploy the new schema to all instances simultaneously since it's backward-compatible" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Adding fields without updating the schema means Claude has no guidance on what the fields mean or when to use them. While Claude might notice extra fields in responses, without schema and description support, usage will be inconsistent.", B: "CORRECT: Since the schema change is backward-compatible (adding optional fields), the right approach is to update the schema and description together so Claude knows about the new fields. The description should mention how to use loyalty_tier and lifetime_value. This is a safe single deployment since nothing breaks for existing queries.", C: "INCORRECT: Creating a v2 tool doubles the tool count and creates confusion about which version to use. Backward-compatible additions don't require a new tool — they can be added to the existing schema.", D: "INCORRECT: While technically backward-compatible, deploying without updating descriptions means Claude won't know about the new fields and can't leverage them. Description updates are needed for Claude to use new capabilities." }
   },
   {
     id: "d2-016",
@@ -357,19 +207,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Idempotent tool design for reliability",
     question: "A research system's `submit_analysis_job(dataset_id: string, analysis_type: string)` tool sometimes gets called twice when Claude retries due to a timeout. This creates duplicate analysis jobs, wasting compute. What tool design principle should be applied?",
-    choices: {
-      A: "Add a `request_id` parameter that Claude generates as a UUID, so the backend can deduplicate",
-      B: "Add rate limiting to prevent Claude from calling the tool more than once per minute",
-      C: "Make the tool description say 'Do not retry this tool if it times out'",
-      D: "Add a `check_job_status` tool and instruct Claude to check before resubmitting"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Adding an idempotency key (`request_id`) is a standard pattern for making tools safe to retry. If Claude sends the same `request_id` twice, the backend recognizes the duplicate and returns the existing job instead of creating a new one. This makes the tool inherently safe for retries.",
-      B: "INCORRECT: Rate limiting prevents rapid calls but doesn't solve the duplicate problem — Claude could retry after the rate limit window. It also blocks legitimate rapid successive calls for different analyses.",
-      C: "INCORRECT: Description instructions not to retry are unreliable. Claude may retry if it believes the tool didn't execute, and the description guidance can be overridden by the model's retry heuristics.",
-      D: "INCORRECT: While `check_job_status` is useful, requiring Claude to check before every submission adds latency and doesn't guarantee the check-then-submit sequence is atomic. An idempotency key is a more robust solution."
-    }
+    choices: { A: "Make the tool description say 'Do not retry this tool if it times out'", B: "Add a `check_job_status` tool and instruct Claude to check before resubmitting", C: "Add a `request_id` parameter that Claude generates as a UUID, so the backend can deduplicate", D: "Add rate limiting to prevent Claude from calling the tool more than once per minute" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Description instructions not to retry are unreliable. Claude may retry if it believes the tool didn't execute, and the description guidance can be overridden by the model's retry heuristics.", B: "INCORRECT: While `check_job_status` is useful, requiring Claude to check before every submission adds latency and doesn't guarantee the check-then-submit sequence is atomic. An idempotency key is a more robust solution.", C: "CORRECT: Adding an idempotency key (`request_id`) is a standard pattern for making tools safe to retry. If Claude sends the same `request_id` twice, the backend recognizes the duplicate and returns the existing job instead of creating a new one. This makes the tool inherently safe for retries.", D: "INCORRECT: Rate limiting prevents rapid calls but doesn't solve the duplicate problem — Claude could retry after the rate limit window. It also blocks legitimate rapid successive calls for different analyses." }
   },
   {
     id: "d2-017",
@@ -380,19 +220,9 @@ export const d2Questions = [
     scenario: 5,
     importance: "Tool design for CI/CD safety",
     question: "Claude Code is used in a CI/CD pipeline with a `deploy_to_production(service: string, version: string)` tool. The team wants to ensure Claude cannot accidentally deploy untested versions. What tool design approach best enforces this safety constraint?",
-    choices: {
-      A: "Add a description warning: 'Only deploy versions that have passed all tests. Check test status before deploying.'",
-      B: "Redesign the tool to `deploy_to_production(service: string, version: string, test_run_id: string)` where `test_run_id` is a required parameter that the backend validates against a passing test suite",
-      C: "Add a pre-deploy confirmation tool that Claude must call first",
-      D: "Use `tool_choice: none` to disable the deploy tool by default and only enable it after tests pass"
-    },
+    choices: { A: "Add a description warning: 'Only deploy versions that have passed all tests. Check test status before deploying.'", B: "Redesign the tool to `deploy_to_production(service: string, version: string, test_run_id: string)` where `test_run_id` is a required parameter that the backend validates against a passing test suite", C: "Add a pre-deploy confirmation tool that Claude must call first", D: "Use `tool_choice: none` to disable the deploy tool by default and only enable it after tests pass" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Description warnings are advisory and cannot enforce constraints. Claude might skip the check or misinterpret test results. Safety-critical constraints need structural enforcement.",
-      B: "CORRECT: Making `test_run_id` a required parameter that the backend validates creates a structural enforcement. Claude cannot deploy without providing a valid, passing test run ID. This is design-level safety — the tool physically cannot be misused because the backend rejects calls without proof of passing tests.",
-      C: "INCORRECT: A confirmation tool adds a step but doesn't enforce the constraint. Claude could skip the confirmation or the confirmation tool could lack the authority to actually verify test status.",
-      D: "INCORRECT: `tool_choice: none` disables ALL tool use, not just one specific tool. There's no mechanism to dynamically enable/disable individual tools based on external state through tool_choice alone."
-    }
+    explanations: { A: "INCORRECT: Description warnings are advisory and cannot enforce constraints. Claude might skip the check or misinterpret test results. Safety-critical constraints need structural enforcement.", B: "CORRECT: Making `test_run_id` a required parameter that the backend validates creates a structural enforcement. Claude cannot deploy without providing a valid, passing test run ID. This is design-level safety — the tool physically cannot be misused because the backend rejects calls without proof of passing tests.", C: "INCORRECT: A confirmation tool adds a step but doesn't enforce the constraint. Claude could skip the confirmation or the confirmation tool could lack the authority to actually verify test status.", D: "INCORRECT: `tool_choice: none` disables ALL tool use, not just one specific tool. There's no mechanism to dynamically enable/disable individual tools based on external state through tool_choice alone." }
   },
   {
     id: "d2-018",
@@ -403,19 +233,9 @@ export const d2Questions = [
     scenario: 6,
     importance: "Handling ambiguous tool boundaries",
     question: "A document processing system has `extract_table(page: number)` and `extract_text(page: number)`. When users upload PDFs with tables embedded in paragraphs, Claude can't decide which tool to use and often calls both sequentially, doubling processing time. What is the best design improvement?",
-    choices: {
-      A: "Merge into a single `extract_content(page: number, content_type: 'table' | 'text' | 'all')` tool with a clear description of when to use each content type",
-      B: "Add a system prompt rule: 'For mixed content pages, always use extract_text first, then extract_table only if tables are detected'",
-      C: "Add a `detect_content_type(page: number)` tool that Claude calls first to determine the page layout",
-      D: "Update both descriptions to say 'Use for pages that contain ONLY tables/text respectively'"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: When two tools frequently need to be called together or have overlapping scope, merging them with a discriminating parameter is the right pattern. The `content_type: 'all'` option handles the common mixed-content case in a single call, reducing latency and cost.",
-      B: "INCORRECT: System prompt sequential rules are fragile and add latency. The two-call sequence is the exact problem being solved.",
-      C: "INCORRECT: Adding a detection tool means three calls instead of two, increasing latency further. The content type detection logic belongs in the extraction tool itself.",
-      D: "INCORRECT: Restricting descriptions to 'ONLY tables' or 'ONLY text' means mixed-content pages genuinely need both calls, which doesn't solve the performance issue."
-    }
+    choices: { A: "Add a system prompt rule: 'For mixed content pages, always use extract_text first, then extract_table only if tables are detected'", B: "Update both descriptions to say 'Use for pages that contain ONLY tables/text respectively'", C: "Merge into a single `extract_content(page: number, content_type: 'table' | 'text' | 'all')` tool with a clear description of when to use each content type", D: "Add a `detect_content_type(page: number)` tool that Claude calls first to determine the page layout" },
+    correct: "C",
+    explanations: { A: "INCORRECT: System prompt sequential rules are fragile and add latency. The two-call sequence is the exact problem being solved.", B: "INCORRECT: Restricting descriptions to 'ONLY tables' or 'ONLY text' means mixed-content pages genuinely need both calls, which doesn't solve the performance issue.", C: "CORRECT: When two tools frequently need to be called together or have overlapping scope, merging them with a discriminating parameter is the right pattern. The `content_type: 'all'` option handles the common mixed-content case in a single call, reducing latency and cost.", D: "INCORRECT: Adding a detection tool means three calls instead of two, increasing latency further. The content type detection logic belongs in the extraction tool itself." }
   },
 
   // ============================================================
@@ -453,19 +273,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "isRetryable prevents wasted retries on permanent failures",
     question: "A multi-agent research system's `access_proprietary_database` tool sometimes fails with 'Access denied: subscription expired'. Claude automatically retries the call 3 times, wasting API credits. What structured error field should be added to prevent this?",
-    choices: {
-      A: "Add `severity: 'fatal'` to the error response to signal Claude should stop",
-      B: "Add `isRetryable: false` to the error response to signal that retrying will not resolve this error",
-      C: "Add `maxRetries: 0` to the tool configuration to disable retries globally",
-      D: "Add 'Do not retry this error' to the error message text"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: `severity` is not a standard MCP error response field. Custom fields may not be recognized by the framework.",
-      B: "CORRECT: `isRetryable: false` is the structured mechanism to tell Claude (or the orchestrator) that this error is permanent and retrying will not help. An expired subscription is a policy/administrative issue that cannot be resolved by calling the tool again. This prevents wasted retries.",
-      C: "INCORRECT: Disabling retries globally would prevent retries even for transient errors (network timeouts, rate limits) where retrying is the correct behavior. The retryability signal should be per-error, not per-tool.",
-      D: "INCORRECT: Natural language instructions in error messages are less reliable than structured fields. Claude may or may not honor free-text retry instructions, especially under agentic orchestration where retry logic may be automated."
-    }
+    choices: { A: "Add `isRetryable: false` to the error response to signal that retrying will not resolve this error", B: "Add 'Do not retry this error' to the error message text", C: "Add `maxRetries: 0` to the tool configuration to disable retries globally", D: "Add `severity: 'fatal'` to the error response to signal Claude should stop" },
+    correct: "A",
+    explanations: { A: "CORRECT: `isRetryable: false` is the structured mechanism to tell Claude (or the orchestrator) that this error is permanent and retrying will not help. An expired subscription is a policy/administrative issue that cannot be resolved by calling the tool again. This prevents wasted retries.", B: "INCORRECT: Natural language instructions in error messages are less reliable than structured fields. Claude may or may not honor free-text retry instructions, especially under agentic orchestration where retry logic may be automated.", C: "INCORRECT: Disabling retries globally would prevent retries even for transient errors (network timeouts, rate limits) where retrying is the correct behavior. The retryability signal should be per-error, not per-tool.", D: "INCORRECT: `severity` is not a standard MCP error response field. Custom fields may not be recognized by the framework." }
   },
   {
     id: "d2-021",
@@ -499,19 +309,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Local recovery for transient errors; propagate unresolvable",
     question: "A developer productivity agent calls a `fetch_deployment_logs(service: string, timeframe: string)` tool that fails with a 429 rate limit error. The agent is in the middle of a complex debugging session with the developer. What is the correct error handling strategy?",
-    choices: {
-      A: "Propagate the error to the developer immediately: 'The log service is rate limited. Please try again later.'",
-      B: "Handle the transient error locally — implement exponential backoff retry within the tool, and only propagate to the user if retries are exhausted",
-      C: "Switch to a different tool that doesn't have rate limits",
-      D: "Cache the error and continue the debugging session without logs, hoping the developer doesn't notice"
-    },
+    choices: { A: "Propagate the error to the developer immediately: 'The log service is rate limited. Please try again later.'", B: "Handle the transient error locally — implement exponential backoff retry within the tool, and only propagate to the user if retries are exhausted", C: "Switch to a different tool that doesn't have rate limits", D: "Cache the error and continue the debugging session without logs, hoping the developer doesn't notice" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: A 429 rate limit is a transient error that typically resolves within seconds. Immediately propagating it breaks the developer's workflow unnecessarily. Local recovery should be attempted first.",
-      B: "CORRECT: Transient errors (rate limits, network blips, temporary unavailability) should be handled locally with retry logic — exponential backoff is the standard pattern for 429s. Only if retries are exhausted should the error be propagated to the user. This maintains a smooth experience during the debugging session.",
-      C: "INCORRECT: Switching tools because of a transient error is an overreaction. The rate limit will resolve, and an alternative tool may not provide the same data quality.",
-      D: "INCORRECT: Silently swallowing errors and proceeding without data leads to incorrect conclusions. The developer needs accurate information for debugging."
-    }
+    explanations: { A: "INCORRECT: A 429 rate limit is a transient error that typically resolves within seconds. Immediately propagating it breaks the developer's workflow unnecessarily. Local recovery should be attempted first.", B: "CORRECT: Transient errors (rate limits, network blips, temporary unavailability) should be handled locally with retry logic — exponential backoff is the standard pattern for 429s. Only if retries are exhausted should the error be propagated to the user. This maintains a smooth experience during the debugging session.", C: "INCORRECT: Switching tools because of a transient error is an overreaction. The rate limit will resolve, and an alternative tool may not provide the same data quality.", D: "INCORRECT: Silently swallowing errors and proceeding without data leads to incorrect conclusions. The developer needs accurate information for debugging." }
   },
   {
     id: "d2-023",
@@ -568,19 +368,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Error categorization drives correct recovery behavior",
     question: "A developer productivity agent encounters three different errors: (1) 'Rate limit exceeded', (2) 'Invalid API key', (3) 'File not found: /src/utils.ts'. Which categorization correctly maps each error to the right recovery strategy?",
-    choices: {
-      A: "All three are transient errors — retry all with exponential backoff",
-      B: "(1) Transient → retry with backoff; (2) Configuration → propagate to user for key update; (3) Input → adjust parameters and retry with correct path",
-      C: "(1) Transient → retry; (2) Transient → retry with different key; (3) Fatal → stop all operations",
-      D: "(1) Fatal → stop; (2) Configuration → propagate; (3) Transient → retry with same path"
-    },
+    choices: { A: "(1) Transient → retry; (2) Transient → retry with different key; (3) Fatal → stop all operations", B: "(1) Transient → retry with backoff; (2) Configuration → propagate to user for key update; (3) Input → adjust parameters and retry with correct path", C: "All three are transient errors — retry all with exponential backoff", D: "(1) Fatal → stop; (2) Configuration → propagate; (3) Transient → retry with same path" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: An invalid API key will never resolve through retrying — it's a configuration error. A missing file is an input error, not a transient one. Retrying both wastes resources.",
-      B: "CORRECT: Rate limits are transient (resolve with time). Invalid API keys are configuration errors that require human intervention (updating the key). File not found is an input error — Claude should adjust the file path based on codebase knowledge and retry. Each category has a distinct recovery strategy.",
-      C: "INCORRECT: An invalid API key is not transient — trying a 'different key' assumes Claude has alternative credentials, which it shouldn't. File not found is not fatal — the file may exist at a different path.",
-      D: "INCORRECT: Rate limits are not fatal — they resolve with time and backoff. A missing file is not transient — the same path will fail again. This categorization inverts the correct recovery strategies."
-    }
+    explanations: { A: "INCORRECT: An invalid API key is not transient — trying a 'different key' assumes Claude has alternative credentials, which it shouldn't. File not found is not fatal — the file may exist at a different path.", B: "CORRECT: Rate limits are transient (resolve with time). Invalid API keys are configuration errors that require human intervention (updating the key). File not found is an input error — Claude should adjust the file path based on codebase knowledge and retry. Each category has a distinct recovery strategy.", C: "INCORRECT: An invalid API key will never resolve through retrying — it's a configuration error. A missing file is an input error, not a transient one. Retrying both wastes resources.", D: "INCORRECT: Rate limits are not fatal — they resolve with time and backoff. A missing file is not transient — the same path will fail again. This categorization inverts the correct recovery strategies." }
   },
   {
     id: "d2-026",
@@ -683,19 +473,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Timeout errors need context for intelligent retry",
     question: "A customer support agent's `search_orders` tool times out after 30 seconds. The agent has `isRetryable: true` in the error. Claude retries immediately and gets another timeout. What additional error context would help?",
-    choices: {
-      A: "A message suggesting the search criteria are too broad: 'Search timed out. Try narrowing the date range or adding more specific filters to reduce results.'",
-      B: "An `errorCode: 'TIMEOUT'` field for programmatic handling",
-      C: "A `retryAfterMs: 5000` field and the original query parameters so Claude can retry identically after a delay",
-      D: "A stack trace so Claude can debug the backend"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: When a search times out, it often means the query is too broad. Providing actionable guidance to narrow the search lets Claude reformulate (e.g., add a date range filter) rather than retrying the same slow query. This is much more likely to succeed on the next attempt.",
-      B: "INCORRECT: An error code alone doesn't help Claude take corrective action. Claude needs human-readable guidance on how to adjust its approach.",
-      C: "INCORRECT: Retrying identically after a delay will likely produce the same timeout — the query itself is the problem, not a transient server issue. A delay helps with rate limits, not with computation timeouts.",
-      D: "INCORRECT: Stack traces expose internal implementation details and are not actionable by Claude. They're a security concern and provide no useful guidance for query optimization."
-    }
+    choices: { A: "A stack trace so Claude can debug the backend", B: "A message suggesting the search criteria are too broad: 'Search timed out. Try narrowing the date range or adding more specific filters to reduce results.'", C: "A `retryAfterMs: 5000` field and the original query parameters so Claude can retry identically after a delay", D: "An `errorCode: 'TIMEOUT'` field for programmatic handling" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Stack traces expose internal implementation details and are not actionable by Claude. They're a security concern and provide no useful guidance for query optimization.", B: "CORRECT: When a search times out, it often means the query is too broad. Providing actionable guidance to narrow the search lets Claude reformulate (e.g., add a date range filter) rather than retrying the same slow query. This is much more likely to succeed on the next attempt.", C: "INCORRECT: Retrying identically after a delay will likely produce the same timeout — the query itself is the problem, not a transient server issue. A delay helps with rate limits, not with computation timeouts.", D: "INCORRECT: An error code alone doesn't help Claude take corrective action. Claude needs human-readable guidance on how to adjust its approach." }
   },
   {
     id: "d2-031",
@@ -706,19 +486,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Chained tool errors need upstream context",
     question: "A research system has a pipeline: `fetch_data` → `transform_data` → `generate_report`. The `transform_data` step fails because `fetch_data` returned malformed data (but reported success). Claude has no visibility into why transformation failed. What error design principle should be applied?",
-    choices: {
-      A: "Add logging to each tool so engineers can debug after the fact",
-      B: "Each tool should validate its inputs and return errors that reference the upstream step: 'Transform failed: Input data from fetch_data is missing required field \"timestamp\" in records 15-23. Suggest re-fetching with format=\"structured\".'",
-      C: "Add a global error handler that catches all pipeline errors",
-      D: "Make `fetch_data` always return data in a validated schema so downstream tools never fail"
-    },
+    choices: { A: "Add a global error handler that catches all pipeline errors", B: "Each tool should validate its inputs and return errors that reference the upstream step: 'Transform failed: Input data from fetch_data is missing required field \"timestamp\" in records 15-23. Suggest re-fetching with format=\"structured\".'", C: "Add logging to each tool so engineers can debug after the fact", D: "Make `fetch_data` always return data in a validated schema so downstream tools never fail" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Backend logging helps engineers but doesn't help Claude or the user in real-time. The error needs to be actionable within the current conversation.",
-      B: "CORRECT: In chained tool pipelines, downstream tools should validate their inputs and produce errors that reference the upstream source. This gives Claude enough context to either re-invoke the upstream tool with corrections or inform the user about the specific failure point in the pipeline.",
-      C: "INCORRECT: A global error handler catches errors but loses the specific context of where and why the failure occurred. Claude needs granular, per-step error information.",
-      D: "INCORRECT: While input validation at `fetch_data` is good practice, it cannot guarantee all downstream requirements are met. Each tool must validate its own inputs as a defense-in-depth measure."
-    }
+    explanations: { A: "INCORRECT: A global error handler catches errors but loses the specific context of where and why the failure occurred. Claude needs granular, per-step error information.", B: "CORRECT: In chained tool pipelines, downstream tools should validate their inputs and produce errors that reference the upstream source. This gives Claude enough context to either re-invoke the upstream tool with corrections or inform the user about the specific failure point in the pipeline.", C: "INCORRECT: Backend logging helps engineers but doesn't help Claude or the user in real-time. The error needs to be actionable within the current conversation.", D: "INCORRECT: While input validation at `fetch_data` is good practice, it cannot guarantee all downstream requirements are met. Each tool must validate its own inputs as a defense-in-depth measure." }
   },
   {
     id: "d2-032",
@@ -775,19 +545,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Concurrent tool errors need independent handling",
     question: "A research system calls 3 tools in parallel: `fetch_sec_filings`, `fetch_earnings_calls`, and `fetch_analyst_reports`. Two succeed but `fetch_analyst_reports` returns a permission error. Claude currently treats the entire batch as failed. What error handling pattern should be implemented?",
-    choices: {
-      A: "Wrap all parallel calls in a single try-catch and return either all results or a single error",
-      B: "Each tool should return its result independently so Claude can process successful results and handle the single error separately — presenting available data while noting the unavailable source",
-      C: "Add a `batch_tool_call` wrapper that aggregates results and errors into a single response",
-      D: "Serial execution instead of parallel to isolate errors"
-    },
+    choices: { A: "Wrap all parallel calls in a single try-catch and return either all results or a single error", B: "Each tool should return its result independently so Claude can process successful results and handle the single error separately — presenting available data while noting the unavailable source", C: "Add a `batch_tool_call` wrapper that aggregates results and errors into a single response", D: "Serial execution instead of parallel to isolate errors" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: All-or-nothing error handling discards successful results when one tool fails. In research contexts, partial data is often highly valuable.",
-      B: "CORRECT: Independent tool responses let Claude process each result on its own merits. It can present SEC filings and earnings call data while telling the researcher that analyst reports are unavailable due to a permission issue. This maximizes the value of successful calls.",
-      C: "INCORRECT: A batch wrapper that merges results loses the per-tool error granularity and adds unnecessary complexity. Claude natively handles multiple tool results independently.",
-      D: "INCORRECT: Serial execution eliminates the latency benefit of parallel calls and doesn't improve error handling. The same permission error would occur serially."
-    }
+    explanations: { A: "INCORRECT: All-or-nothing error handling discards successful results when one tool fails. In research contexts, partial data is often highly valuable.", B: "CORRECT: Independent tool responses let Claude process each result on its own merits. It can present SEC filings and earnings call data while telling the researcher that analyst reports are unavailable due to a permission issue. This maximizes the value of successful calls.", C: "INCORRECT: A batch wrapper that merges results loses the per-tool error granularity and adds unnecessary complexity. Claude natively handles multiple tool results independently.", D: "INCORRECT: Serial execution eliminates the latency benefit of parallel calls and doesn't improve error handling. The same permission error would occur serially." }
   },
   {
     id: "d2-035",
@@ -798,19 +558,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Error recovery suggestions should be specific",
     question: "A developer agent calls `run_tests(suite: 'integration')` and 3 out of 50 tests fail. The tool returns the failures but with `isError: true`. Claude reports 'Tests failed' and stops helping. What is the better error response design for partial test failures?",
-    choices: {
-      A: "Return `isError: false` with full results: passed count, failed count, and detailed failure messages for each failed test, allowing Claude to analyze the specific failures and suggest fixes",
-      B: "Return `isError: true` with just the failure count to keep the response small",
-      C: "Return `isError: false` with only passing tests to keep the output positive",
-      D: "Return `isError: true` with all 50 test results for completeness"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Partial test failures are not an error in the tool invocation — the tool worked correctly. `isError: false` is appropriate because the tool successfully executed. The response should include both the success summary and detailed failure information so Claude can analyze specific failures and suggest fixes.",
-      B: "INCORRECT: `isError: true` signals the tool itself failed, not that some tests failed. Also, omitting failure details prevents Claude from helping debug the specific issues.",
-      C: "INCORRECT: Hiding failures is dangerous — the developer needs to know about failing tests. Suppressing negative results undermines trust and utility.",
-      D: "INCORRECT: `isError: true` is semantically wrong for successful tool execution with some test failures. Also, returning all 50 results when only 3 failed wastes context space."
-    }
+    choices: { A: "Return `isError: true` with just the failure count to keep the response small", B: "Return `isError: false` with only passing tests to keep the output positive", C: "Return `isError: false` with full results: passed count, failed count, and detailed failure messages for each failed test, allowing Claude to analyze the specific failures and suggest fixes", D: "Return `isError: true` with all 50 test results for completeness" },
+    correct: "C",
+    explanations: { A: "INCORRECT: `isError: true` signals the tool itself failed, not that some tests failed. Also, omitting failure details prevents Claude from helping debug the specific issues.", B: "INCORRECT: Hiding failures is dangerous — the developer needs to know about failing tests. Suppressing negative results undermines trust and utility.", C: "CORRECT: Partial test failures are not an error in the tool invocation — the tool worked correctly. `isError: false` is appropriate because the tool successfully executed. The response should include both the success summary and detailed failure information so Claude can analyze specific failures and suggest fixes.", D: "INCORRECT: `isError: true` is semantically wrong for successful tool execution with some test failures. Also, returning all 50 results when only 3 failed wastes context space." }
   },
   {
     id: "d2-036",
@@ -848,19 +598,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Tool count degradation threshold",
     question: "A multi-agent research system has a 'general analyst' agent with 22 tools spanning market data, document analysis, financial modeling, compliance checks, and report generation. Accuracy has dropped 25% since the tool set grew past 15. What is the best mitigation?",
-    choices: {
-      A: "Add more detailed descriptions to all 22 tools to improve selection accuracy",
-      B: "Split into specialized sub-agents — a market data agent (5 tools), a document analysis agent (4 tools), a modeling agent (4 tools), a compliance agent (4 tools) — each with focused tool sets under the selection degradation threshold",
-      C: "Use `tool_choice: any` to force the agent to always use a tool, reducing skipped-tool errors",
-      D: "Keep all 22 tools but add a routing system prompt that maps query types to specific tools"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Better descriptions help marginally but cannot overcome the fundamental degradation that occurs beyond ~15-18 tools. Selection accuracy drops because Claude must evaluate too many options, regardless of description quality.",
-      B: "CORRECT: Splitting into specialized sub-agents with 4-5 focused tools each keeps each agent well under the degradation threshold. This is the recommended architectural pattern — specialized agents with focused tool sets perform dramatically better than generalist agents with sprawling tool sets.",
-      C: "INCORRECT: `tool_choice: any` forces a tool call but doesn't improve selection quality. It actually makes things worse because Claude must call a tool even when none is appropriate, leading to misuse.",
-      D: "INCORRECT: Routing instructions for 22 tools in the system prompt would be extremely long and create competing ghost associations. System prompt routing doesn't scale and degrades with conversation length."
-    }
+    choices: { A: "Split into specialized sub-agents — a market data agent (5 tools), a document analysis agent (4 tools), a modeling agent (4 tools), a compliance agent (4 tools) — each with focused tool sets under the selection degradation threshold", B: "Use `tool_choice: any` to force the agent to always use a tool, reducing skipped-tool errors", C: "Keep all 22 tools but add a routing system prompt that maps query types to specific tools", D: "Add more detailed descriptions to all 22 tools to improve selection accuracy" },
+    correct: "A",
+    explanations: { A: "CORRECT: Splitting into specialized sub-agents with 4-5 focused tools each keeps each agent well under the degradation threshold. This is the recommended architectural pattern — specialized agents with focused tool sets perform dramatically better than generalist agents with sprawling tool sets.", B: "INCORRECT: `tool_choice: any` forces a tool call but doesn't improve selection quality. It actually makes things worse because Claude must call a tool even when none is appropriate, leading to misuse.", C: "INCORRECT: Routing instructions for 22 tools in the system prompt would be extremely long and create competing ghost associations. System prompt routing doesn't scale and degrades with conversation length.", D: "INCORRECT: Better descriptions help marginally but cannot overcome the fundamental degradation that occurs beyond ~15-18 tools. Selection accuracy drops because Claude must evaluate too many options, regardless of description quality." }
   },
   {
     id: "d2-038",
@@ -894,19 +634,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Out-of-specialization tools cause active misuse",
     question: "A research system's 'literature review' agent has tools for searching papers and synthesizing findings. The team adds a `execute_trade` tool to this agent so analysts can act on insights immediately. What is the most likely failure mode?",
-    choices: {
-      A: "The trade tool will slow down the literature review by consuming context window space",
-      B: "Claude will occasionally invoke `execute_trade` inappropriately — for example, interpreting a paper's recommendation as an instruction to trade — because the tool is outside the agent's specialization and its presence creates an active misuse risk",
-      C: "The trade tool will not work because it's in the wrong agent",
-      D: "Claude will ignore the trade tool entirely since it doesn't match the literature review context"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: A single extra tool's schema is minimal context overhead. The performance concern is about selection quality, not context space.",
-      B: "CORRECT: Out-of-specialization tools don't just sit unused — they create active misuse risk. When a research paper says 'we recommend increasing allocation to emerging markets', Claude might interpret this as a trade instruction and invoke `execute_trade`. This is far worse than confusion — it's dangerous action in the wrong context.",
-      C: "INCORRECT: The trade tool will technically work if called — the problem isn't functionality but inappropriate invocation.",
-      D: "INCORRECT: Claude does NOT ignore available tools. It evaluates all tools for potential relevance, and an out-of-specialization tool may get selected when language in the conversation coincidentally matches its description."
-    }
+    choices: { A: "Claude will occasionally invoke `execute_trade` inappropriately — for example, interpreting a paper's recommendation as an instruction to trade — because the tool is outside the agent's specialization and its presence creates an active misuse risk", B: "The trade tool will slow down the literature review by consuming context window space", C: "The trade tool will not work because it's in the wrong agent", D: "Claude will ignore the trade tool entirely since it doesn't match the literature review context" },
+    correct: "A",
+    explanations: { A: "CORRECT: Out-of-specialization tools don't just sit unused — they create active misuse risk. When a research paper says 'we recommend increasing allocation to emerging markets', Claude might interpret this as a trade instruction and invoke `execute_trade`. This is far worse than confusion — it's dangerous action in the wrong context.", B: "INCORRECT: A single extra tool's schema is minimal context overhead. The performance concern is about selection quality, not context space.", C: "INCORRECT: The trade tool will technically work if called — the problem isn't functionality but inappropriate invocation.", D: "INCORRECT: Claude does NOT ignore available tools. It evaluates all tools for potential relevance, and an out-of-specialization tool may get selected when language in the conversation coincidentally matches its description." }
   },
   {
     id: "d2-040",
@@ -940,19 +670,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Scoped cross-role tools for high-frequency needs only",
     question: "A customer support system has specialized agents: billing, technical, and shipping. All three agents frequently need to look up customer profiles. Currently, the `lookup_customer` tool exists only in the billing agent, requiring expensive cross-agent routing for every technical or shipping query. What is the correct tool distribution approach?",
-    choices: {
-      A: "Keep `lookup_customer` only in the billing agent and optimize the cross-agent routing latency",
-      B: "Create a separate 'customer profile' agent that all other agents query",
-      C: "Duplicate `lookup_customer` into all three agents as a scoped cross-role tool, since customer lookup is a high-frequency need across all specializations",
-      D: "Merge all three agents into one general support agent to avoid cross-agent communication"
-    },
+    choices: { A: "Create a separate 'customer profile' agent that all other agents query", B: "Merge all three agents into one general support agent to avoid cross-agent communication", C: "Duplicate `lookup_customer` into all three agents as a scoped cross-role tool, since customer lookup is a high-frequency need across all specializations", D: "Keep `lookup_customer` only in the billing agent and optimize the cross-agent routing latency" },
     correct: "C",
-    explanations: {
-      A: "INCORRECT: Optimizing cross-agent routing still adds latency and complexity for a high-frequency operation. When a tool is needed by all agents regularly, local access is better.",
-      B: "INCORRECT: A dedicated profile agent adds another layer of indirection. Every interaction now requires an extra agent-to-agent call for basic customer lookup, increasing latency and system complexity.",
-      C: "CORRECT: High-frequency cross-role tools should be scoped (duplicated) into each agent that needs them. Customer lookup is a foundational operation that all support agents need on nearly every interaction. Duplicating this tool eliminates cross-agent overhead while keeping each agent's tool set focused.",
-      D: "INCORRECT: Merging agents loses the specialization benefit. Each agent has domain-specific tools (billing tools, technical tools, shipping tools) that would create tool sprawl if combined."
-    }
+    explanations: { A: "INCORRECT: A dedicated profile agent adds another layer of indirection. Every interaction now requires an extra agent-to-agent call for basic customer lookup, increasing latency and system complexity.", B: "INCORRECT: Merging agents loses the specialization benefit. Each agent has domain-specific tools (billing tools, technical tools, shipping tools) that would create tool sprawl if combined.", C: "CORRECT: High-frequency cross-role tools should be scoped (duplicated) into each agent that needs them. Customer lookup is a foundational operation that all support agents need on nearly every interaction. Duplicating this tool eliminates cross-agent overhead while keeping each agent's tool set focused.", D: "INCORRECT: Optimizing cross-agent routing still adds latency and complexity for a high-frequency operation. When a tool is needed by all agents regularly, local access is better." }
   },
   {
     id: "d2-042",
@@ -963,19 +683,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Dynamic tool set based on conversation phase",
     question: "A multi-agent research system has distinct phases: data gathering, analysis, and report generation. During data gathering, Claude has access to 12 search and retrieval tools. During analysis, it needs 6 statistical tools. During reporting, it needs 4 formatting tools. What is the optimal tool distribution strategy?",
-    choices: {
-      A: "Provide all 22 tools at all times so Claude has maximum flexibility",
-      B: "Dynamically adjust the tool set per conversation phase — provide only the tools relevant to the current phase, keeping each phase's tool count under the degradation threshold",
-      C: "Provide all 22 tools but use system prompt instructions to indicate which tools are appropriate for each phase",
-      D: "Create 3 separate conversation threads, one per phase, and pass context between them"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: 22 tools exceeds the degradation threshold (~15-18), leading to poor selection accuracy throughout. Providing all tools also risks Claude using analysis tools during data gathering or search tools during report generation.",
-      B: "CORRECT: Dynamically scoping tools to the current phase keeps each phase's tool count low (4-12), well within the effective range. This ensures optimal selection accuracy and prevents cross-phase tool misuse. The orchestrator manages tool set transitions based on the conversation's progression.",
-      C: "INCORRECT: System prompt phase instructions are advisory and fragile. With 22 tools visible, Claude may still select out-of-phase tools, and the phase routing instructions consume valuable context.",
-      D: "INCORRECT: Separate conversation threads lose the context from previous phases. The analysis phase needs awareness of what data was gathered, and reporting needs awareness of analysis results."
-    }
+    choices: { A: "Create 3 separate conversation threads, one per phase, and pass context between them", B: "Provide all 22 tools at all times so Claude has maximum flexibility", C: "Provide all 22 tools but use system prompt instructions to indicate which tools are appropriate for each phase", D: "Dynamically adjust the tool set per conversation phase — provide only the tools relevant to the current phase, keeping each phase's tool count under the degradation threshold" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Separate conversation threads lose the context from previous phases. The analysis phase needs awareness of what data was gathered, and reporting needs awareness of analysis results.", B: "INCORRECT: 22 tools exceeds the degradation threshold (~15-18), leading to poor selection accuracy throughout. Providing all tools also risks Claude using analysis tools during data gathering or search tools during report generation.", C: "INCORRECT: System prompt phase instructions are advisory and fragile. With 22 tools visible, Claude may still select out-of-phase tools, and the phase routing instructions consume valuable context.", D: "CORRECT: Dynamically scoping tools to the current phase keeps each phase's tool count low (4-12), well within the effective range. This ensures optimal selection accuracy and prevents cross-phase tool misuse. The orchestrator manages tool set transitions based on the conversation's progression." }
   },
   {
     id: "d2-043",
@@ -1009,19 +719,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Tool overlap between agents causes routing confusion",
     question: "A customer support system has a 'billing agent' with `search_invoices(query)` and a 'general agent' with `search_all(query)`. The `search_all` tool can also find invoices. When a customer asks about an invoice, the routing layer sends the query to the general agent because `search_all` matches. But the billing agent's `search_invoices` provides better results with billing-specific filters. What is the root cause?",
-    choices: {
-      A: "The general agent's `search_all` tool has too broad a description, creating overlap with the billing agent's specialized tool",
-      B: "The routing layer is using the wrong algorithm to select agents",
-      C: "The billing agent's `search_invoices` description isn't good enough",
-      D: "The customer's query was ambiguous"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: A tool with an overly broad description like `search_all` creates overlap with specialized tools. The routing layer sees that `search_all` can handle invoice queries, so it routes to the general agent. The fix is to either narrow `search_all`'s description to exclude billing-specific queries or remove it in favor of domain-specific search tools.",
-      B: "INCORRECT: The routing algorithm is working as designed — it matched the query to a tool that claims to handle it. The problem is the tool's broad claim, not the routing logic.",
-      C: "INCORRECT: Even a perfect `search_invoices` description doesn't help if the routing layer is diverting queries to the general agent before they reach the billing agent.",
-      D: "INCORRECT: 'Tell me about invoice #12345' is not ambiguous. The issue is tool description overlap creating multiple valid routing targets."
-    }
+    choices: { A: "The billing agent's `search_invoices` description isn't good enough", B: "The customer's query was ambiguous", C: "The routing layer is using the wrong algorithm to select agents", D: "The general agent's `search_all` tool has too broad a description, creating overlap with the billing agent's specialized tool" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Even a perfect `search_invoices` description doesn't help if the routing layer is diverting queries to the general agent before they reach the billing agent.", B: "INCORRECT: 'Tell me about invoice #12345' is not ambiguous. The issue is tool description overlap creating multiple valid routing targets.", C: "INCORRECT: The routing algorithm is working as designed — it matched the query to a tool that claims to handle it. The problem is the tool's broad claim, not the routing logic.", D: "CORRECT: A tool with an overly broad description like `search_all` creates overlap with specialized tools. The routing layer sees that `search_all` can handle invoice queries, so it routes to the general agent. The fix is to either narrow `search_all`'s description to exclude billing-specific queries or remove it in favor of domain-specific search tools." }
   },
   {
     id: "d2-045",
@@ -1055,19 +755,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Tool proliferation anti-pattern",
     question: "A research platform's tool set grew from 8 tools to 19 tools over a year. The team notices that Claude's tool selection accuracy dropped from 94% to 71%, but each individual tool works correctly. A junior engineer suggests adding detailed usage instructions for each tool in the system prompt. A senior engineer disagrees. Who is correct and why?",
-    choices: {
-      A: "The junior engineer is correct — detailed system prompt instructions will restore selection accuracy by providing explicit routing rules",
-      B: "The senior engineer is correct — the issue is tool count exceeding the degradation threshold, and system prompt instructions will create ghost associations that further degrade selection. The tools need consolidation.",
-      C: "Both are partially correct — add system prompt instructions AND consolidate tools simultaneously",
-      D: "Neither is correct — the issue is that individual tool descriptions need to be improved, not tool count"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Adding detailed routing instructions for 19 tools in the system prompt would create a massive set of competing ghost associations. Each keyword-to-tool mapping interferes with the description-based selection, likely making accuracy worse, not better.",
-      B: "CORRECT: 19 tools exceeds the ~15-18 tool degradation threshold where selection accuracy drops regardless of description quality. System prompt instructions for this many tools would compound the problem by creating ghost associations. The correct fix is tool consolidation — merging overlapping tools and eliminating redundancy to get back under the threshold.",
-      C: "INCORRECT: Adding system prompt instructions is actively harmful at this tool count. Only consolidation addresses the root cause.",
-      D: "INCORRECT: While description quality matters, research shows that beyond the degradation threshold, even excellent descriptions can't maintain selection accuracy. Tool count must be reduced."
-    }
+    choices: { A: "Neither is correct — the issue is that individual tool descriptions need to be improved, not tool count", B: "The junior engineer is correct — detailed system prompt instructions will restore selection accuracy by providing explicit routing rules", C: "Both are partially correct — add system prompt instructions AND consolidate tools simultaneously", D: "The senior engineer is correct — the issue is tool count exceeding the degradation threshold, and system prompt instructions will create ghost associations that further degrade selection. The tools need consolidation." },
+    correct: "D",
+    explanations: { A: "INCORRECT: While description quality matters, research shows that beyond the degradation threshold, even excellent descriptions can't maintain selection accuracy. Tool count must be reduced.", B: "INCORRECT: Adding detailed routing instructions for 19 tools in the system prompt would create a massive set of competing ghost associations. Each keyword-to-tool mapping interferes with the description-based selection, likely making accuracy worse, not better.", C: "INCORRECT: Adding system prompt instructions is actively harmful at this tool count. Only consolidation addresses the root cause.", D: "CORRECT: 19 tools exceeds the ~15-18 tool degradation threshold where selection accuracy drops regardless of description quality. System prompt instructions for this many tools would compound the problem by creating ghost associations. The correct fix is tool consolidation — merging overlapping tools and eliminating redundancy to get back under the threshold." }
   },
   {
     id: "d2-047",
@@ -1078,19 +768,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Role-appropriate tool sets prevent misuse",
     question: "A developer productivity platform gives all developers the same Claude agent with 14 tools including `modify_production_config`, `delete_database`, and `revoke_access`. A junior developer asks Claude to 'clean up the test environment' and Claude calls `delete_database` against production because the tool description mentions 'cleaning up databases'. What architectural principle was violated?",
-    choices: {
-      A: "The tool descriptions should have been more specific about which environments they target",
-      B: "The principle of role-appropriate tool sets — different user roles should have different tool sets, with destructive production tools only available to senior/admin roles",
-      C: "Claude should have asked for confirmation before executing destructive operations",
-      D: "The system should have had a production/test environment flag in the tool parameters"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: While better descriptions help, they don't prevent the fundamental risk. A determined or confused Claude might still call a production tool. The fix is removing the tool from the junior developer's agent entirely.",
-      B: "CORRECT: Role-appropriate tool sets mean that junior developers should never have access to `delete_database`, `modify_production_config`, or `revoke_access`. These tools should only appear in agents assigned to senior engineers or admins. This prevents the possibility of misuse — you can't misuse a tool that doesn't exist in your agent.",
-      C: "INCORRECT: Confirmation steps are defense-in-depth but not sufficient as the primary control. If the tool is available, Claude might be convinced to skip confirmation through prompt injection or conversational pressure.",
-      D: "INCORRECT: An environment flag is useful but still relies on Claude selecting the correct flag value. Removing the production tool entirely from junior agents is more robust."
-    }
+    choices: { A: "The system should have had a production/test environment flag in the tool parameters", B: "Claude should have asked for confirmation before executing destructive operations", C: "The principle of role-appropriate tool sets — different user roles should have different tool sets, with destructive production tools only available to senior/admin roles", D: "The tool descriptions should have been more specific about which environments they target" },
+    correct: "C",
+    explanations: { A: "INCORRECT: An environment flag is useful but still relies on Claude selecting the correct flag value. Removing the production tool entirely from junior agents is more robust.", B: "INCORRECT: Confirmation steps are defense-in-depth but not sufficient as the primary control. If the tool is available, Claude might be convinced to skip confirmation through prompt injection or conversational pressure.", C: "CORRECT: Role-appropriate tool sets mean that junior developers should never have access to `delete_database`, `modify_production_config`, or `revoke_access`. These tools should only appear in agents assigned to senior engineers or admins. This prevents the possibility of misuse — you can't misuse a tool that doesn't exist in your agent.", D: "INCORRECT: While better descriptions help, they don't prevent the fundamental risk. A determined or confused Claude might still call a production tool. The fix is removing the tool from the junior developer's agent entirely." }
   },
   {
     id: "d2-048",
@@ -1124,19 +804,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Tool set changes mid-conversation",
     question: "A customer support conversation starts with a billing inquiry (billing tools available). Midway through, the customer pivots to a technical issue. The orchestrator dynamically swaps the billing tools for technical tools. Claude's next response tries to call `check_billing_status` (now removed) and fails. What is the correct approach?",
-    choices: {
-      A: "Keep all tools available at all times to prevent this issue",
-      B: "When swapping tool sets mid-conversation, include a system message informing Claude that the available tools have changed and listing the new tool set",
-      C: "Use `tool_choice: none` for one turn to force a text-only transition response, then provide the new tools",
-      D: "Never change tools mid-conversation — start a new conversation for the technical issue"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Keeping all tools available creates tool sprawl and the selection degradation problems discussed in other questions. Dynamic tool sets are valuable.",
-      B: "CORRECT: When tool sets change mid-conversation, Claude needs explicit notification via a system message. Without this, Claude's cached understanding of available tools is stale, and it may try to call tools that no longer exist. The system message should list what tools are now available and optionally explain why the change occurred.",
-      C: "INCORRECT: Forcing a text-only response adds latency and may produce an awkward transition message. Claude can handle tool set changes in a single turn if properly informed.",
-      D: "INCORRECT: Starting a new conversation loses the customer context. The customer's billing issue context may be relevant to the technical issue they're now describing."
-    }
+    choices: { A: "When swapping tool sets mid-conversation, include a system message informing Claude that the available tools have changed and listing the new tool set", B: "Keep all tools available at all times to prevent this issue", C: "Never change tools mid-conversation — start a new conversation for the technical issue", D: "Use `tool_choice: none` for one turn to force a text-only transition response, then provide the new tools" },
+    correct: "A",
+    explanations: { A: "CORRECT: When tool sets change mid-conversation, Claude needs explicit notification via a system message. Without this, Claude's cached understanding of available tools is stale, and it may try to call tools that no longer exist. The system message should list what tools are now available and optionally explain why the change occurred.", B: "INCORRECT: Keeping all tools available creates tool sprawl and the selection degradation problems discussed in other questions. Dynamic tool sets are valuable.", C: "INCORRECT: Starting a new conversation loses the customer context. The customer's billing issue context may be relevant to the technical issue they're now describing.", D: "INCORRECT: Forcing a text-only response adds latency and may produce an awkward transition message. Claude can handle tool set changes in a single turn if properly informed." }
   },
   {
     id: "d2-050",
@@ -1147,19 +817,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Parallel tool calling constraints",
     question: "A research system allows Claude to call tools in parallel for efficiency. Claude calls `fetch_sec_filings(ticker: 'AAPL')` and `fetch_sec_filings(ticker: 'MSFT')` in parallel — this works well. But it also calls `create_report(data: ...)` in parallel with the fetches, using placeholder data because the real data hasn't returned yet. What constraint should be applied?",
-    choices: {
-      A: "Disable parallel tool calling entirely to ensure sequential execution",
-      B: "Add dependency metadata to tools so the orchestrator knows `create_report` depends on `fetch_sec_filings` results, and enforce that dependent tools execute sequentially while independent tools can parallelize",
-      C: "Add a system prompt instruction: 'Never call create_report until all data is fetched'",
-      D: "Make `create_report` validate its input and return an error if data looks like a placeholder"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Disabling all parallel calls eliminates the performance benefit for independent calls (like fetching data for multiple tickers simultaneously). The constraint should target dependencies, not all parallelism.",
-      B: "CORRECT: Tool dependency metadata allows the orchestrator to enforce execution order where needed while preserving parallelism for independent operations. Independent fetches can run in parallel, but `create_report` waits for all fetches to complete. This is the best of both worlds.",
-      C: "INCORRECT: System prompt instructions about execution order are advisory and cannot be enforced. Claude might still attempt to call dependent tools in parallel if it predicts the data.",
-      D: "INCORRECT: Input validation in `create_report` catches the error after the fact but wastes a tool call and adds latency. Prevention through dependency metadata is better than detection."
-    }
+    choices: { A: "Disable parallel tool calling entirely to ensure sequential execution", B: "Make `create_report` validate its input and return an error if data looks like a placeholder", C: "Add dependency metadata to tools so the orchestrator knows `create_report` depends on `fetch_sec_filings` results, and enforce that dependent tools execute sequentially while independent tools can parallelize", D: "Add a system prompt instruction: 'Never call create_report until all data is fetched'" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Disabling all parallel calls eliminates the performance benefit for independent calls (like fetching data for multiple tickers simultaneously). The constraint should target dependencies, not all parallelism.", B: "INCORRECT: Input validation in `create_report` catches the error after the fact but wastes a tool call and adds latency. Prevention through dependency metadata is better than detection.", C: "CORRECT: Tool dependency metadata allows the orchestrator to enforce execution order where needed while preserving parallelism for independent operations. Independent fetches can run in parallel, but `create_report` waits for all fetches to complete. This is the best of both worlds.", D: "INCORRECT: System prompt instructions about execution order are advisory and cannot be enforced. Claude might still attempt to call dependent tools in parallel if it predicts the data." }
   },
   {
     id: "d2-051",
@@ -1193,19 +853,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Cost optimization through tool_choice strategy",
     question: "A developer productivity system processes 10,000 support requests daily. 60% are simple FAQ questions that don't need tool calls, but Claude with `tool_choice: 'auto'` still calls `search_docs` for 40% of these simple questions, wasting API credits on unnecessary tool calls. However, the other 40% of complex questions critically need tool access. What is the most cost-effective approach?",
-    choices: {
-      A: "Use `tool_choice: 'none'` for all requests to eliminate unnecessary tool calls, and handle complex questions separately",
-      B: "Implement a lightweight classifier that routes simple FAQs with `tool_choice: 'none'` and complex questions with `tool_choice: 'auto'`, reducing unnecessary tool calls while preserving tool access when needed",
-      C: "Use `tool_choice: 'any'` to ensure every tool call is intentional",
-      D: "Remove all tools and use a RAG-only approach for knowledge retrieval"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Using `none` for all requests means complex questions that need tool access can't use tools. This breaks functionality for 40% of requests.",
-      B: "CORRECT: A lightweight pre-classifier (which can be a simple keyword/pattern matcher or a fast Claude Haiku call) routes simple FAQs with `tool_choice: 'none'` and complex questions with `tool_choice: 'auto'`. This eliminates unnecessary tool calls for simple questions while preserving full tool access for complex ones. At 10,000 daily requests, this saves significant cost.",
-      C: "INCORRECT: `any` forces a tool call on EVERY request, making the problem worse — now 100% of simple FAQs waste tool calls instead of 40%.",
-      D: "INCORRECT: RAG-only removes the ability to take actions (create tickets, execute commands) that complex questions require. Tools are essential for the action-oriented 40% of queries."
-    }
+    choices: { A: "Use `tool_choice: 'none'` for all requests to eliminate unnecessary tool calls, and handle complex questions separately", B: "Remove all tools and use a RAG-only approach for knowledge retrieval", C: "Implement a lightweight classifier that routes simple FAQs with `tool_choice: 'none'` and complex questions with `tool_choice: 'auto'`, reducing unnecessary tool calls while preserving tool access when needed", D: "Use `tool_choice: 'any'` to ensure every tool call is intentional" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Using `none` for all requests means complex questions that need tool access can't use tools. This breaks functionality for 40% of requests.", B: "INCORRECT: RAG-only removes the ability to take actions (create tickets, execute commands) that complex questions require. Tools are essential for the action-oriented 40% of queries.", C: "CORRECT: A lightweight pre-classifier (which can be a simple keyword/pattern matcher or a fast Claude Haiku call) routes simple FAQs with `tool_choice: 'none'` and complex questions with `tool_choice: 'auto'`. This eliminates unnecessary tool calls for simple questions while preserving full tool access for complex ones. At 10,000 daily requests, this saves significant cost.", D: "INCORRECT: `any` forces a tool call on EVERY request, making the problem worse — now 100% of simple FAQs waste tool calls instead of 40%." }
   },
   {
     id: "d2-053",
@@ -1239,19 +889,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "Agent handoff tool design",
     question: "A customer support system has billing, technical, and shipping agents. When a customer's issue spans domains (e.g., 'I was charged twice and my package arrived damaged'), the billing agent handles the charge but can't address the shipping issue. What tool distribution pattern handles multi-domain issues?",
-    choices: {
-      A: "Give each agent all tools from all domains so any agent can handle any issue",
-      B: "Add a scoped `handoff_to_agent(target: string, context: string)` tool to each agent, allowing agents to transfer conversations with full context to the appropriate specialist",
-      C: "Create a 'super agent' with all tools that handles multi-domain issues",
-      D: "Tell customers to open separate tickets for each domain"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Giving all tools to all agents creates tool sprawl and defeats the purpose of specialization. Each agent would have 15+ tools, exceeding the degradation threshold.",
-      B: "CORRECT: A `handoff_to_agent` tool is a lightweight cross-role tool that enables multi-domain handling without bloating tool sets. The billing agent handles the charge, then hands off to shipping with context about what was resolved. Each agent stays focused with its specialized tools.",
-      C: "INCORRECT: A super agent combines all domain tools, creating massive tool sprawl and degraded selection. It's the anti-pattern that specialization was designed to prevent.",
-      D: "INCORRECT: This creates a terrible customer experience. Multi-domain issues should be handled seamlessly through agent collaboration, not pushed back to the customer."
-    }
+    choices: { A: "Tell customers to open separate tickets for each domain", B: "Give each agent all tools from all domains so any agent can handle any issue", C: "Create a 'super agent' with all tools that handles multi-domain issues", D: "Add a scoped `handoff_to_agent(target: string, context: string)` tool to each agent, allowing agents to transfer conversations with full context to the appropriate specialist" },
+    correct: "D",
+    explanations: { A: "INCORRECT: This creates a terrible customer experience. Multi-domain issues should be handled seamlessly through agent collaboration, not pushed back to the customer.", B: "INCORRECT: Giving all tools to all agents creates tool sprawl and defeats the purpose of specialization. Each agent would have 15+ tools, exceeding the degradation threshold.", C: "INCORRECT: A super agent combines all domain tools, creating massive tool sprawl and degraded selection. It's the anti-pattern that specialization was designed to prevent.", D: "CORRECT: A `handoff_to_agent` tool is a lightweight cross-role tool that enables multi-domain handling without bloating tool sets. The billing agent handles the charge, then hands off to shipping with context about what was resolved. Each agent stays focused with its specialized tools." }
   },
 
   // ============================================================
@@ -1312,19 +952,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "All MCP servers discovered at connection time",
     question: "A multi-agent research system configures 8 MCP servers in `.mcp.json`. The team notices that Claude Code startup takes 45 seconds because one MCP server (a custom internal tool) takes 30 seconds to initialize. They want Claude to start working immediately and discover that server later. Is this possible?",
-    choices: {
-      A: "Yes — configure the slow server as a 'lazy' MCP server that connects only when its tools are first needed",
-      B: "No — all MCP servers configured in `.mcp.json` are discovered and connected at startup time. There is no lazy loading. The fix is to optimize the slow server's startup time.",
-      C: "Yes — add a `defer: true` flag to the slow server's configuration",
-      D: "Yes — move the slow server to `~/.claude.json` so it loads after project servers"
-    },
+    choices: { A: "Yes — move the slow server to `~/.claude.json` so it loads after project servers", B: "No — all MCP servers configured in `.mcp.json` are discovered and connected at startup time. There is no lazy loading. The fix is to optimize the slow server's startup time.", C: "Yes — configure the slow server as a 'lazy' MCP server that connects only when its tools are first needed", D: "Yes — add a `defer: true` flag to the slow server's configuration" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: MCP does not support lazy loading of servers. There is no 'lazy' connection mode — all configured servers are connected at discovery time.",
-      B: "CORRECT: All MCP servers are discovered and connected at startup. There is no lazy loading mechanism. If a server is slow to initialize, it blocks the entire startup. The solution is to optimize the server itself (caching, faster initialization) or run it as a persistent background process.",
-      C: "INCORRECT: There is no `defer: true` flag in MCP server configuration. This option does not exist in the protocol.",
-      D: "INCORRECT: Moving to `~/.claude.json` doesn't change the loading behavior — it's still discovered at startup. The loading location doesn't affect timing."
-    }
+    explanations: { A: "INCORRECT: Moving to `~/.claude.json` doesn't change the loading behavior — it's still discovered at startup. The loading location doesn't affect timing.", B: "CORRECT: All MCP servers are discovered and connected at startup. There is no lazy loading mechanism. If a server is slow to initialize, it blocks the entire startup. The solution is to optimize the server itself (caching, faster initialization) or run it as a persistent background process.", C: "INCORRECT: MCP does not support lazy loading of servers. There is no 'lazy' connection mode — all configured servers are connected at discovery time.", D: "INCORRECT: There is no `defer: true` flag in MCP server configuration. This option does not exist in the protocol." }
   },
   {
     id: "d2-058",
@@ -1335,19 +965,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Resources vs Tools distinction in MCP",
     question: "A research team is building an MCP server for their internal document repository. They need to decide between exposing documents as MCP Resources vs. MCP Tools. The documents are reference materials that Claude should be able to browse and read. Occasionally, a researcher needs Claude to update a document's metadata. How should this be modeled?",
-    choices: {
-      A: "Expose everything as Tools: `get_document`, `list_documents`, `update_metadata`",
-      B: "Expose documents as Resources (content catalogs for browsing and reading) and expose `update_metadata` as a Tool (an action that modifies state)",
-      C: "Expose everything as Resources since they're all related to documents",
-      D: "Expose documents as Tools with a `read_only: true` flag and metadata updates as Tools with `read_only: false`"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Exposing read-only document access as Tools forces Claude to make explicit tool calls just to browse content, adding latency. Resources are the correct abstraction for content that Claude should be able to browse.",
-      B: "CORRECT: In MCP, Resources are content catalogs — they represent data that Claude can browse and read (like documents). Tools represent actions that perform operations or modify state (like updating metadata). This distinction is fundamental to MCP's design: Resources for reading, Tools for acting.",
-      C: "INCORRECT: Resources cannot perform actions that modify state. `update_metadata` changes data and must be a Tool. Resources are read-only content catalogs.",
-      D: "INCORRECT: There is no `read_only` flag on MCP Tools. The Resource/Tool distinction is the MCP-native way to differentiate read access from write actions."
-    }
+    choices: { A: "Expose documents as Resources (content catalogs for browsing and reading) and expose `update_metadata` as a Tool (an action that modifies state)", B: "Expose documents as Tools with a `read_only: true` flag and metadata updates as Tools with `read_only: false`", C: "Expose everything as Resources since they're all related to documents", D: "Expose everything as Tools: `get_document`, `list_documents`, `update_metadata`" },
+    correct: "A",
+    explanations: { A: "CORRECT: In MCP, Resources are content catalogs — they represent data that Claude can browse and read (like documents). Tools represent actions that perform operations or modify state (like updating metadata). This distinction is fundamental to MCP's design: Resources for reading, Tools for acting.", B: "INCORRECT: There is no `read_only` flag on MCP Tools. The Resource/Tool distinction is the MCP-native way to differentiate read access from write actions.", C: "INCORRECT: Resources cannot perform actions that modify state. `update_metadata` changes data and must be a Tool. Resources are read-only content catalogs.", D: "INCORRECT: Exposing read-only document access as Tools forces Claude to make explicit tool calls just to browse content, adding latency. Resources are the correct abstraction for content that Claude should be able to browse." }
   },
   {
     id: "d2-059",
@@ -1358,19 +978,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Community servers preferred for standard integrations",
     question: "A developer productivity team needs Claude Code to integrate with GitHub, Slack, and PostgreSQL. A senior engineer proposes building custom MCP servers for each. What is the recommended approach?",
-    choices: {
-      A: "Build custom MCP servers for all three to ensure they exactly match the team's requirements",
-      B: "Use community/official MCP servers for all three standard integrations, only building custom servers if the community versions lack critical functionality",
-      C: "Use community servers for GitHub and Slack but build a custom PostgreSQL server for security reasons",
-      D: "Build custom servers for all three to avoid dependency on external maintainers"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Building custom servers for standard integrations duplicates significant effort. Official/community MCP servers for GitHub, Slack, and PostgreSQL are well-maintained and cover standard use cases.",
-      B: "CORRECT: Community MCP servers should be the first choice for standard integrations. They're battle-tested, regularly updated, and cover common use cases. Building custom servers is only justified when community versions lack specific critical functionality the team needs.",
-      C: "INCORRECT: Community PostgreSQL MCP servers support standard security practices (connection strings via env vars, SSL). There's no inherent security advantage to a custom build unless the team has highly unusual security requirements.",
-      D: "INCORRECT: Building three custom servers creates a maintenance burden far greater than the risk of depending on well-maintained community projects. The team would need to track API changes, fix bugs, and add features for all three."
-    }
+    choices: { A: "Build custom servers for all three to avoid dependency on external maintainers", B: "Use community servers for GitHub and Slack but build a custom PostgreSQL server for security reasons", C: "Use community/official MCP servers for all three standard integrations, only building custom servers if the community versions lack critical functionality", D: "Build custom MCP servers for all three to ensure they exactly match the team's requirements" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Building three custom servers creates a maintenance burden far greater than the risk of depending on well-maintained community projects. The team would need to track API changes, fix bugs, and add features for all three.", B: "INCORRECT: Community PostgreSQL MCP servers support standard security practices (connection strings via env vars, SSL). There's no inherent security advantage to a custom build unless the team has highly unusual security requirements.", C: "CORRECT: Community MCP servers should be the first choice for standard integrations. They're battle-tested, regularly updated, and cover common use cases. Building custom servers is only justified when community versions lack specific critical functionality the team needs.", D: "INCORRECT: Building custom servers for standard integrations duplicates significant effort. Official/community MCP servers for GitHub, Slack, and PostgreSQL are well-maintained and cover standard use cases." }
   },
   {
     id: "d2-060",
@@ -1381,19 +991,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Enhanced descriptions needed for MCP tools to compete with built-ins",
     question: "A team deploys an MCP server providing a `search_code` tool alongside Claude Code's built-in code search tools (Grep, Glob). Developers report that Claude almost never uses the MCP `search_code` tool, even when it would provide better results (e.g., semantic search across the codebase). What is the most likely cause and fix?",
-    choices: {
-      A: "MCP tools are lower priority than built-in tools. There's no fix — built-ins always win.",
-      B: "The MCP tool's description must be enhanced to clearly differentiate its capabilities from built-in tools. For example: 'Performs semantic code search using embeddings — use for conceptual queries like \"authentication flow\" where keyword search (Grep) would miss related code.'",
-      C: "Remove the built-in Grep and Glob tools to force Claude to use the MCP tool",
-      D: "Rename the MCP tool to something unrelated to code search so it doesn't compete"
-    },
+    choices: { A: "Remove the built-in Grep and Glob tools to force Claude to use the MCP tool", B: "The MCP tool's description must be enhanced to clearly differentiate its capabilities from built-in tools. For example: 'Performs semantic code search using embeddings — use for conceptual queries like \"authentication flow\" where keyword search (Grep) would miss related code.'", C: "MCP tools are lower priority than built-in tools. There's no fix — built-ins always win.", D: "Rename the MCP tool to something unrelated to code search so it doesn't compete" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: MCP tools are not inherently lower priority. However, built-in tools have well-established descriptions that Claude is familiar with. MCP tools need enhanced descriptions to differentiate themselves and compete for selection.",
-      B: "CORRECT: MCP tools must have enhanced descriptions that clearly explain what they offer beyond built-in tools. Without explicit differentiation (e.g., 'semantic search' vs. 'keyword search'), Claude defaults to familiar built-in tools. The description should explain when the MCP tool is superior.",
-      C: "INCORRECT: Removing built-in tools eliminates valuable capabilities. Keyword search (Grep) and path matching (Glob) serve different use cases than semantic search. The goal is complementary tools, not replacement.",
-      D: "INCORRECT: Renaming the tool to avoid competition obscures its purpose. The fix is better descriptions that explain the complementary relationship, not name obfuscation."
-    }
+    explanations: { A: "INCORRECT: Removing built-in tools eliminates valuable capabilities. Keyword search (Grep) and path matching (Glob) serve different use cases than semantic search. The goal is complementary tools, not replacement.", B: "CORRECT: MCP tools must have enhanced descriptions that clearly explain what they offer beyond built-in tools. Without explicit differentiation (e.g., 'semantic search' vs. 'keyword search'), Claude defaults to familiar built-in tools. The description should explain when the MCP tool is superior.", C: "INCORRECT: MCP tools are not inherently lower priority. However, built-in tools have well-established descriptions that Claude is familiar with. MCP tools need enhanced descriptions to differentiate themselves and compete for selection.", D: "INCORRECT: Renaming the tool to avoid competition obscures its purpose. The fix is better descriptions that explain the complementary relationship, not name obfuscation." }
   },
   {
     id: "d2-061",
@@ -1404,19 +1004,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "MCP server architecture for multi-tenant support",
     question: "A customer support platform serves 50 enterprise clients, each with their own CRM system. The team needs MCP integration with each client's CRM. What is the scalable MCP architecture?",
-    choices: {
-      A: "Create 50 separate MCP server configurations, one per client, in `.mcp.json`",
-      B: "Create one MCP server that accepts a `tenant_id` parameter and routes to the correct CRM based on the tenant context, with credentials resolved from environment variables per tenant",
-      C: "Create one MCP server per CRM type (Salesforce, HubSpot, etc.) and route based on client configuration",
-      D: "Have each client host their own MCP server that the platform connects to"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: 50 separate MCP server configurations would all be discovered at startup, creating massive initialization overhead and potentially exceeding practical limits.",
-      B: "CORRECT: A single multi-tenant MCP server with tenant routing is the scalable pattern. The server accepts `tenant_id`, resolves the appropriate CRM credentials from environment or secrets management, and routes requests accordingly. This keeps the MCP configuration minimal while supporting all 50 clients.",
-      C: "INCORRECT: Grouping by CRM type is better than per-client but still requires multiple server configurations and doesn't handle clients with the same CRM type but different credentials cleanly.",
-      D: "INCORRECT: Having clients host MCP servers creates operational complexity, security concerns (clients would need to maintain server infrastructure), and connectivity challenges."
-    }
+    choices: { A: "Create 50 separate MCP server configurations, one per client, in `.mcp.json`", B: "Create one MCP server per CRM type (Salesforce, HubSpot, etc.) and route based on client configuration", C: "Have each client host their own MCP server that the platform connects to", D: "Create one MCP server that accepts a `tenant_id` parameter and routes to the correct CRM based on the tenant context, with credentials resolved from environment variables per tenant" },
+    correct: "D",
+    explanations: { A: "INCORRECT: 50 separate MCP server configurations would all be discovered at startup, creating massive initialization overhead and potentially exceeding practical limits.", B: "INCORRECT: Grouping by CRM type is better than per-client but still requires multiple server configurations and doesn't handle clients with the same CRM type but different credentials cleanly.", C: "INCORRECT: Having clients host MCP servers creates operational complexity, security concerns (clients would need to maintain server infrastructure), and connectivity challenges.", D: "CORRECT: A single multi-tenant MCP server with tenant routing is the scalable pattern. The server accepts `tenant_id`, resolves the appropriate CRM credentials from environment or secrets management, and routes requests accordingly. This keeps the MCP configuration minimal while supporting all 50 clients." }
   },
   {
     id: "d2-062",
@@ -1450,19 +1040,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "MCP server error handling and resilience",
     question: "A research system's MCP server for a financial data API crashes intermittently under high load. When the server crashes, Claude loses access to all tools from that server and proceeds without financial data, producing incomplete research reports. What is the recommended resilience pattern?",
-    choices: {
-      A: "Add a health check that restarts the MCP server automatically when it crashes",
-      B: "Implement connection monitoring in the orchestrator that detects MCP server disconnection, attempts reconnection with exponential backoff, and pauses Claude's workflow until the server is restored or a timeout triggers a graceful degradation path",
-      C: "Duplicate the MCP server tools as native tools so Claude has a fallback",
-      D: "Add a try-catch around every tool call to handle missing servers"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Auto-restart helps but there's a gap between crash and restart where Claude has no access. The orchestrator needs to be aware of the outage and handle the workflow appropriately during the gap.",
-      B: "CORRECT: Connection monitoring, reconnection with backoff, and workflow management during outages is the comprehensive resilience pattern. The orchestrator should detect disconnection, attempt recovery, and either pause the workflow (if the data is critical) or trigger a graceful degradation path (if partial results are acceptable).",
-      C: "INCORRECT: Duplicating MCP tools as native tools doubles the maintenance burden and creates tool overlap confusion. MCP server reliability should be solved at the infrastructure level.",
-      D: "INCORRECT: Per-call try-catch handles individual failures but doesn't address the systemic issue of server disconnection. It also doesn't provide recovery or degradation logic."
-    }
+    choices: { A: "Add a health check that restarts the MCP server automatically when it crashes", B: "Add a try-catch around every tool call to handle missing servers", C: "Duplicate the MCP server tools as native tools so Claude has a fallback", D: "Implement connection monitoring in the orchestrator that detects MCP server disconnection, attempts reconnection with exponential backoff, and pauses Claude's workflow until the server is restored or a timeout triggers a graceful degradation path" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Auto-restart helps but there's a gap between crash and restart where Claude has no access. The orchestrator needs to be aware of the outage and handle the workflow appropriately during the gap.", B: "INCORRECT: Per-call try-catch handles individual failures but doesn't address the systemic issue of server disconnection. It also doesn't provide recovery or degradation logic.", C: "INCORRECT: Duplicating MCP tools as native tools doubles the maintenance burden and creates tool overlap confusion. MCP server reliability should be solved at the infrastructure level.", D: "CORRECT: Connection monitoring, reconnection with backoff, and workflow management during outages is the comprehensive resilience pattern. The orchestrator should detect disconnection, attempt recovery, and either pause the workflow (if the data is critical) or trigger a graceful degradation path (if partial results are acceptable)." }
   },
   {
     id: "d2-064",
@@ -1473,19 +1053,9 @@ export const d2Questions = [
     scenario: 6,
     importance: "MCP tool naming and namespacing",
     question: "A structured data extraction system uses two MCP servers: one for PDF processing and one for image OCR. Both expose a tool called `extract_text`. When Claude calls `extract_text`, which server handles the request?",
-    choices: {
-      A: "The first server in the configuration file handles it",
-      B: "Both servers handle it in parallel, and Claude gets both results",
-      C: "MCP tools are namespaced by server — they appear as `pdf_server__extract_text` and `ocr_server__extract_text` (or similar), so Claude must specify which one to call",
-      D: "It fails with a name collision error"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: MCP doesn't use first-match routing for tool names. Tool namespacing prevents ambiguity.",
-      B: "INCORRECT: MCP does not broadcast tool calls to multiple servers. Each call targets a specific server's tool.",
-      C: "CORRECT: MCP tools from different servers are namespaced (typically `serverName__toolName` or similar prefixing) to prevent collisions. Claude sees them as distinct tools and must call the specific namespaced version. This means the tool descriptions should clearly differentiate when to use each server's `extract_text`.",
-      D: "INCORRECT: MCP handles name collisions through namespacing rather than failing. The framework is designed to support multiple servers with potentially overlapping tool names."
-    }
+    choices: { A: "It fails with a name collision error", B: "MCP tools are namespaced by server — they appear as `pdf_server__extract_text` and `ocr_server__extract_text` (or similar), so Claude must specify which one to call", C: "Both servers handle it in parallel, and Claude gets both results", D: "The first server in the configuration file handles it" },
+    correct: "B",
+    explanations: { A: "INCORRECT: MCP handles name collisions through namespacing rather than failing. The framework is designed to support multiple servers with potentially overlapping tool names.", B: "CORRECT: MCP tools from different servers are namespaced (typically `serverName__toolName` or similar prefixing) to prevent collisions. Claude sees them as distinct tools and must call the specific namespaced version. This means the tool descriptions should clearly differentiate when to use each server's `extract_text`.", C: "INCORRECT: MCP does not broadcast tool calls to multiple servers. Each call targets a specific server's tool.", D: "INCORRECT: MCP doesn't use first-match routing for tool names. Tool namespacing prevents ambiguity." }
   },
   {
     id: "d2-065",
@@ -1496,19 +1066,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "MCP server capability discovery",
     question: "A developer productivity platform dynamically adds new tools to its MCP server (e.g., when new integrations are deployed). Claude Code was started this morning, and a new `deploy_canary` tool was added to the MCP server at noon. A developer tries to use it at 2 PM but Claude doesn't know about it. Why?",
-    choices: {
-      A: "The tool was added after Claude Code's context window was established and tools are cached for the session",
-      B: "MCP tools are discovered at connection time. Since Claude Code connected this morning, it has the morning's tool list. The developer needs to restart Claude Code or reconnect to the MCP server to discover new tools.",
-      C: "The new tool wasn't added to `.mcp.json` so Claude Code can't see it",
-      D: "MCP servers can only expose tools that existed when the server was first compiled"
-    },
+    choices: { A: "MCP servers can only expose tools that existed when the server was first compiled", B: "MCP tools are discovered at connection time. Since Claude Code connected this morning, it has the morning's tool list. The developer needs to restart Claude Code or reconnect to the MCP server to discover new tools.", C: "The tool was added after Claude Code's context window was established and tools are cached for the session", D: "The new tool wasn't added to `.mcp.json` so Claude Code can't see it" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: This is partially right about caching, but the specific mechanism is MCP discovery at connection time, not context window establishment.",
-      B: "CORRECT: MCP tools are discovered when the client connects to the server. There is no automatic re-discovery or hot-reload of tools during an active session. If the server adds tools after connection, the client won't see them until reconnection.",
-      C: "INCORRECT: `.mcp.json` configures server connections, not individual tools. The tools are exposed by the running MCP server, not listed in the config file.",
-      D: "INCORRECT: MCP servers can dynamically register tools at runtime. The issue is that the client discovers tools at connection time and doesn't re-discover them mid-session."
-    }
+    explanations: { A: "INCORRECT: MCP servers can dynamically register tools at runtime. The issue is that the client discovers tools at connection time and doesn't re-discover them mid-session.", B: "CORRECT: MCP tools are discovered when the client connects to the server. There is no automatic re-discovery or hot-reload of tools during an active session. If the server adds tools after connection, the client won't see them until reconnection.", C: "INCORRECT: This is partially right about caching, but the specific mechanism is MCP discovery at connection time, not context window establishment.", D: "INCORRECT: `.mcp.json` configures server connections, not individual tools. The tools are exposed by the running MCP server, not listed in the config file." }
   },
   {
     id: "d2-066",
@@ -1519,19 +1079,9 @@ export const d2Questions = [
     scenario: 1,
     importance: "MCP transport selection",
     question: "A customer support platform needs to connect Claude Code to an MCP server running in a Kubernetes cluster in a different network zone. The MCP server handles sensitive customer data. What transport configuration is appropriate?",
-    choices: {
-      A: "Use stdio transport with SSH tunneling to the Kubernetes pod",
-      B: "Use SSE (Server-Sent Events) transport over HTTPS with mutual TLS authentication for secure cross-network communication",
-      C: "Use stdio transport — it works for all MCP configurations",
-      D: "Run the MCP server locally and sync data from Kubernetes to avoid network transport"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: stdio transport requires the server process to be local (started by the client). SSH tunneling to a Kubernetes pod is fragile and not the designed cross-network pattern.",
-      B: "CORRECT: SSE (Server-Sent Events) transport is designed for remote MCP servers. Over HTTPS with mutual TLS, it provides encrypted, authenticated communication suitable for cross-network access to sensitive data. This is the appropriate transport for connecting to a remote MCP server in a different network zone.",
-      C: "INCORRECT: stdio transport launches the server as a local subprocess. It doesn't support connecting to remote servers in different network zones.",
-      D: "INCORRECT: Syncing sensitive customer data to a local machine creates data residency and security issues. The data should stay in its secured network zone."
-    }
+    choices: { A: "Use stdio transport — it works for all MCP configurations", B: "Run the MCP server locally and sync data from Kubernetes to avoid network transport", C: "Use SSE (Server-Sent Events) transport over HTTPS with mutual TLS authentication for secure cross-network communication", D: "Use stdio transport with SSH tunneling to the Kubernetes pod" },
+    correct: "C",
+    explanations: { A: "INCORRECT: stdio transport launches the server as a local subprocess. It doesn't support connecting to remote servers in different network zones.", B: "INCORRECT: Syncing sensitive customer data to a local machine creates data residency and security issues. The data should stay in its secured network zone.", C: "CORRECT: SSE (Server-Sent Events) transport is designed for remote MCP servers. Over HTTPS with mutual TLS, it provides encrypted, authenticated communication suitable for cross-network access to sensitive data. This is the appropriate transport for connecting to a remote MCP server in a different network zone.", D: "INCORRECT: stdio transport requires the server process to be local (started by the client). SSH tunneling to a Kubernetes pod is fragile and not the designed cross-network pattern." }
   },
   {
     id: "d2-067",
@@ -1542,19 +1092,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "MCP prompts for guided workflows",
     question: "A research system's MCP server exposes complex analytical tools. New analysts struggle to use them effectively. The team wants to provide guided workflows like 'Quarterly Market Analysis' that set up the right tool sequence with pre-configured parameters. What MCP feature supports this?",
-    choices: {
-      A: "Add workflow descriptions to each tool's description field",
-      B: "Use MCP Prompts — server-defined prompt templates that combine instructions, tool sequences, and pre-configured parameters into reusable guided workflows",
-      C: "Create a separate 'workflow' tool that wraps other tools",
-      D: "Add workflow instructions to the system prompt for each user session"
-    },
+    choices: { A: "Add workflow descriptions to each tool's description field", B: "Use MCP Prompts — server-defined prompt templates that combine instructions, tool sequences, and pre-configured parameters into reusable guided workflows", C: "Add workflow instructions to the system prompt for each user session", D: "Create a separate 'workflow' tool that wraps other tools" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Tool descriptions guide individual tool selection, not multi-step workflows. Cramming workflow logic into a single tool's description overloads its purpose.",
-      B: "CORRECT: MCP Prompts are server-defined prompt templates that can include pre-configured instructions, suggested tool sequences, and parameter defaults. They enable guided workflows without modifying tool definitions, making complex analytical processes accessible to new analysts.",
-      C: "INCORRECT: A wrapper tool adds unnecessary indirection and makes debugging harder. MCP Prompts are the native mechanism for workflow guidance.",
-      D: "INCORRECT: System prompt workflow instructions are session-specific and not reusable. MCP Prompts are defined on the server and available to all users, making them maintainable and consistent."
-    }
+    explanations: { A: "INCORRECT: Tool descriptions guide individual tool selection, not multi-step workflows. Cramming workflow logic into a single tool's description overloads its purpose.", B: "CORRECT: MCP Prompts are server-defined prompt templates that can include pre-configured instructions, suggested tool sequences, and parameter defaults. They enable guided workflows without modifying tool definitions, making complex analytical processes accessible to new analysts.", C: "INCORRECT: System prompt workflow instructions are session-specific and not reusable. MCP Prompts are defined on the server and available to all users, making them maintainable and consistent.", D: "INCORRECT: A wrapper tool adds unnecessary indirection and makes debugging harder. MCP Prompts are the native mechanism for workflow guidance." }
   },
   {
     id: "d2-068",
@@ -1565,19 +1105,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "MCP server testing and validation",
     question: "A team is building a custom MCP server for their internal deployment system. Before connecting it to Claude Code in production, they need to verify it works correctly. What is the recommended testing approach?",
-    choices: {
-      A: "Connect it to Claude Code directly and test manually with various prompts",
-      B: "Write unit tests for each tool handler, then use the MCP Inspector tool to test the server's MCP protocol compliance, tool discovery, parameter validation, and error handling before connecting to Claude Code",
-      C: "Test only the backend API that the MCP server wraps — if the API works, the MCP server will work",
-      D: "Deploy to production and monitor for errors"
-    },
+    choices: { A: "Test only the backend API that the MCP server wraps — if the API works, the MCP server will work", B: "Write unit tests for each tool handler, then use the MCP Inspector tool to test the server's MCP protocol compliance, tool discovery, parameter validation, and error handling before connecting to Claude Code", C: "Deploy to production and monitor for errors", D: "Connect it to Claude Code directly and test manually with various prompts" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Manual testing with Claude Code is slow, non-reproducible, and can't systematically test edge cases. You can't control what Claude will call or in what order.",
-      B: "CORRECT: A layered testing approach — unit tests for tool handlers, then MCP Inspector for protocol compliance — ensures the server works correctly at both the business logic and protocol levels. MCP Inspector can validate tool discovery, parameter schemas, error responses, and protocol compliance independently of Claude.",
-      C: "INCORRECT: The backend API working doesn't guarantee the MCP layer is correct. Issues can arise in parameter mapping, response formatting, error translation, and protocol compliance — all specific to the MCP layer.",
-      D: "INCORRECT: Deploying untested servers to production is reckless, especially for a deployment system that could cause outages if tools malfunction."
-    }
+    explanations: { A: "INCORRECT: The backend API working doesn't guarantee the MCP layer is correct. Issues can arise in parameter mapping, response formatting, error translation, and protocol compliance — all specific to the MCP layer.", B: "CORRECT: A layered testing approach — unit tests for tool handlers, then MCP Inspector for protocol compliance — ensures the server works correctly at both the business logic and protocol levels. MCP Inspector can validate tool discovery, parameter schemas, error responses, and protocol compliance independently of Claude.", C: "INCORRECT: Deploying untested servers to production is reckless, especially for a deployment system that could cause outages if tools malfunction.", D: "INCORRECT: Manual testing with Claude Code is slow, non-reproducible, and can't systematically test edge cases. You can't control what Claude will call or in what order." }
   },
   {
     id: "d2-069",
@@ -1588,19 +1118,9 @@ export const d2Questions = [
     scenario: 5,
     importance: "MCP server performance in CI/CD",
     question: "A CI/CD pipeline using Claude Code with 4 MCP servers has a cold start time of 60 seconds due to server initialization. For a pipeline that runs hundreds of times daily, this adds significant time. What optimization reduces cold start impact?",
-    choices: {
-      A: "Remove MCP servers from CI and use direct API calls instead",
-      B: "Run MCP servers as persistent background services that stay alive between pipeline runs, so subsequent runs connect to already-initialized servers",
-      C: "Use `tool_choice: none` to skip MCP initialization",
-      D: "Reduce the number of MCP servers to 1 by combining all functionality"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Replacing MCP with direct API calls loses the benefits of the MCP abstraction and requires maintaining custom API integration code.",
-      B: "CORRECT: Running MCP servers as persistent background services (or long-lived processes) means initialization happens once and subsequent pipeline runs connect instantly. This amortizes the cold start cost across hundreds of daily runs.",
-      C: "INCORRECT: `tool_choice: none` disables tool USE, not server initialization. The servers are still discovered and connected at startup regardless of tool_choice settings.",
-      D: "INCORRECT: Combining all functionality into one server reduces cold starts but creates a monolithic server that's harder to maintain and doesn't benefit from the modular MCP architecture."
-    }
+    choices: { A: "Reduce the number of MCP servers to 1 by combining all functionality", B: "Remove MCP servers from CI and use direct API calls instead", C: "Run MCP servers as persistent background services that stay alive between pipeline runs, so subsequent runs connect to already-initialized servers", D: "Use `tool_choice: none` to skip MCP initialization" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Combining all functionality into one server reduces cold starts but creates a monolithic server that's harder to maintain and doesn't benefit from the modular MCP architecture.", B: "INCORRECT: Replacing MCP with direct API calls loses the benefits of the MCP abstraction and requires maintaining custom API integration code.", C: "CORRECT: Running MCP servers as persistent background services (or long-lived processes) means initialization happens once and subsequent pipeline runs connect instantly. This amortizes the cold start cost across hundreds of daily runs.", D: "INCORRECT: `tool_choice: none` disables tool USE, not server initialization. The servers are still discovered and connected at startup regardless of tool_choice settings." }
   },
   {
     id: "d2-070",
@@ -1611,19 +1131,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "MCP sampling for LLM-mediated tool interactions",
     question: "A research MCP server needs to summarize large datasets before returning them to Claude (to fit within token limits). The server itself doesn't have summarization capability. What MCP feature allows the server to request LLM help for this preprocessing step?",
-    choices: {
-      A: "The MCP server should call the Claude API directly with its own API key",
-      B: "MCP Sampling allows the server to request an LLM completion through the client (Claude Code), enabling the server to leverage Claude's capabilities for preprocessing like summarization before returning the final result",
-      C: "The server should truncate the data to fit the token limit without summarization",
-      D: "Add a summarization library to the MCP server"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Having the MCP server make independent API calls to Claude creates a separate billing stream, loses conversation context, and requires managing API keys in the server.",
-      B: "CORRECT: MCP Sampling is a protocol feature that allows MCP servers to request LLM completions through the connected client. The server can send the large dataset to the client with a summarization prompt, receive the summary, and then return the compact result. This keeps the LLM interaction within the existing session.",
-      C: "INCORRECT: Truncation loses data and may remove critical information. Summarization preserves the key insights while reducing size.",
-      D: "INCORRECT: Adding a summarization library (likely a smaller model) to the MCP server adds infrastructure complexity and produces lower-quality summaries than Claude. MCP Sampling leverages the existing, high-quality LLM connection."
-    }
+    choices: { A: "The MCP server should call the Claude API directly with its own API key", B: "Add a summarization library to the MCP server", C: "The server should truncate the data to fit the token limit without summarization", D: "MCP Sampling allows the server to request an LLM completion through the client (Claude Code), enabling the server to leverage Claude's capabilities for preprocessing like summarization before returning the final result" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Having the MCP server make independent API calls to Claude creates a separate billing stream, loses conversation context, and requires managing API keys in the server.", B: "INCORRECT: Adding a summarization library (likely a smaller model) to the MCP server adds infrastructure complexity and produces lower-quality summaries than Claude. MCP Sampling leverages the existing, high-quality LLM connection.", C: "INCORRECT: Truncation loses data and may remove critical information. Summarization preserves the key insights while reducing size.", D: "CORRECT: MCP Sampling is a protocol feature that allows MCP servers to request LLM completions through the connected client. The server can send the large dataset to the client with a summarization prompt, receive the summary, and then return the compact result. This keeps the LLM interaction within the existing session." }
   },
   {
     id: "d2-071",
@@ -1634,19 +1144,9 @@ export const d2Questions = [
     scenario: 6,
     importance: "MCP for multi-format extraction pipelines",
     question: "A structured data extraction system processes PDFs, images, spreadsheets, and HTML documents. The team considers two MCP architectures: (A) one MCP server per document format, each with format-specific extraction tools, or (B) one MCP server with a single `extract(document_url, format_hint)` tool. The system handles 10,000 documents daily across all formats. Which architecture is better and why?",
-    choices: {
-      A: "Architecture A (per-format servers) because each server can be optimized for its format and scaled independently based on document volume per format",
-      B: "Architecture B (single server) because it's simpler and fewer MCP servers mean faster startup",
-      C: "Architecture A because MCP requires one server per document type",
-      D: "Architecture B because Claude can't handle more than one MCP server"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Per-format MCP servers can be independently optimized (PDF processing uses different libraries than image OCR), independently scaled (if 70% of documents are PDFs, scale the PDF server), and independently maintained. At 10,000 documents daily, operational flexibility matters significantly.",
-      B: "INCORRECT: A single server is simpler initially but becomes a bottleneck at scale. It can't be optimized or scaled per format, and a bug in one format's handler can affect all formats.",
-      C: "INCORRECT: MCP does not require one server per document type. This is an architectural choice, not a protocol requirement.",
-      D: "INCORRECT: Claude Code can connect to multiple MCP servers simultaneously. There is no single-server limitation."
-    }
+    choices: { A: "Architecture A because MCP requires one server per document type", B: "Architecture B (single server) because it's simpler and fewer MCP servers mean faster startup", C: "Architecture A (per-format servers) because each server can be optimized for its format and scaled independently based on document volume per format", D: "Architecture B because Claude can't handle more than one MCP server" },
+    correct: "C",
+    explanations: { A: "INCORRECT: MCP does not require one server per document type. This is an architectural choice, not a protocol requirement.", B: "INCORRECT: A single server is simpler initially but becomes a bottleneck at scale. It can't be optimized or scaled per format, and a bug in one format's handler can affect all formats.", C: "CORRECT: Per-format MCP servers can be independently optimized (PDF processing uses different libraries than image OCR), independently scaled (if 70% of documents are PDFs, scale the PDF server), and independently maintained. At 10,000 documents daily, operational flexibility matters significantly.", D: "INCORRECT: Claude Code can connect to multiple MCP servers simultaneously. There is no single-server limitation." }
   },
   {
     id: "d2-072",
@@ -1684,19 +1184,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Grep vs Glob — commonly confused",
     question: "A developer asks Claude Code: 'Find all TypeScript files in the project that import the `AuthProvider` component.' Claude uses Glob with pattern `**/*.ts` and then reads each file to check for the import. This takes 3 minutes across 500 files. What is the correct approach?",
-    choices: {
-      A: "Use Glob with a more specific pattern like `**/*auth*.ts` to narrow the file list",
-      B: "Use Grep to search for the pattern `import.*AuthProvider` across the codebase, which directly finds files containing the import without reading every file",
-      C: "Use Read on the `tsconfig.json` to find the import paths, then Glob for those specific paths",
-      D: "Use Glob with `**/AuthProvider*` to find the component file, then trace all imports from there"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Glob matches file paths, not file contents. Even with `*auth*` in the path, many files that import `AuthProvider` won't have 'auth' in their filename. This filters the wrong dimension.",
-      B: "CORRECT: Grep is for content search — it finds files containing specific text patterns. Searching for `import.*AuthProvider` directly identifies every file that imports the component, regardless of filename. This is the correct tool for content-based queries and is dramatically faster than reading every file.",
-      C: "INCORRECT: `tsconfig.json` contains compiler configuration, not import relationships. This approach doesn't help find which files import a specific component.",
-      D: "INCORRECT: Finding the component file doesn't reveal its consumers. Import relationships go from consumer to provider, so you need to search consumer files for the import statement."
-    }
+    choices: { A: "Use Grep to search for the pattern `import.*AuthProvider` across the codebase, which directly finds files containing the import without reading every file", B: "Use Read on the `tsconfig.json` to find the import paths, then Glob for those specific paths", C: "Use Glob with a more specific pattern like `**/*auth*.ts` to narrow the file list", D: "Use Glob with `**/AuthProvider*` to find the component file, then trace all imports from there" },
+    correct: "A",
+    explanations: { A: "CORRECT: Grep is for content search — it finds files containing specific text patterns. Searching for `import.*AuthProvider` directly identifies every file that imports the component, regardless of filename. This is the correct tool for content-based queries and is dramatically faster than reading every file.", B: "INCORRECT: `tsconfig.json` contains compiler configuration, not import relationships. This approach doesn't help find which files import a specific component.", C: "INCORRECT: Glob matches file paths, not file contents. Even with `*auth*` in the path, many files that import `AuthProvider` won't have 'auth' in their filename. This filters the wrong dimension.", D: "INCORRECT: Finding the component file doesn't reveal its consumers. Import relationships go from consumer to provider, so you need to search consumer files for the import statement." }
   },
   {
     id: "d2-074",
@@ -1707,19 +1197,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Glob for path-based file discovery",
     question: "A developer asks Claude Code: 'What test files exist for the payments module?' The codebase follows the convention of `*.test.ts` files next to source files. What is the most efficient approach?",
-    choices: {
-      A: "Grep for 'describe(' or 'it(' to find all test files",
-      B: "Read the directory listing for every folder in the payments module",
-      C: "Use Glob with pattern `**/payments/**/*.test.ts` to find all test files in the payments module by path pattern",
-      D: "Use Grep for 'payments' to find files mentioning the module"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Grepping for test function keywords would find test files across the ENTIRE codebase, not just the payments module. You'd need additional filtering by path, which Glob does natively.",
-      B: "INCORRECT: Manually reading directory listings is slow and tedious. Glob does exactly this job — finding files by path pattern — in a single operation.",
-      C: "CORRECT: Glob is designed for path-based file discovery. The pattern `**/payments/**/*.test.ts` efficiently finds all files matching the test naming convention within the payments directory tree. This is the exact use case for Glob.",
-      D: "INCORRECT: Grepping for 'payments' would find any file that mentions payments in its content, which includes documentation, configuration, and unrelated code that references the payments module."
-    }
+    choices: { A: "Use Grep for 'payments' to find files mentioning the module", B: "Use Glob with pattern `**/payments/**/*.test.ts` to find all test files in the payments module by path pattern", C: "Grep for 'describe(' or 'it(' to find all test files", D: "Read the directory listing for every folder in the payments module" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Grepping for 'payments' would find any file that mentions payments in its content, which includes documentation, configuration, and unrelated code that references the payments module.", B: "CORRECT: Glob is designed for path-based file discovery. The pattern `**/payments/**/*.test.ts` efficiently finds all files matching the test naming convention within the payments directory tree. This is the exact use case for Glob.", C: "INCORRECT: Grepping for test function keywords would find test files across the ENTIRE codebase, not just the payments module. You'd need additional filtering by path, which Glob does natively.", D: "INCORRECT: Manually reading directory listings is slow and tedious. Glob does exactly this job — finding files by path pattern — in a single operation." }
   },
   {
     id: "d2-075",
@@ -1730,19 +1210,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Edit fails on non-unique text — Read+Write fallback",
     question: "A developer asks Claude Code to change a specific `console.log('debug')` statement on line 145 of a file. The file has 12 identical `console.log('debug')` statements. Claude uses Edit to replace the text but the operation fails. Why, and what is the correct fallback?",
-    choices: {
-      A: "Edit failed because the file is too large. Use Write to rewrite the entire file.",
-      B: "Edit failed because `console.log('debug')` is not unique in the file — Edit requires the target text to appear exactly once. The fallback is to Read the file to get the surrounding context, then use Edit with a larger unique text snippet that includes lines around line 145.",
-      C: "Edit failed because of a syntax error. Fix the syntax and retry Edit.",
-      D: "Edit failed because line numbers aren't supported. Use Grep to find the exact occurrence first."
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Edit doesn't fail due to file size. The failure is specifically because the target text appears multiple times, making the replacement ambiguous.",
-      B: "CORRECT: Edit requires the old_string to be unique in the file. When it's not (12 identical occurrences), Edit fails. The correct fallback is to Read the file to see the context around line 145, then use Edit with a larger text snippet that includes surrounding lines, making the target unique. If that's still not unique, Read+Write (rewriting the full file) is the final fallback.",
-      C: "INCORRECT: There's no syntax error — `console.log('debug')` is valid. The issue is uniqueness, not syntax.",
-      D: "INCORRECT: Grep finds content in files but doesn't help Edit identify which occurrence to replace. The uniqueness constraint is on Edit's old_string parameter."
-    }
+    choices: { A: "Edit failed because of a syntax error. Fix the syntax and retry Edit.", B: "Edit failed because line numbers aren't supported. Use Grep to find the exact occurrence first.", C: "Edit failed because `console.log('debug')` is not unique in the file — Edit requires the target text to appear exactly once. The fallback is to Read the file to get the surrounding context, then use Edit with a larger unique text snippet that includes lines around line 145.", D: "Edit failed because the file is too large. Use Write to rewrite the entire file." },
+    correct: "C",
+    explanations: { A: "INCORRECT: There's no syntax error — `console.log('debug')` is valid. The issue is uniqueness, not syntax.", B: "INCORRECT: Grep finds content in files but doesn't help Edit identify which occurrence to replace. The uniqueness constraint is on Edit's old_string parameter.", C: "CORRECT: Edit requires the old_string to be unique in the file. When it's not (12 identical occurrences), Edit fails. The correct fallback is to Read the file to see the context around line 145, then use Edit with a larger text snippet that includes surrounding lines, making the target unique. If that's still not unique, Read+Write (rewriting the full file) is the final fallback.", D: "INCORRECT: Edit doesn't fail due to file size. The failure is specifically because the target text appears multiple times, making the replacement ambiguous." }
   },
   {
     id: "d2-076",
@@ -1753,19 +1223,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Incremental exploration pattern",
     question: "A developer asks Claude Code to understand how errors propagate through a large Express.js application. The codebase has 200 files. What is the correct incremental exploration strategy?",
-    choices: {
-      A: "Read every file in the `src/` directory to build a complete mental model",
-      B: "Start with Grep to find error handling entry points (e.g., `app.use.*error`, `catch`, `next(err)`), then Read the relevant files, trace imports, and follow the error flow incrementally",
-      C: "Read `package.json` to understand dependencies, then read the README for architecture overview",
-      D: "Use Glob to find all `.ts` files and read them in alphabetical order"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Reading all 200 files wastes time and context window. Most files are irrelevant to error handling. The incremental approach focuses on relevant code first.",
-      B: "CORRECT: The incremental exploration pattern starts with Grep to find entry points (error middleware, catch blocks, error forwarding), then uses Read to examine the relevant files, traces imports to understand dependencies, and follows the error flow from handler to handler. This is efficient and focused.",
-      C: "INCORRECT: `package.json` and README provide high-level context but don't reveal the actual error propagation implementation. Starting with code search is more direct.",
-      D: "INCORRECT: Alphabetical file reading is arbitrary and has no relation to error flow. Most files won't be relevant to error handling."
-    }
+    choices: { A: "Start with Grep to find error handling entry points (e.g., `app.use.*error`, `catch`, `next(err)`), then Read the relevant files, trace imports, and follow the error flow incrementally", B: "Read `package.json` to understand dependencies, then read the README for architecture overview", C: "Read every file in the `src/` directory to build a complete mental model", D: "Use Glob to find all `.ts` files and read them in alphabetical order" },
+    correct: "A",
+    explanations: { A: "CORRECT: The incremental exploration pattern starts with Grep to find entry points (error middleware, catch blocks, error forwarding), then uses Read to examine the relevant files, traces imports to understand dependencies, and follows the error flow from handler to handler. This is efficient and focused.", B: "INCORRECT: `package.json` and README provide high-level context but don't reveal the actual error propagation implementation. Starting with code search is more direct.", C: "INCORRECT: Reading all 200 files wastes time and context window. Most files are irrelevant to error handling. The incremental approach focuses on relevant code first.", D: "INCORRECT: Alphabetical file reading is arbitrary and has no relation to error flow. Most files won't be relevant to error handling." }
   },
   {
     id: "d2-077",
@@ -1776,19 +1236,9 @@ export const d2Questions = [
     scenario: 2,
     importance: "Start with Grep for entry points, not reading all files",
     question: "A developer using Claude Code for code generation needs to add a new REST endpoint that follows the existing patterns. The codebase has 300+ files. Claude should understand the routing pattern, middleware chain, and response format before generating code. What is the correct exploration sequence?",
-    choices: {
-      A: "Read the main entry file (app.ts or index.ts), then read every imported file recursively until the full architecture is understood",
-      B: "Grep for `router.get` or `app.get` to find existing endpoint definitions, Read 2-3 representative examples to understand the pattern, then generate the new endpoint matching the established conventions",
-      C: "Ask the developer to describe the architecture, then generate code based on the description",
-      D: "Use Glob to find all route files, Read all of them, then synthesize the pattern"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Recursively reading all imports from the entry point would eventually read most of the 300+ files. This is the 'read everything' anti-pattern that wastes context window and time.",
-      B: "CORRECT: Starting with Grep to find existing endpoints gives Claude a focused set of entry points. Reading 2-3 representative examples reveals the routing pattern, middleware usage, and response format. This is enough to generate a consistent new endpoint without reading the entire codebase.",
-      C: "INCORRECT: Developer descriptions may be incomplete or outdated. Examining actual code ensures the generated endpoint matches the real implementation patterns.",
-      D: "INCORRECT: Globbing for route files and reading ALL of them is overkill. 2-3 representative examples are sufficient to understand the pattern."
-    }
+    choices: { A: "Grep for `router.get` or `app.get` to find existing endpoint definitions, Read 2-3 representative examples to understand the pattern, then generate the new endpoint matching the established conventions", B: "Read the main entry file (app.ts or index.ts), then read every imported file recursively until the full architecture is understood", C: "Use Glob to find all route files, Read all of them, then synthesize the pattern", D: "Ask the developer to describe the architecture, then generate code based on the description" },
+    correct: "A",
+    explanations: { A: "CORRECT: Starting with Grep to find existing endpoints gives Claude a focused set of entry points. Reading 2-3 representative examples reveals the routing pattern, middleware usage, and response format. This is enough to generate a consistent new endpoint without reading the entire codebase.", B: "INCORRECT: Recursively reading all imports from the entry point would eventually read most of the 300+ files. This is the 'read everything' anti-pattern that wastes context window and time.", C: "INCORRECT: Globbing for route files and reading ALL of them is overkill. 2-3 representative examples are sufficient to understand the pattern.", D: "INCORRECT: Developer descriptions may be incomplete or outdated. Examining actual code ensures the generated endpoint matches the real implementation patterns." }
   },
   {
     id: "d2-078",
@@ -1799,19 +1249,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Combining built-in tools for complex investigations",
     question: "A developer reports a bug: 'The `calculateDiscount` function returns wrong values for premium customers.' Claude Code needs to investigate. The function exists somewhere in 150 files. What is the optimal tool sequence?",
-    choices: {
-      A: "Grep for `calculateDiscount` → Read the file containing the definition → Grep for `premium` in that file → Read surrounding logic → Grep for callers of `calculateDiscount` to trace the data flow",
-      B: "Glob for `*discount*` files → Read all of them → Identify the bug by reading",
-      C: "Read the test files first to understand expected behavior, then find the implementation",
-      D: "Use Grep for `premium` across the entire codebase to find all premium-related logic"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: This follows the optimal incremental investigation pattern: (1) Grep finds the function definition quickly, (2) Read examines the implementation, (3) Grep within the file focuses on the premium customer logic, (4) Read the surrounding code to understand the bug, (5) Grep for callers traces how data flows into the function. Each step narrows the investigation.",
-      B: "INCORRECT: Globbing for `*discount*` finds files by name, but the function might be in a file not named 'discount'. Also, reading all matched files is wasteful.",
-      C: "INCORRECT: Tests might not exist for this function, or they might not cover the premium case. Starting with the implementation is more direct for bug investigation.",
-      D: "INCORRECT: Grepping for 'premium' across 150 files would return too many irrelevant results (UI text, documentation, other premium-related code). Starting with the specific function name is more targeted."
-    }
+    choices: { A: "Read the test files first to understand expected behavior, then find the implementation", B: "Use Grep for `premium` across the entire codebase to find all premium-related logic", C: "Grep for `calculateDiscount` → Read the file containing the definition → Grep for `premium` in that file → Read surrounding logic → Grep for callers of `calculateDiscount` to trace the data flow", D: "Glob for `*discount*` files → Read all of them → Identify the bug by reading" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Tests might not exist for this function, or they might not cover the premium case. Starting with the implementation is more direct for bug investigation.", B: "INCORRECT: Grepping for 'premium' across 150 files would return too many irrelevant results (UI text, documentation, other premium-related code). Starting with the specific function name is more targeted.", C: "CORRECT: This follows the optimal incremental investigation pattern: (1) Grep finds the function definition quickly, (2) Read examines the implementation, (3) Grep within the file focuses on the premium customer logic, (4) Read the surrounding code to understand the bug, (5) Grep for callers traces how data flows into the function. Each step narrows the investigation.", D: "INCORRECT: Globbing for `*discount*` finds files by name, but the function might be in a file not named 'discount'. Also, reading all matched files is wasteful." }
   },
   {
     id: "d2-079",
@@ -1822,19 +1262,9 @@ export const d2Questions = [
     scenario: 5,
     importance: "Built-in tools in CI/CD context",
     question: "In a CI/CD pipeline, Claude Code needs to verify that a pull request doesn't introduce any `console.log` statements in production code (but they're allowed in test files). What built-in tool approach accomplishes this?",
-    choices: {
-      A: "Read every changed file and visually scan for `console.log`",
-      B: "Use Grep with pattern `console\\.log` excluding test file patterns (e.g., `--glob '!**/*.test.*'`) to find `console.log` only in production code",
-      C: "Use Glob to find all `.js` files and then Read each one",
-      D: "Use Edit to remove all `console.log` statements automatically"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Manually reading every changed file is slow and error-prone, especially for large PRs. Grep is purpose-built for content search.",
-      B: "CORRECT: Grep with exclusion patterns efficiently finds `console.log` statements while ignoring test files. This is precisely the content-search-with-filtering use case that Grep excels at.",
-      C: "INCORRECT: Glob finds files by path pattern, not by content. You'd still need to read every file to check for `console.log`, which is what Grep does in one step.",
-      D: "INCORRECT: Automatically removing `console.log` is destructive and might remove intentional logging. The task is to verify (detect), not to fix."
-    }
+    choices: { A: "Use Grep with pattern `console\\.log` excluding test file patterns (e.g., `--glob '!**/*.test.*'`) to find `console.log` only in production code", B: "Use Glob to find all `.js` files and then Read each one", C: "Use Edit to remove all `console.log` statements automatically", D: "Read every changed file and visually scan for `console.log`" },
+    correct: "A",
+    explanations: { A: "CORRECT: Grep with exclusion patterns efficiently finds `console.log` statements while ignoring test files. This is precisely the content-search-with-filtering use case that Grep excels at.", B: "INCORRECT: Glob finds files by path pattern, not by content. You'd still need to read every file to check for `console.log`, which is what Grep does in one step.", C: "INCORRECT: Automatically removing `console.log` is destructive and might remove intentional logging. The task is to verify (detect), not to fix.", D: "INCORRECT: Manually reading every changed file is slow and error-prone, especially for large PRs. Grep is purpose-built for content search." }
   },
   {
     id: "d2-080",
@@ -1845,19 +1275,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Read tool for targeted file examination",
     question: "Claude Code needs to examine a 5,000-line configuration file to find the database connection settings. A developer says the settings are 'somewhere in the middle.' What is the most efficient approach?",
-    choices: {
-      A: "Read the entire 5,000-line file to find the database settings",
-      B: "Grep for `database` or `connection` in the file to find the exact line numbers, then Read only the relevant section using offset and limit parameters",
-      C: "Read the file in 500-line chunks from the beginning until finding the settings",
-      D: "Use Edit to search-and-replace the database settings without reading first"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Reading a 5,000-line file consumes significant context window space, mostly with irrelevant configuration. Targeted reading is much more efficient.",
-      B: "CORRECT: Grep first identifies the exact line numbers where database/connection settings appear. Then Read with offset and limit parameters reads only the relevant section (e.g., lines 2400-2450). This uses minimal context window while providing exactly the needed information.",
-      C: "INCORRECT: Sequential chunk reading is a linear search — you might need to read 2500+ lines before finding the settings. Grep provides instant location.",
-      D: "INCORRECT: Edit requires knowing the exact text to replace. You can't use Edit to search without first knowing what's in the file. Also, you should always Read before Edit."
-    }
+    choices: { A: "Grep for `database` or `connection` in the file to find the exact line numbers, then Read only the relevant section using offset and limit parameters", B: "Use Edit to search-and-replace the database settings without reading first", C: "Read the file in 500-line chunks from the beginning until finding the settings", D: "Read the entire 5,000-line file to find the database settings" },
+    correct: "A",
+    explanations: { A: "CORRECT: Grep first identifies the exact line numbers where database/connection settings appear. Then Read with offset and limit parameters reads only the relevant section (e.g., lines 2400-2450). This uses minimal context window while providing exactly the needed information.", B: "INCORRECT: Edit requires knowing the exact text to replace. You can't use Edit to search without first knowing what's in the file. Also, you should always Read before Edit.", C: "INCORRECT: Sequential chunk reading is a linear search — you might need to read 2500+ lines before finding the settings. Grep provides instant location.", D: "INCORRECT: Reading a 5,000-line file consumes significant context window space, mostly with irrelevant configuration. Targeted reading is much more efficient." }
   },
   {
     id: "d2-081",
@@ -1868,19 +1288,9 @@ export const d2Questions = [
     scenario: 2,
     importance: "Write tool for new file creation",
     question: "A developer asks Claude Code to create a new utility module `src/utils/date-formatter.ts`. The file doesn't exist yet. What is the correct tool to use?",
-    choices: {
-      A: "Edit to create the file by specifying the new content",
-      B: "Write to create the new file with the complete content, since Edit is for modifying existing files",
-      C: "Read the file first (it will fail), then use Edit to create it",
-      D: "Use Bash to run `touch src/utils/date-formatter.ts` then use Edit to add content"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Edit modifies existing files by replacing specific text. It's not designed for creating new files from scratch — it requires an old_string to replace.",
-      B: "CORRECT: Write is the tool for creating new files. It takes a file path and complete content. For new file creation where no existing file needs to be modified, Write is the correct choice.",
-      C: "INCORRECT: Intentionally failing a Read and then using Edit is an unnecessary extra step. Write directly creates new files.",
-      D: "INCORRECT: Using Bash to create an empty file and then Edit to add content is two steps when Write accomplishes both in one operation."
-    }
+    choices: { A: "Read the file first (it will fail), then use Edit to create it", B: "Use Bash to run `touch src/utils/date-formatter.ts` then use Edit to add content", C: "Write to create the new file with the complete content, since Edit is for modifying existing files", D: "Edit to create the file by specifying the new content" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Intentionally failing a Read and then using Edit is an unnecessary extra step. Write directly creates new files.", B: "INCORRECT: Using Bash to create an empty file and then Edit to add content is two steps when Write accomplishes both in one operation.", C: "CORRECT: Write is the tool for creating new files. It takes a file path and complete content. For new file creation where no existing file needs to be modified, Write is the correct choice.", D: "INCORRECT: Edit modifies existing files by replacing specific text. It's not designed for creating new files from scratch — it requires an old_string to replace." }
   },
   {
     id: "d2-082",
@@ -1891,19 +1301,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Tool selection for refactoring tasks",
     question: "A developer asks Claude Code to rename the function `processData` to `transformPayload` across the entire codebase (50 files reference it). What is the optimal tool strategy?",
-    choices: {
-      A: "Grep for `processData` to find all files that reference it, then use Edit on each file to replace `processData` with `transformPayload`",
-      B: "Read every file in `src/`, find mentions of `processData`, and use Write to rewrite each file",
-      C: "Use Edit with `replace_all: true` on each file found by Grep — first Grep to identify all files containing `processData`, then Edit each file with `old_string: 'processData'` and `new_string: 'transformPayload'` with `replace_all` to catch multiple occurrences per file",
-      D: "Use Bash to run `sed -i 's/processData/transformPayload/g'` across all files"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Using Edit without `replace_all` would fail on files that have multiple references to `processData`, since Edit requires unique text matches by default.",
-      B: "INCORRECT: Reading every file is wasteful. Grep efficiently identifies only the files that contain the reference. Also, Write rewrites the entire file, which is riskier than targeted Edit replacements.",
-      C: "CORRECT: Grep identifies all 50 files containing `processData`. Then Edit with `replace_all: true` on each file replaces every occurrence within that file. This is precise, safe (only touching files that need changes), and handles multiple occurrences per file.",
-      D: "INCORRECT: While `sed` would work technically, using built-in tools (Grep + Edit) provides better error handling, confirmation of changes, and integration with Claude Code's workflow. Built-in tools are preferred when they can accomplish the task."
-    }
+    choices: { A: "Grep for `processData` to find all files that reference it, then use Edit on each file to replace `processData` with `transformPayload`", B: "Use Edit with `replace_all: true` on each file found by Grep — first Grep to identify all files containing `processData`, then Edit each file with `old_string: 'processData'` and `new_string: 'transformPayload'` with `replace_all` to catch multiple occurrences per file", C: "Read every file in `src/`, find mentions of `processData`, and use Write to rewrite each file", D: "Use Bash to run `sed -i 's/processData/transformPayload/g'` across all files" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Using Edit without `replace_all` would fail on files that have multiple references to `processData`, since Edit requires unique text matches by default.", B: "CORRECT: Grep identifies all 50 files containing `processData`. Then Edit with `replace_all: true` on each file replaces every occurrence within that file. This is precise, safe (only touching files that need changes), and handles multiple occurrences per file.", C: "INCORRECT: Reading every file is wasteful. Grep efficiently identifies only the files that contain the reference. Also, Write rewrites the entire file, which is riskier than targeted Edit replacements.", D: "INCORRECT: While `sed` would work technically, using built-in tools (Grep + Edit) provides better error handling, confirmation of changes, and integration with Claude Code's workflow. Built-in tools are preferred when they can accomplish the task." }
   },
   {
     id: "d2-083",
@@ -1914,19 +1314,9 @@ export const d2Questions = [
     scenario: 3,
     importance: "Built-in tools for research codebase exploration",
     question: "A research team asks Claude Code to analyze a data processing pipeline codebase they've never seen before. The codebase has 400 files with no documentation. What is the recommended exploration strategy using built-in tools?",
-    choices: {
-      A: "Read the README.md for an overview, then read the main entry point",
-      B: "Glob for `**/*.py` to list all Python files, then read them in order of modification date",
-      C: "Start with Glob to understand the directory structure (`**/*/`), then Grep for entry points (e.g., `if __name__`, `def main`, `app.run`), Read the entry files, and incrementally trace the pipeline through imports and function calls",
-      D: "Use Grep for 'pipeline' to find all pipeline-related code and read everything"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: The question states there's no documentation, so README.md likely doesn't exist or is unhelpful. The entry point filename is unknown.",
-      B: "INCORRECT: Reading all 400 Python files in modification order is a brute-force approach that wastes context. Modification date order doesn't reflect code flow.",
-      C: "CORRECT: This is the recommended incremental exploration pattern: (1) Glob for directory structure reveals the project organization, (2) Grep for entry points identifies where execution begins, (3) Read the entry files to understand the top-level flow, (4) incrementally trace through imports and function calls to understand the pipeline. Each step narrows the exploration.",
-      D: "INCORRECT: Grepping for 'pipeline' might miss code that doesn't use that exact word and might match comments or variable names. Starting with structural entry points is more reliable."
-    }
+    choices: { A: "Start with Glob to understand the directory structure (`**/*/`), then Grep for entry points (e.g., `if __name__`, `def main`, `app.run`), Read the entry files, and incrementally trace the pipeline through imports and function calls", B: "Glob for `**/*.py` to list all Python files, then read them in order of modification date", C: "Use Grep for 'pipeline' to find all pipeline-related code and read everything", D: "Read the README.md for an overview, then read the main entry point" },
+    correct: "A",
+    explanations: { A: "CORRECT: This is the recommended incremental exploration pattern: (1) Glob for directory structure reveals the project organization, (2) Grep for entry points identifies where execution begins, (3) Read the entry files to understand the top-level flow, (4) incrementally trace through imports and function calls to understand the pipeline. Each step narrows the exploration.", B: "INCORRECT: Reading all 400 Python files in modification order is a brute-force approach that wastes context. Modification date order doesn't reflect code flow.", C: "INCORRECT: Grepping for 'pipeline' might miss code that doesn't use that exact word and might match comments or variable names. Starting with structural entry points is more reliable.", D: "INCORRECT: The question states there's no documentation, so README.md likely doesn't exist or is unhelpful. The entry point filename is unknown." }
   },
   {
     id: "d2-084",
@@ -1937,19 +1327,9 @@ export const d2Questions = [
     scenario: 6,
     importance: "Using built-in tools for data format investigation",
     question: "A structured data extraction system needs to understand the format of incoming CSV files before writing extraction logic. The CSV files are large (50,000 rows). What is the efficient approach with built-in tools?",
-    choices: {
-      A: "Read the entire CSV file to understand the format",
-      B: "Use Read with `limit: 20` to examine just the header row and first few data rows to understand the column structure and data formats",
-      C: "Use Grep to search for specific column names across the file",
-      D: "Use Bash to run `wc -l` to count rows first"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Reading a 50,000-row CSV consumes enormous context window space. The format can be determined from a small sample.",
-      B: "CORRECT: Read with `limit: 20` examines the header row and a few data rows, which is sufficient to understand column names, data types, delimiters, and formatting conventions. This uses minimal context while providing all the information needed to write extraction logic.",
-      C: "INCORRECT: Grepping for column names assumes you already know what columns exist. The task is to discover the format, not search for known patterns.",
-      D: "INCORRECT: Row count alone doesn't reveal the format. You need to see the actual header and data structure."
-    }
+    choices: { A: "Use Read with `limit: 20` to examine just the header row and first few data rows to understand the column structure and data formats", B: "Read the entire CSV file to understand the format", C: "Use Grep to search for specific column names across the file", D: "Use Bash to run `wc -l` to count rows first" },
+    correct: "A",
+    explanations: { A: "CORRECT: Read with `limit: 20` examines the header row and a few data rows, which is sufficient to understand column names, data types, delimiters, and formatting conventions. This uses minimal context while providing all the information needed to write extraction logic.", B: "INCORRECT: Reading a 50,000-row CSV consumes enormous context window space. The format can be determined from a small sample.", C: "INCORRECT: Grepping for column names assumes you already know what columns exist. The task is to discover the format, not search for known patterns.", D: "INCORRECT: Row count alone doesn't reveal the format. You need to see the actual header and data structure." }
   },
   {
     id: "d2-085",
@@ -1960,19 +1340,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Bash tool for operations outside Read/Write/Edit scope",
     question: "A developer asks Claude Code to check if the project's test suite passes before making changes. The test command is `npm test`. Which built-in tool is appropriate?",
-    choices: {
-      A: "Read the test files to verify they look correct, then confirm tests should pass",
-      B: "Grep for `test` in `package.json` to find the test command, then tell the developer to run it manually",
-      C: "Use the Bash tool to execute `npm test` and evaluate the results",
-      D: "Use Write to create a test runner script, then Bash to execute it"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Reading test files doesn't execute them. Tests need to actually run to verify they pass — static analysis of test code is not equivalent to running tests.",
-      B: "INCORRECT: Finding the test command is useful, but telling the developer to run it manually defeats the purpose of Claude Code. The Bash tool can execute commands directly.",
-      C: "CORRECT: The Bash tool executes shell commands, which is the correct tool for running tests, build commands, and other operations that go beyond file reading/writing/editing. Claude Code can then evaluate the output to determine if tests pass.",
-      D: "INCORRECT: Creating a wrapper script for a command that can be run directly is unnecessary. `npm test` is a standard command that Bash can execute directly."
-    }
+    choices: { A: "Read the test files to verify they look correct, then confirm tests should pass", B: "Use Write to create a test runner script, then Bash to execute it", C: "Grep for `test` in `package.json` to find the test command, then tell the developer to run it manually", D: "Use the Bash tool to execute `npm test` and evaluate the results" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Reading test files doesn't execute them. Tests need to actually run to verify they pass — static analysis of test code is not equivalent to running tests.", B: "INCORRECT: Creating a wrapper script for a command that can be run directly is unnecessary. `npm test` is a standard command that Bash can execute directly.", C: "INCORRECT: Finding the test command is useful, but telling the developer to run it manually defeats the purpose of Claude Code. The Bash tool can execute commands directly.", D: "CORRECT: The Bash tool executes shell commands, which is the correct tool for running tests, build commands, and other operations that go beyond file reading/writing/editing. Claude Code can then evaluate the output to determine if tests pass." }
   },
   {
     id: "d2-086",
@@ -1983,19 +1353,9 @@ export const d2Questions = [
     scenario: 2,
     importance: "Edit tool requires reading the file first",
     question: "A developer asks Claude Code to fix a bug in `src/services/payment.ts` by changing `amount * 0.1` to `amount * taxRate`. Claude immediately uses Edit without reading the file first. What happens?",
-    choices: {
-      A: "Edit succeeds because it can find and replace text without reading context",
-      B: "Edit fails because the tool requires that Read has been called on the file first in the conversation — Claude must Read the file to understand context before editing",
-      C: "Edit succeeds but might replace the wrong occurrence because Claude didn't verify context",
-      D: "Edit automatically reads the file as part of its operation"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code's Edit tool enforces that the file must have been Read first. This is a safety mechanism, not just a best practice.",
-      B: "CORRECT: The Edit tool requires that Read has been called on the file first in the conversation. This ensures Claude has context about the file's structure, surrounding code, and the specific location of the change. Attempting to Edit without prior Read will fail.",
-      C: "INCORRECT: The Edit tool will not proceed without a prior Read. The safety mechanism prevents this scenario.",
-      D: "INCORRECT: Edit does not automatically read the file. The Read must be performed as a separate, prior step. This separation ensures Claude actively examines the file context before making changes."
-    }
+    choices: { A: "Edit automatically reads the file as part of its operation", B: "Edit succeeds but might replace the wrong occurrence because Claude didn't verify context", C: "Edit fails because the tool requires that Read has been called on the file first in the conversation — Claude must Read the file to understand context before editing", D: "Edit succeeds because it can find and replace text without reading context" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Edit does not automatically read the file. The Read must be performed as a separate, prior step. This separation ensures Claude actively examines the file context before making changes.", B: "INCORRECT: The Edit tool will not proceed without a prior Read. The safety mechanism prevents this scenario.", C: "CORRECT: The Edit tool requires that Read has been called on the file first in the conversation. This ensures Claude has context about the file's structure, surrounding code, and the specific location of the change. Attempting to Edit without prior Read will fail.", D: "INCORRECT: Claude Code's Edit tool enforces that the file must have been Read first. This is a safety mechanism, not just a best practice." }
   },
   {
     id: "d2-087",
@@ -2006,19 +1366,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Grep regex patterns for precise searches",
     question: "A developer asks Claude Code to find all TODO comments that have a priority marker like `TODO(P1):` or `TODO(P2):` but NOT generic `TODO:` comments. What Grep pattern accomplishes this?",
-    choices: {
-      A: "`TODO`",
-      B: "`TODO\\(P[0-9]\\):`",
-      C: "`TODO:` with manual filtering after results return",
-      D: "`P1|P2` to find priority markers"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Plain `TODO` matches all TODO comments including generic ones without priority markers. This is too broad.",
-      B: "CORRECT: The regex `TODO\\(P[0-9]\\):` matches exactly the pattern: the literal text 'TODO', followed by a parenthesized priority marker (P0-P9), followed by a colon. The parentheses must be escaped in regex. This precisely matches `TODO(P1):`, `TODO(P2):`, etc.",
-      C: "INCORRECT: Searching for `TODO:` and then manually filtering is inefficient. Grep's regex capability should be used to narrow results at search time.",
-      D: "INCORRECT: `P1|P2` would match any occurrence of P1 or P2 in the codebase, including variable names, version numbers, and other unrelated text."
-    }
+    choices: { A: "`TODO\\(P[0-9]\\):`", B: "`P1|P2` to find priority markers", C: "`TODO`", D: "`TODO:` with manual filtering after results return" },
+    correct: "A",
+    explanations: { A: "CORRECT: The regex `TODO\\(P[0-9]\\):` matches exactly the pattern: the literal text 'TODO', followed by a parenthesized priority marker (P0-P9), followed by a colon. The parentheses must be escaped in regex. This precisely matches `TODO(P1):`, `TODO(P2):`, etc.", B: "INCORRECT: `P1|P2` would match any occurrence of P1 or P2 in the codebase, including variable names, version numbers, and other unrelated text.", C: "INCORRECT: Plain `TODO` matches all TODO comments including generic ones without priority markers. This is too broad.", D: "INCORRECT: Searching for `TODO:` and then manually filtering is inefficient. Grep's regex capability should be used to narrow results at search time." }
   },
   {
     id: "d2-088",
@@ -2029,19 +1379,9 @@ export const d2Questions = [
     scenario: 5,
     importance: "Built-in tools for CI/CD code verification",
     question: "In a CI/CD pipeline, Claude Code needs to verify that a migration file follows the team's convention: every migration must have both an `up()` and a `down()` function. Given a new migration file at `migrations/20250115_add_user_roles.ts`, what is the verification approach?",
-    choices: {
-      A: "Read the file and check for both `up()` and `down()` function definitions",
-      B: "Grep for `function up` and `function down` in the migration file, verifying both exist",
-      C: "Read the file to verify the convention, but also Grep across all migration files (`migrations/*.ts`) for any that might be missing `down()` — catching both the new file and any previously missed violations",
-      D: "Use Glob to verify the file exists, then assume it follows the convention"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Reading only the new file catches the immediate issue but misses an opportunity. In CI/CD, it's valuable to verify all migrations, not just the latest.",
-      B: "INCORRECT: Grep for a single file works but misses the broader verification opportunity. Also, the function might be defined as `async up()` or `export function up()` or `up = async () =>`, requiring a more flexible search.",
-      C: "CORRECT: The comprehensive approach reads the new file for full context AND uses Grep across all migration files to catch any violations. This is especially valuable in CI/CD where you want to enforce conventions across the entire codebase, not just the latest change. It catches both new violations and historical ones.",
-      D: "INCORRECT: File existence doesn't verify content. Convention compliance requires examining the file's contents."
-    }
+    choices: { A: "Use Glob to verify the file exists, then assume it follows the convention", B: "Grep for `function up` and `function down` in the migration file, verifying both exist", C: "Read the file and check for both `up()` and `down()` function definitions", D: "Read the file to verify the convention, but also Grep across all migration files (`migrations/*.ts`) for any that might be missing `down()` — catching both the new file and any previously missed violations" },
+    correct: "D",
+    explanations: { A: "INCORRECT: File existence doesn't verify content. Convention compliance requires examining the file's contents.", B: "INCORRECT: Grep for a single file works but misses the broader verification opportunity. Also, the function might be defined as `async up()` or `export function up()` or `up = async () =>`, requiring a more flexible search.", C: "INCORRECT: Reading only the new file catches the immediate issue but misses an opportunity. In CI/CD, it's valuable to verify all migrations, not just the latest.", D: "CORRECT: The comprehensive approach reads the new file for full context AND uses Grep across all migration files to catch any violations. This is especially valuable in CI/CD where you want to enforce conventions across the entire codebase, not just the latest change. It catches both new violations and historical ones." }
   },
   {
     id: "d2-089",
@@ -2052,19 +1392,9 @@ export const d2Questions = [
     scenario: 4,
     importance: "Multi-step debugging with built-in tools",
     question: "A developer reports that their Express middleware chain has a subtle bug where authentication is bypassed for certain routes. Claude Code needs to trace the middleware registration order. The app uses multiple router files that are dynamically imported. What is the correct investigation approach?",
-    choices: {
-      A: "Read `app.ts` to see all middleware registration, which gives the complete picture",
-      B: "Grep for `app.use` in `app.ts` → Read the main app file → Grep for `router.use` across all files → Read each router file to trace the middleware chain → Grep for the authentication middleware specifically to verify its position relative to the affected routes",
-      C: "Run the application with debug logging via Bash to observe the middleware execution order",
-      D: "Grep for `authenticate` or `auth` to find the middleware definition, then read only that file"
-    },
+    choices: { A: "Read `app.ts` to see all middleware registration, which gives the complete picture", B: "Grep for `app.use` in `app.ts` → Read the main app file → Grep for `router.use` across all files → Read each router file to trace the middleware chain → Grep for the authentication middleware specifically to verify its position relative to the affected routes", C: "Run the application with debug logging via Bash to observe the middleware execution order", D: "Grep for `authenticate` or `auth` to find the middleware definition, then read only that file" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Express apps typically split middleware and routes across multiple files via `require`/`import`. The main app file shows top-level middleware but not route-specific middleware in router files.",
-      B: "CORRECT: This multi-step investigation uses Grep to find middleware registration patterns, Read to examine the chain in context, and then targeted Grep to verify the authentication middleware's position. This systematically traces the middleware chain from top-level to route-specific, revealing where authentication might be missing or out-of-order.",
-      C: "INCORRECT: Running the application might work but doesn't give Claude direct insight into the code structure. Static analysis with built-in tools is more precise for tracing registration order.",
-      D: "INCORRECT: Finding only the auth middleware definition tells you what it does, not where it's registered in the chain. The bug is about registration order, not the middleware's implementation."
-    }
+    explanations: { A: "INCORRECT: Express apps typically split middleware and routes across multiple files via `require`/`import`. The main app file shows top-level middleware but not route-specific middleware in router files.", B: "CORRECT: This multi-step investigation uses Grep to find middleware registration patterns, Read to examine the chain in context, and then targeted Grep to verify the authentication middleware's position. This systematically traces the middleware chain from top-level to route-specific, revealing where authentication might be missing or out-of-order.", C: "INCORRECT: Running the application might work but doesn't give Claude direct insight into the code structure. Static analysis with built-in tools is more precise for tracing registration order.", D: "INCORRECT: Finding only the auth middleware definition tells you what it does, not where it's registered in the chain. The bug is about registration order, not the middleware's implementation." }
   },
   {
     id: "d2-090",
@@ -2075,18 +1405,8 @@ export const d2Questions = [
     scenario: 6,
     importance: "Choosing between Read and Grep for known vs unknown locations",
     question: "In two scenarios: (A) A developer says 'Check the database config in `config/database.yml`' and (B) A developer says 'Find where we configure the database connection.' What is the correct tool for each scenario?",
-    choices: {
-      A: "Read for both — always read files to find information",
-      B: "Grep for both — always search for content patterns",
-      C: "Scenario A: Read (known file path, examine directly). Scenario B: Grep (unknown location, search for content like 'database' or 'connection' across the codebase)",
-      D: "Scenario A: Glob for `**/database.*`. Scenario B: Read `config/` directory listing"
-    },
+    choices: { A: "Grep for both — always search for content patterns", B: "Read for both — always read files to find information", C: "Scenario A: Read (known file path, examine directly). Scenario B: Grep (unknown location, search for content like 'database' or 'connection' across the codebase)", D: "Scenario A: Glob for `**/database.*`. Scenario B: Read `config/` directory listing" },
     correct: "C",
-    explanations: {
-      A: "INCORRECT: Using Read when you don't know the file location means reading files randomly. Grep is designed for discovering content locations.",
-      B: "INCORRECT: Using Grep when you already know the exact file adds unnecessary overhead. Read directly accesses the known file.",
-      C: "CORRECT: When the file location is known, Read is the most direct tool. When the location is unknown but you know what content you're looking for, Grep searches across the codebase efficiently. This is the fundamental Read vs. Grep decision pattern: known location → Read, unknown location → Grep.",
-      D: "INCORRECT: Glob finds files by path pattern, not content. In Scenario B, the config might not have 'database' in its filename. Read on a directory doesn't work — you need Read on a file."
-    }
+    explanations: { A: "INCORRECT: Using Grep when you already know the exact file adds unnecessary overhead. Read directly accesses the known file.", B: "INCORRECT: Using Read when you don't know the file location means reading files randomly. Grep is designed for discovering content locations.", C: "CORRECT: When the file location is known, Read is the most direct tool. When the location is unknown but you know what content you're looking for, Grep searches across the codebase efficiently. This is the fundamental Read vs. Grep decision pattern: known location → Read, unknown location → Grep.", D: "INCORRECT: Glob finds files by path pattern, not content. In Scenario B, the config might not have 'database' in its filename. Read on a directory doesn't work — you need Read on a file." }
   }
 ];

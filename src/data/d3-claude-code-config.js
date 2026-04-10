@@ -12,19 +12,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "In enterprise teams with 50+ developers, CLAUDE.md misconfiguration means inconsistent code quality across the team. Understanding the hierarchy prevents 'works on my machine' configuration drift that costs engineering hours.",
     question: "A new developer joins a 60-person fintech team and reports that Claude Code isn't following the team's TypeScript strict-mode coding standards, even though every other developer sees them. The project root has a CLAUDE.md with these standards. Investigation reveals the new developer cloned the repo correctly. Where are the missing instructions MOST likely configured?",
-    choices: {
-      A: "In the project's .claude/rules/ directory, which the new developer's git clone failed to fetch",
-      B: "In the ~/.claude/ user-level configuration on other developers' machines, which isn't shared via version control",
-      C: "In a parent directory CLAUDE.md above the project root that only exists on the CI server",
-      D: "In the project's .claude/settings.json file, which requires manual permissions acceptance"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: The .claude/rules/ directory IS part of the project and would be included in a git clone. If it existed in the repo, the new developer would have it too.",
-      B: "CORRECT: The ~/.claude/ directory contains user-level CLAUDE.md instructions that are NOT shared via version control. If other developers placed team standards in their personal user-level config instead of the project-level CLAUDE.md, new team members would miss them. This is a common configuration anti-pattern.",
-      C: "INCORRECT: While parent directory CLAUDE.md files do get loaded, this scenario describes a team where 'every other developer sees them' on their local machines, not just CI. A CI-only parent directory wouldn't explain local developer behavior.",
-      D: "INCORRECT: .claude/settings.json handles tool permissions and allowed/denied tools, not coding standards. It also doesn't contain CLAUDE.md-style instructions."
-    }
+    choices: { A: "In the project's .claude/settings.json file, which requires manual permissions acceptance", B: "In a parent directory CLAUDE.md above the project root that only exists on the CI server", C: "In the ~/.claude/ user-level configuration on other developers' machines, which isn't shared via version control", D: "In the project's .claude/rules/ directory, which the new developer's git clone failed to fetch" },
+    correct: "C",
+    explanations: { A: "INCORRECT: .claude/settings.json handles tool permissions and allowed/denied tools, not coding standards. It also doesn't contain CLAUDE.md-style instructions.", B: "INCORRECT: While parent directory CLAUDE.md files do get loaded, this scenario describes a team where 'every other developer sees them' on their local machines, not just CI. A CI-only parent directory wouldn't explain local developer behavior.", C: "CORRECT: The ~/.claude/ directory contains user-level CLAUDE.md instructions that are NOT shared via version control. If other developers placed team standards in their personal user-level config instead of the project-level CLAUDE.md, new team members would miss them. This is a common configuration anti-pattern.", D: "INCORRECT: The .claude/rules/ directory IS part of the project and would be included in a git clone. If it existed in the repo, the new developer would have it too." }
   },
   {
     id: "d3-002",
@@ -35,19 +25,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Understanding that CLAUDE.md levels MERGE rather than override is critical for enterprise monorepos where organization-wide, team-level, and project-level instructions must coexist without conflicts.",
     question: "A healthcare SaaS company has a monorepo with a root CLAUDE.md specifying HIPAA compliance patterns, and a /services/patient-api/ subdirectory with its own CLAUDE.md specifying REST API conventions. A developer working in /services/patient-api/ asks Claude Code to generate a new endpoint. What behavior should they expect regarding the two CLAUDE.md files?",
-    choices: {
-      A: "The subdirectory CLAUDE.md overrides the root CLAUDE.md, so only REST API conventions apply",
-      B: "The root CLAUDE.md takes priority because it's closer to the repository root, so only HIPAA patterns apply",
-      C: "Both CLAUDE.md files are merged, so Claude Code follows both HIPAA compliance patterns AND REST API conventions simultaneously",
-      D: "Claude Code prompts the developer to choose which CLAUDE.md to apply for this session"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: CLAUDE.md files do NOT override each other. This is a critical misconception — the hierarchy uses MERGING, not overriding. The subdirectory file adds to, rather than replaces, the root file.",
-      B: "INCORRECT: There is no 'priority' system where one CLAUDE.md suppresses another. The root file doesn't take precedence over subdirectory files; they are combined.",
-      C: "CORRECT: All CLAUDE.md files in the hierarchy are MERGED. When working in /services/patient-api/, Claude Code loads both the root CLAUDE.md (HIPAA compliance) and the subdirectory CLAUDE.md (REST API conventions). Both sets of instructions apply simultaneously.",
-      D: "INCORRECT: Claude Code does not prompt users to choose between CLAUDE.md files. The merging happens automatically and silently."
-    }
+    choices: { A: "Both CLAUDE.md files are merged, so Claude Code follows both HIPAA compliance patterns AND REST API conventions simultaneously", B: "The root CLAUDE.md takes priority because it's closer to the repository root, so only HIPAA patterns apply", C: "Claude Code prompts the developer to choose which CLAUDE.md to apply for this session", D: "The subdirectory CLAUDE.md overrides the root CLAUDE.md, so only REST API conventions apply" },
+    correct: "A",
+    explanations: { A: "CORRECT: All CLAUDE.md files in the hierarchy are MERGED. When working in /services/patient-api/, Claude Code loads both the root CLAUDE.md (HIPAA compliance) and the subdirectory CLAUDE.md (REST API conventions). Both sets of instructions apply simultaneously.", B: "INCORRECT: There is no 'priority' system where one CLAUDE.md suppresses another. The root file doesn't take precedence over subdirectory files; they are combined.", C: "INCORRECT: Claude Code does not prompt users to choose between CLAUDE.md files. The merging happens automatically and silently.", D: "INCORRECT: CLAUDE.md files do NOT override each other. This is a critical misconception — the hierarchy uses MERGING, not overriding. The subdirectory file adds to, rather than replaces, the root file." }
   },
   {
     id: "d3-003",
@@ -58,19 +38,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "The /memory command is frequently misunderstood. Developers need to know it verifies what's loaded, not that it creates configuration, to avoid debugging phantom configuration issues in CI/CD pipelines.",
     question: "A DevOps engineer setting up Claude Code in a CI/CD pipeline wants to verify that the correct CLAUDE.md instructions are being loaded during automated code review. Which command should they use to check what memory/instructions Claude Code has loaded?",
-    choices: {
-      A: "claude --show-config to display all active configuration files",
-      B: "/memory command within a Claude Code session to verify loaded instructions",
-      C: "claude --list-rules to enumerate all active CLAUDE.md and rules files",
-      D: "cat .claude/memory.json to read the cached instruction state"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no --show-config flag in Claude Code CLI. This is a fabricated option that sounds plausible.",
-      B: "CORRECT: The /memory command within a Claude Code session shows what memory/instructions have been loaded, including which CLAUDE.md files are active. It verifies loaded content but does not create or modify configuration.",
-      C: "INCORRECT: There is no --list-rules CLI flag. This is a plausible-sounding but non-existent option.",
-      D: "INCORRECT: There is no memory.json cache file. CLAUDE.md files are read directly from the filesystem at session start, not cached in a JSON file."
-    }
+    choices: { A: "claude --show-config to display all active configuration files", B: "cat .claude/memory.json to read the cached instruction state", C: "/memory command within a Claude Code session to verify loaded instructions", D: "claude --list-rules to enumerate all active CLAUDE.md and rules files" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There is no --show-config flag in Claude Code CLI. This is a fabricated option that sounds plausible.", B: "INCORRECT: There is no memory.json cache file. CLAUDE.md files are read directly from the filesystem at session start, not cached in a JSON file.", C: "CORRECT: The /memory command within a Claude Code session shows what memory/instructions have been loaded, including which CLAUDE.md files are active. It verifies loaded content but does not create or modify configuration.", D: "INCORRECT: There is no --list-rules CLI flag. This is a plausible-sounding but non-existent option." }
   },
   {
     id: "d3-004",
@@ -81,19 +51,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "The @import directive enables modular CLAUDE.md configurations essential for large enterprise codebases where different teams maintain different instruction sets that need composition.",
     question: "A research lab's monorepo has grown to 200+ developers across 15 teams. The root CLAUDE.md has become a 2000-line monolithic file causing merge conflicts weekly. An architect proposes modularizing it. What is the MOST effective approach using Claude Code's native features?",
-    choices: {
-      A: "Split into multiple CLAUDE.md files in each team's directory and rely on automatic hierarchy merging",
-      B: "Use @import directives in the root CLAUDE.md to reference separate instruction files for each team's concerns",
-      C: "Move all instructions into .claude/settings.json using a 'rules' array for better merge conflict handling",
-      D: "Create a .claude/rules/ directory with separate rule files as an alternative to monolithic CLAUDE.md"
-    },
+    choices: { A: "Split into multiple CLAUDE.md files in each team's directory and rely on automatic hierarchy merging", B: "Use @import directives in the root CLAUDE.md to reference separate instruction files for each team's concerns", C: "Move all instructions into .claude/settings.json using a 'rules' array for better merge conflict handling", D: "Create a .claude/rules/ directory with separate rule files as an alternative to monolithic CLAUDE.md" },
     correct: "D",
-    explanations: {
-      A: "INCORRECT: While subdirectory CLAUDE.md files do merge, this only helps developers working within those subdirectories. Team-wide standards that apply across directories wouldn't be captured, and this doesn't solve the root CLAUDE.md monolith problem.",
-      B: "INCORRECT: While @import is a valid feature for modularity, it still concentrates management in a single root file and doesn't fundamentally solve merge conflicts on the root CLAUDE.md itself. Each import change still requires editing the root file.",
-      C: "INCORRECT: .claude/settings.json is for tool permissions and configuration settings, not for storing coding standards and instructions. It doesn't support a 'rules' array for CLAUDE.md-style content.",
-      D: "CORRECT: The .claude/rules/ directory is specifically designed as an alternative to monolithic CLAUDE.md files. Each file in .claude/rules/ is automatically loaded, allowing teams to maintain separate rule files (e.g., hipaa-compliance.md, api-conventions.md) that can be independently edited without merge conflicts on a single file."
-    }
+    explanations: { A: "INCORRECT: While subdirectory CLAUDE.md files do merge, this only helps developers working within those subdirectories. Team-wide standards that apply across directories wouldn't be captured, and this doesn't solve the root CLAUDE.md monolith problem.", B: "INCORRECT: While @import is a valid feature for modularity, it still concentrates management in a single root file and doesn't fundamentally solve merge conflicts on the root CLAUDE.md itself. Each import change still requires editing the root file.", C: "INCORRECT: .claude/settings.json is for tool permissions and configuration settings, not for storing coding standards and instructions. It doesn't support a 'rules' array for CLAUDE.md-style content.", D: "CORRECT: The .claude/rules/ directory is specifically designed as an alternative to monolithic CLAUDE.md files. Each file in .claude/rules/ is automatically loaded, allowing teams to maintain separate rule files (e.g., hipaa-compliance.md, api-conventions.md) that can be independently edited without merge conflicts on a single file." }
   },
   {
     id: "d3-005",
@@ -104,19 +64,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Knowing which CLAUDE.md locations are version-controlled vs personal is critical for enterprise teams to ensure consistent developer experience and avoid configuration drift.",
     question: "A team lead at a legal tech company wants to ensure that ALL developers on the team, including new hires, automatically get the same Claude Code instructions for contract analysis patterns. Which configuration location guarantees this?",
-    choices: {
-      A: "~/.claude/CLAUDE.md on each developer's machine",
-      B: "The project's root CLAUDE.md committed to version control",
-      C: "Environment variable CLAUDE_INSTRUCTIONS set in each developer's shell profile",
-      D: "A shared network drive path referenced in Claude Code's global config"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: ~/.claude/CLAUDE.md is user-level configuration stored locally on each developer's machine. It is NOT shared via version control, so new hires would not automatically receive these instructions.",
-      B: "CORRECT: The project's root CLAUDE.md is committed to version control and cloned with the repository. Every developer who clones the repo automatically gets these instructions, making it the reliable way to share team-wide standards.",
-      C: "INCORRECT: There is no CLAUDE_INSTRUCTIONS environment variable in Claude Code. This is a plausible-sounding but non-existent feature.",
-      D: "INCORRECT: Claude Code does not support network drive path references for instruction files. Configuration is filesystem-local."
-    }
+    choices: { A: "~/.claude/CLAUDE.md on each developer's machine", B: "Environment variable CLAUDE_INSTRUCTIONS set in each developer's shell profile", C: "The project's root CLAUDE.md committed to version control", D: "A shared network drive path referenced in Claude Code's global config" },
+    correct: "C",
+    explanations: { A: "INCORRECT: ~/.claude/CLAUDE.md is user-level configuration stored locally on each developer's machine. It is NOT shared via version control, so new hires would not automatically receive these instructions.", B: "INCORRECT: There is no CLAUDE_INSTRUCTIONS environment variable in Claude Code. This is a plausible-sounding but non-existent feature.", C: "CORRECT: The project's root CLAUDE.md is committed to version control and cloned with the repository. Every developer who clones the repo automatically gets these instructions, making it the reliable way to share team-wide standards.", D: "INCORRECT: Claude Code does not support network drive path references for instruction files. Configuration is filesystem-local." }
   },
   {
     id: "d3-006",
@@ -127,19 +77,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding the three-tier hierarchy (user, project .claude/, project root) and when each applies prevents misconfiguration that silently degrades code quality in enterprise environments.",
     question: "An enterprise Java team has: (1) ~/.claude/CLAUDE.md with personal IDE preferences, (2) project .claude/CLAUDE.md with team deployment conventions, and (3) project root CLAUDE.md with coding standards. A developer opens Claude Code in the project. How are these processed?",
-    choices: {
-      A: "Only the project root CLAUDE.md loads because it has the highest priority in enterprise mode",
-      B: "All three files are loaded and merged, with instructions from all levels applying simultaneously",
-      C: "The project .claude/CLAUDE.md overrides the root CLAUDE.md, and user-level is loaded separately",
-      D: "Claude Code loads them in order and later files override conflicting instructions from earlier files"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no 'enterprise mode' and no priority system that suppresses other levels. All levels participate.",
-      B: "CORRECT: Claude Code loads and MERGES all levels of the hierarchy. The user-level (~/.claude/), the project .claude/ directory, and the project root CLAUDE.md all contribute instructions simultaneously. None override the others.",
-      C: "INCORRECT: The .claude/CLAUDE.md does not override the root CLAUDE.md. They merge. The idea that they have an override relationship is a common misconception.",
-      D: "INCORRECT: There is no override mechanism based on load order. All instructions are merged and apply together, not in a last-write-wins fashion."
-    }
+    choices: { A: "Claude Code loads them in order and later files override conflicting instructions from earlier files", B: "Only the project root CLAUDE.md loads because it has the highest priority in enterprise mode", C: "The project .claude/CLAUDE.md overrides the root CLAUDE.md, and user-level is loaded separately", D: "All three files are loaded and merged, with instructions from all levels applying simultaneously" },
+    correct: "D",
+    explanations: { A: "INCORRECT: There is no override mechanism based on load order. All instructions are merged and apply together, not in a last-write-wins fashion.", B: "INCORRECT: There is no 'enterprise mode' and no priority system that suppresses other levels. All levels participate.", C: "INCORRECT: The .claude/CLAUDE.md does not override the root CLAUDE.md. They merge. The idea that they have an override relationship is a common misconception.", D: "CORRECT: Claude Code loads and MERGES all levels of the hierarchy. The user-level (~/.claude/), the project .claude/ directory, and the project root CLAUDE.md all contribute instructions simultaneously. None override the others." }
   },
   {
     id: "d3-007",
@@ -150,19 +90,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Misunderstanding which .claude/ directory is shared vs personal leads to CI/CD pipeline failures when instructions expected in the repo aren't found.",
     question: "A DevOps team is debugging why their CI pipeline's Claude Code step doesn't follow the same rules as local development. They confirmed the project's CLAUDE.md is present. A senior engineer suspects rules stored in the wrong location. Which location is NOT available in the CI environment?",
-    choices: {
-      A: "The project's .claude/ directory committed to the repository",
-      B: "The project root CLAUDE.md file",
-      C: "The .claude/rules/ directory in the project",
-      D: "The ~/.claude/ user-level directory from developers' local machines"
-    },
-    correct: "D",
-    explanations: {
-      A: "INCORRECT: The project's .claude/ directory IS committed to version control and would be available in CI after checkout.",
-      B: "INCORRECT: The project root CLAUDE.md is part of the repository and available in CI after checkout.",
-      C: "INCORRECT: The .claude/rules/ directory is part of the project and available in CI after checkout.",
-      D: "CORRECT: The ~/.claude/ user-level directory exists only on individual developers' local machines. It is NOT shared via version control and would not exist in a CI environment unless explicitly provisioned. This is the most common source of 'works locally but not in CI' configuration issues."
-    }
+    choices: { A: "The project root CLAUDE.md file", B: "The ~/.claude/ user-level directory from developers' local machines", C: "The .claude/rules/ directory in the project", D: "The project's .claude/ directory committed to the repository" },
+    correct: "B",
+    explanations: { A: "INCORRECT: The project root CLAUDE.md is part of the repository and available in CI after checkout.", B: "CORRECT: The ~/.claude/ user-level directory exists only on individual developers' local machines. It is NOT shared via version control and would not exist in a CI environment unless explicitly provisioned. This is the most common source of 'works locally but not in CI' configuration issues.", C: "INCORRECT: The .claude/rules/ directory is part of the project and available in CI after checkout.", D: "INCORRECT: The project's .claude/ directory IS committed to version control and would be available in CI after checkout." }
   },
   {
     id: "d3-008",
@@ -173,19 +103,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Enterprise teams managing multiple microservices need to understand parent directory CLAUDE.md traversal to avoid unintended instruction inheritance across unrelated projects.",
     question: "A financial services company structures their repos under ~/repos/trading-platform/. They place a CLAUDE.md in ~/repos/trading-platform/ with platform-wide conventions. Inside, ~/repos/trading-platform/risk-engine/ has its own CLAUDE.md. A developer opens Claude Code directly in ~/repos/trading-platform/risk-engine/. What happens with the parent directory's CLAUDE.md?",
-    choices: {
-      A: "Only the risk-engine CLAUDE.md loads because Claude Code stops traversal at the nearest git root",
-      B: "The parent trading-platform CLAUDE.md is loaded via directory hierarchy traversal and merged with the risk-engine CLAUDE.md",
-      C: "The parent CLAUDE.md is ignored unless explicitly referenced with an @import directive",
-      D: "Claude Code asks the developer whether to include parent directory instructions"
-    },
+    choices: { A: "The parent CLAUDE.md is ignored unless explicitly referenced with an @import directive", B: "The parent trading-platform CLAUDE.md is loaded via directory hierarchy traversal and merged with the risk-engine CLAUDE.md", C: "Only the risk-engine CLAUDE.md loads because Claude Code stops traversal at the nearest git root", D: "Claude Code asks the developer whether to include parent directory instructions" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code traverses the directory hierarchy upward and doesn't necessarily stop at the git root boundary. Parent CLAUDE.md files above the working directory are discovered and loaded.",
-      B: "CORRECT: Claude Code traverses the directory hierarchy upward from the working directory, discovering and loading CLAUDE.md files at each level. The parent trading-platform CLAUDE.md merges with the risk-engine CLAUDE.md, so both sets of instructions apply.",
-      C: "INCORRECT: Parent directory CLAUDE.md files are loaded automatically through hierarchy traversal. No @import is needed for parent directories.",
-      D: "INCORRECT: The loading of parent CLAUDE.md files is automatic and silent. Claude Code does not prompt users about parent directory configuration."
-    }
+    explanations: { A: "INCORRECT: Parent directory CLAUDE.md files are loaded automatically through hierarchy traversal. No @import is needed for parent directories.", B: "CORRECT: Claude Code traverses the directory hierarchy upward from the working directory, discovering and loading CLAUDE.md files at each level. The parent trading-platform CLAUDE.md merges with the risk-engine CLAUDE.md, so both sets of instructions apply.", C: "INCORRECT: Claude Code traverses the directory hierarchy upward and doesn't necessarily stop at the git root boundary. Parent CLAUDE.md files above the working directory are discovered and loaded.", D: "INCORRECT: The loading of parent CLAUDE.md files is automatic and silent. Claude Code does not prompt users about parent directory configuration." }
   },
   {
     id: "d3-009",
@@ -196,19 +116,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "The .claude/rules/ directory pattern is essential for enterprise teams adopting modular configuration, and understanding it avoids the common mistake of only using monolithic CLAUDE.md files.",
     question: "A code generation team wants to maintain separate instruction sets for Python backend rules, React frontend rules, and testing conventions. They want each instruction set in its own file for independent maintenance. What is the recommended Claude Code approach?",
-    choices: {
-      A: "Create three separate CLAUDE.md files in the project root with different filenames like CLAUDE-python.md",
-      B: "Create files in .claude/rules/ such as python-backend.md, react-frontend.md, and testing.md",
-      C: "Use a single CLAUDE.md with clearly separated sections using markdown headers",
-      D: "Create three .claude/config/ YAML files for each instruction set"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code only recognizes files named exactly 'CLAUDE.md' (or CLAUDE.local.md). Files like CLAUDE-python.md would be ignored entirely.",
-      B: "CORRECT: The .claude/rules/ directory is designed for exactly this use case. Each file in .claude/rules/ is automatically loaded as a separate rule set. This enables modular, independently maintainable instruction files without merge conflicts.",
-      C: "INCORRECT: While this works functionally, it creates the monolithic file problem — all instructions in one file, causing merge conflicts and making maintenance harder. It doesn't leverage Claude Code's modular configuration features.",
-      D: "INCORRECT: There is no .claude/config/ directory convention and Claude Code rules are not defined in YAML format."
-    }
+    choices: { A: "Create three separate CLAUDE.md files in the project root with different filenames like CLAUDE-python.md", B: "Use a single CLAUDE.md with clearly separated sections using markdown headers", C: "Create files in .claude/rules/ such as python-backend.md, react-frontend.md, and testing.md", D: "Create three .claude/config/ YAML files for each instruction set" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Claude Code only recognizes files named exactly 'CLAUDE.md' (or CLAUDE.local.md). Files like CLAUDE-python.md would be ignored entirely.", B: "INCORRECT: While this works functionally, it creates the monolithic file problem — all instructions in one file, causing merge conflicts and making maintenance harder. It doesn't leverage Claude Code's modular configuration features.", C: "CORRECT: The .claude/rules/ directory is designed for exactly this use case. Each file in .claude/rules/ is automatically loaded as a separate rule set. This enables modular, independently maintainable instruction files without merge conflicts.", D: "INCORRECT: There is no .claude/config/ directory convention and Claude Code rules are not defined in YAML format." }
   },
   {
     id: "d3-010",
@@ -219,19 +129,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding that CLAUDE.md still applies in CI mode (-p flag) is critical for enterprises relying on automated code review and generation pipelines.",
     question: "An enterprise team runs Claude Code in CI with the -p flag for automated PR reviews. They notice the CI reviews follow different standards than local developer sessions. Both environments use the same repository checkout. What is the MOST likely explanation?",
-    choices: {
-      A: "The -p flag disables CLAUDE.md loading for performance optimization in CI environments",
-      B: "Developers have additional instructions in their ~/.claude/ user-level configuration that CI doesn't have",
-      C: "CI mode only loads .claude/rules/ files and ignores the root CLAUDE.md for security reasons",
-      D: "The -p flag uses a separate CLAUDE.ci.md file instead of the standard CLAUDE.md"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: CLAUDE.md files still apply in CI mode (-p flag). The -p flag makes Claude Code non-interactive but does not disable configuration loading.",
-      B: "CORRECT: The most likely explanation is that developers have additional instructions in their ~/.claude/ user-level configuration, which exists only on their local machines. CI environments wouldn't have this user-level config, causing behavioral differences despite the same repo checkout.",
-      C: "INCORRECT: CI mode loads all CLAUDE.md files in the hierarchy, not just .claude/rules/. There is no security-based filtering.",
-      D: "INCORRECT: There is no CLAUDE.ci.md convention. The same CLAUDE.md files are used in both interactive and CI (-p) modes."
-    }
+    choices: { A: "The -p flag uses a separate CLAUDE.ci.md file instead of the standard CLAUDE.md", B: "The -p flag disables CLAUDE.md loading for performance optimization in CI environments", C: "Developers have additional instructions in their ~/.claude/ user-level configuration that CI doesn't have", D: "CI mode only loads .claude/rules/ files and ignores the root CLAUDE.md for security reasons" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There is no CLAUDE.ci.md convention. The same CLAUDE.md files are used in both interactive and CI (-p) modes.", B: "INCORRECT: CLAUDE.md files still apply in CI mode (-p flag). The -p flag makes Claude Code non-interactive but does not disable configuration loading.", C: "CORRECT: The most likely explanation is that developers have additional instructions in their ~/.claude/ user-level configuration, which exists only on their local machines. CI environments wouldn't have this user-level config, causing behavioral differences despite the same repo checkout.", D: "INCORRECT: CI mode loads all CLAUDE.md files in the hierarchy, not just .claude/rules/. There is no security-based filtering." }
   },
   {
     id: "d3-011",
@@ -242,19 +142,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "The @import directive is a key enterprise feature for composable configurations, and misunderstanding its behavior leads to instructions silently not loading.",
     question: "A platform engineering team creates a shared instruction library at docs/claude-standards/. The root CLAUDE.md uses '@import docs/claude-standards/security.md' and '@import docs/claude-standards/api-design.md'. A developer reports that after pulling the latest changes, Claude Code stopped following security standards but api-design still works. What should they investigate FIRST?",
-    choices: {
-      A: "Whether the @import directive has a caching bug requiring a Claude Code restart",
-      B: "Whether docs/claude-standards/security.md was renamed, moved, or deleted in the latest changes",
-      C: "Whether the CLAUDE.md @import syntax changed in a Claude Code version update",
-      D: "Whether the security.md file exceeds the maximum import file size limit"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: @import directives are resolved at session start by reading the filesystem. There is no caching mechanism that would cause stale imports.",
-      B: "CORRECT: Since the api-design import still works but security doesn't, the most likely cause is that the security.md file was renamed, moved, or deleted in the latest pull. The @import path would break, and Claude Code would silently not load those instructions.",
-      C: "INCORRECT: Import syntax is stable and wouldn't change between versions in a breaking way. Additionally, if the syntax changed, BOTH imports would fail, not just one.",
-      D: "INCORRECT: There is no documented maximum import file size limit that would selectively affect one import. If such a limit existed, it would be an unusual first thing to investigate."
-    }
+    choices: { A: "Whether the @import directive has a caching bug requiring a Claude Code restart", B: "Whether the CLAUDE.md @import syntax changed in a Claude Code version update", C: "Whether docs/claude-standards/security.md was renamed, moved, or deleted in the latest changes", D: "Whether the security.md file exceeds the maximum import file size limit" },
+    correct: "C",
+    explanations: { A: "INCORRECT: @import directives are resolved at session start by reading the filesystem. There is no caching mechanism that would cause stale imports.", B: "INCORRECT: Import syntax is stable and wouldn't change between versions in a breaking way. Additionally, if the syntax changed, BOTH imports would fail, not just one.", C: "CORRECT: Since the api-design import still works but security doesn't, the most likely cause is that the security.md file was renamed, moved, or deleted in the latest pull. The @import path would break, and Claude Code would silently not load those instructions.", D: "INCORRECT: There is no documented maximum import file size limit that would selectively affect one import. If such a limit existed, it would be an unusual first thing to investigate." }
   },
   {
     id: "d3-012",
@@ -265,19 +155,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "CLAUDE.local.md provides a mechanism for developer-specific project overrides that don't belong in version control, preventing personal preferences from polluting shared configuration.",
     question: "A developer on a code generation team wants to add personal debugging instructions that apply only when they work on the project but shouldn't be committed to the repository. What is the appropriate Claude Code mechanism?",
-    choices: {
-      A: "Add instructions to the project's CLAUDE.md in a section marked '# Personal' and gitignore that section",
-      B: "Create a CLAUDE.local.md file in the project and add it to .gitignore",
-      C: "Create a .claude/personal.md file that is automatically excluded from version control",
-      D: "Use the /preferences command to set project-scoped personal instructions"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Git cannot selectively ignore sections within a file. The entire file is either tracked or not. This approach would either commit personal preferences or exclude all shared standards.",
-      B: "CORRECT: CLAUDE.local.md is the intended mechanism for personal, project-specific instructions that shouldn't be version controlled. It's loaded alongside CLAUDE.md and merged, but should be added to .gitignore to keep it personal.",
-      C: "INCORRECT: There is no automatic exclusion mechanism for .claude/personal.md. Files in .claude/ are generally version controlled unless explicitly gitignored.",
-      D: "INCORRECT: There is no /preferences command in Claude Code for setting project-scoped personal instructions."
-    }
+    choices: { A: "Use the /preferences command to set project-scoped personal instructions", B: "Add instructions to the project's CLAUDE.md in a section marked '# Personal' and gitignore that section", C: "Create a CLAUDE.local.md file in the project and add it to .gitignore", D: "Create a .claude/personal.md file that is automatically excluded from version control" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There is no /preferences command in Claude Code for setting project-scoped personal instructions.", B: "INCORRECT: Git cannot selectively ignore sections within a file. The entire file is either tracked or not. This approach would either commit personal preferences or exclude all shared standards.", C: "CORRECT: CLAUDE.local.md is the intended mechanism for personal, project-specific instructions that shouldn't be version controlled. It's loaded alongside CLAUDE.md and merged, but should be added to .gitignore to keep it personal.", D: "INCORRECT: There is no automatic exclusion mechanism for .claude/personal.md. Files in .claude/ are generally version controlled unless explicitly gitignored." }
   },
   {
     id: "d3-013",
@@ -288,19 +168,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "In large organizations with nested team structures, understanding how deeply nested CLAUDE.md files interact with the full hierarchy is essential for predictable behavior.",
     question: "A large enterprise monorepo has CLAUDE.md files at: (1) repo root with org-wide standards, (2) /packages/ with shared package conventions, (3) /packages/auth/ with auth-specific patterns, and (4) /packages/auth/src/ with implementation details. A developer works in /packages/auth/src/. How many CLAUDE.md files contribute to their session?",
-    choices: {
-      A: "Two — only the nearest CLAUDE.md and the root CLAUDE.md are loaded",
-      B: "Four — all CLAUDE.md files from root to the working directory are discovered and merged",
-      C: "Three — Claude Code limits hierarchy depth to three levels for performance",
-      D: "One — only the CLAUDE.md in the nearest parent directory (/packages/auth/src/) is loaded"
-    },
+    choices: { A: "One — only the CLAUDE.md in the nearest parent directory (/packages/auth/src/) is loaded", B: "Four — all CLAUDE.md files from root to the working directory are discovered and merged", C: "Three — Claude Code limits hierarchy depth to three levels for performance", D: "Two — only the nearest CLAUDE.md and the root CLAUDE.md are loaded" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code does not skip intermediate CLAUDE.md files. It traverses the full path, loading every CLAUDE.md it finds.",
-      B: "CORRECT: Claude Code traverses from the working directory up through the entire directory hierarchy, loading and merging every CLAUDE.md file it encounters. All four files contribute instructions to the session.",
-      C: "INCORRECT: There is no three-level depth limit on CLAUDE.md hierarchy traversal. All levels are loaded regardless of depth.",
-      D: "INCORRECT: Claude Code does not stop at the nearest CLAUDE.md. It continues traversing upward to load all CLAUDE.md files in the path."
-    }
+    explanations: { A: "INCORRECT: Claude Code does not stop at the nearest CLAUDE.md. It continues traversing upward to load all CLAUDE.md files in the path.", B: "CORRECT: Claude Code traverses from the working directory up through the entire directory hierarchy, loading and merging every CLAUDE.md file it encounters. All four files contribute instructions to the session.", C: "INCORRECT: There is no three-level depth limit on CLAUDE.md hierarchy traversal. All levels are loaded regardless of depth.", D: "INCORRECT: Claude Code does not skip intermediate CLAUDE.md files. It traverses the full path, loading every CLAUDE.md it finds." }
   },
   {
     id: "d3-014",
@@ -311,19 +181,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Ensuring CI pipelines have the right configuration is critical for automated quality gates. Teams must understand which configuration artifacts travel with the repo.",
     question: "A CI/CD team is setting up automated code quality checks using Claude Code. They want to ensure the CI environment has EXACTLY the same CLAUDE.md instructions as developers. Which set of files should they verify are present in the CI checkout?",
-    choices: {
-      A: "CLAUDE.md, .claude/ directory, and ~/.claude/ directory",
-      B: "CLAUDE.md and .claude/ directory only (both version-controlled)",
-      C: "CLAUDE.md only — the .claude/ directory is for runtime state",
-      D: "The .claude/settings.json file, which contains all compiled instructions"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: The ~/.claude/ directory is user-level and NOT version controlled. It cannot be 'verified in the CI checkout' because it was never in the repository. Including it would mean replicating personal configs, which defeats the purpose.",
-      B: "CORRECT: The project root CLAUDE.md and the .claude/ directory (including .claude/rules/) are both version-controlled and travel with the repository. These are the files that will be present in a CI checkout. Note that CI will NOT have ~/.claude/ user-level config, so 'exactly the same' is achievable only for project-level configuration.",
-      C: "INCORRECT: The .claude/ directory contains important configuration like rules files, not just runtime state. Excluding it would miss .claude/rules/ instructions.",
-      D: "INCORRECT: .claude/settings.json handles tool permissions, not compiled instructions. Instructions are in CLAUDE.md and .claude/rules/ files."
-    }
+    choices: { A: "CLAUDE.md and .claude/ directory only (both version-controlled)", B: "The .claude/settings.json file, which contains all compiled instructions", C: "CLAUDE.md, .claude/ directory, and ~/.claude/ directory", D: "CLAUDE.md only — the .claude/ directory is for runtime state" },
+    correct: "A",
+    explanations: { A: "CORRECT: The project root CLAUDE.md and the .claude/ directory (including .claude/rules/) are both version-controlled and travel with the repository. These are the files that will be present in a CI checkout. Note that CI will NOT have ~/.claude/ user-level config, so 'exactly the same' is achievable only for project-level configuration.", B: "INCORRECT: .claude/settings.json handles tool permissions, not compiled instructions. Instructions are in CLAUDE.md and .claude/rules/ files.", C: "INCORRECT: The ~/.claude/ directory is user-level and NOT version controlled. It cannot be 'verified in the CI checkout' because it was never in the repository. Including it would mean replicating personal configs, which defeats the purpose.", D: "INCORRECT: The .claude/ directory contains important configuration like rules files, not just runtime state. Excluding it would miss .claude/rules/ instructions." }
   },
   {
     id: "d3-015",
@@ -334,19 +194,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Enterprise teams must understand the distinction between always-loaded CLAUDE.md and on-demand skills/commands to architect their configuration effectively.",
     question: "A team architect is deciding whether to put complex database migration instructions in CLAUDE.md or as a custom skill. Migrations happen rarely (twice per quarter) but require precise multi-step instructions. What is the BEST configuration decision and why?",
-    choices: {
-      A: "Put it in CLAUDE.md because skills cannot access project context or CLAUDE.md instructions",
-      B: "Put it in CLAUDE.md to ensure every developer always has migration instructions loaded",
-      C: "Create a custom skill because CLAUDE.md content is always loaded into context, and rarely-used complex instructions waste context window on every session",
-      D: "Create a custom skill because CLAUDE.md has a strict line limit that migration instructions would exceed"
-    },
+    choices: { A: "Put it in CLAUDE.md to ensure every developer always has migration instructions loaded", B: "Create a custom skill because CLAUDE.md has a strict line limit that migration instructions would exceed", C: "Create a custom skill because CLAUDE.md content is always loaded into context, and rarely-used complex instructions waste context window on every session", D: "Put it in CLAUDE.md because skills cannot access project context or CLAUDE.md instructions" },
     correct: "C",
-    explanations: {
-      A: "INCORRECT: Skills CAN access project context. They operate within the project and can reference files. This is not a valid reason to avoid skills.",
-      B: "INCORRECT: While this ensures availability, it's wasteful. CLAUDE.md content is always loaded into every session's context. Rarely-used complex instructions consume context window space unnecessarily in the vast majority of sessions.",
-      C: "CORRECT: CLAUDE.md is always-loaded universal context, making it ideal for frequently-needed, concise instructions. Complex, rarely-used instructions like quarterly migrations are better as on-demand skills that only consume context when explicitly invoked.",
-      D: "INCORRECT: There is no strict line limit on CLAUDE.md files. The concern is context window consumption, not a hard line count limit."
-    }
+    explanations: { A: "INCORRECT: While this ensures availability, it's wasteful. CLAUDE.md content is always loaded into every session's context. Rarely-used complex instructions consume context window space unnecessarily in the vast majority of sessions.", B: "INCORRECT: There is no strict line limit on CLAUDE.md files. The concern is context window consumption, not a hard line count limit.", C: "CORRECT: CLAUDE.md is always-loaded universal context, making it ideal for frequently-needed, concise instructions. Complex, rarely-used instructions like quarterly migrations are better as on-demand skills that only consume context when explicitly invoked.", D: "INCORRECT: Skills CAN access project context. They operate within the project and can reference files. This is not a valid reason to avoid skills." }
   },
   {
     id: "d3-016",
@@ -357,19 +207,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Knowing how to verify what configuration is actually loaded prevents hours of debugging when Claude Code behavior doesn't match expectations.",
     question: "A developer at a healthcare company suspects that a CLAUDE.md file in a parent directory is injecting unexpected HIPAA-related instructions into their Claude Code session while working on an internal tools project. How can they verify which instructions are currently loaded?",
-    choices: {
-      A: "Run 'claude --debug' to output a verbose log of all loaded configuration files",
-      B: "Check the .claude/cache/instructions.log file for the last session's loaded instructions",
-      C: "Use the /memory command in the Claude Code session to see what instructions are active",
-      D: "Run 'claude config list' to display all active configuration sources"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: There is no --debug flag that outputs loaded configuration files in this manner.",
-      B: "INCORRECT: There is no .claude/cache/instructions.log file. Claude Code does not maintain instruction cache logs.",
-      C: "CORRECT: The /memory command shows what memory and instructions Claude Code has loaded for the current session. This lets the developer verify if parent directory CLAUDE.md files are contributing instructions.",
-      D: "INCORRECT: There is no 'claude config list' command. This resembles git or npm config patterns but doesn't exist in Claude Code."
-    }
+    choices: { A: "Check the .claude/cache/instructions.log file for the last session's loaded instructions", B: "Run 'claude --debug' to output a verbose log of all loaded configuration files", C: "Run 'claude config list' to display all active configuration sources", D: "Use the /memory command in the Claude Code session to see what instructions are active" },
+    correct: "D",
+    explanations: { A: "INCORRECT: There is no .claude/cache/instructions.log file. Claude Code does not maintain instruction cache logs.", B: "INCORRECT: There is no --debug flag that outputs loaded configuration files in this manner.", C: "INCORRECT: There is no 'claude config list' command. This resembles git or npm config patterns but doesn't exist in Claude Code.", D: "CORRECT: The /memory command shows what memory and instructions Claude Code has loaded for the current session. This lets the developer verify if parent directory CLAUDE.md files are contributing instructions." }
   },
   {
     id: "d3-017",
@@ -380,19 +220,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Enterprise monorepo teams need to understand the interaction between .claude/rules/ files and CLAUDE.md to design non-conflicting, maintainable configuration architectures.",
     question: "A platform team maintains a monorepo with both a root CLAUDE.md and a .claude/rules/ directory containing 12 rule files. A new rule file in .claude/rules/ appears to contradict an instruction in the root CLAUDE.md. How does Claude Code handle this?",
-    choices: {
-      A: "The .claude/rules/ files override CLAUDE.md because they are more specific configuration",
-      B: "CLAUDE.md takes precedence over .claude/rules/ files as the primary configuration source",
-      C: "Both are loaded and merged — Claude Code receives both instructions and uses its judgment to reconcile any conflicts",
-      D: "Claude Code raises a configuration error and refuses to start until the conflict is resolved"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: .claude/rules/ files do not have override priority over CLAUDE.md. Both are treated as instruction sources without a defined precedence hierarchy between them.",
-      B: "INCORRECT: CLAUDE.md does not take precedence over .claude/rules/ files. There is no defined priority between these two configuration sources.",
-      C: "CORRECT: Both CLAUDE.md and .claude/rules/ files are loaded and merged into Claude's context. If instructions appear to conflict, Claude Code receives all of them and must use its judgment to reconcile. This is why teams should avoid contradictions in their configuration.",
-      D: "INCORRECT: Claude Code does not validate instructions for conflicts or raise configuration errors. It loads all instructions without conflict detection."
-    }
+    choices: { A: "CLAUDE.md takes precedence over .claude/rules/ files as the primary configuration source", B: "The .claude/rules/ files override CLAUDE.md because they are more specific configuration", C: "Claude Code raises a configuration error and refuses to start until the conflict is resolved", D: "Both are loaded and merged — Claude Code receives both instructions and uses its judgment to reconcile any conflicts" },
+    correct: "D",
+    explanations: { A: "INCORRECT: CLAUDE.md does not take precedence over .claude/rules/ files. There is no defined priority between these two configuration sources.", B: "INCORRECT: .claude/rules/ files do not have override priority over CLAUDE.md. Both are treated as instruction sources without a defined precedence hierarchy between them.", C: "INCORRECT: Claude Code does not validate instructions for conflicts or raise configuration errors. It loads all instructions without conflict detection.", D: "CORRECT: Both CLAUDE.md and .claude/rules/ files are loaded and merged into Claude's context. If instructions appear to conflict, Claude Code receives all of them and must use its judgment to reconcile. This is why teams should avoid contradictions in their configuration." }
   },
 
   // ============================================================
@@ -407,19 +237,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding the difference between project commands (.claude/commands/) and personal commands (~/.claude/commands/) is essential for enterprise teams sharing reusable workflows.",
     question: "A senior developer creates a custom '/deploy-staging' command that all team members should use for consistent staging deployments. They save the command file and tell the team it's available. New team members report the command doesn't exist. Where did the developer MOST likely save the command?",
-    choices: {
-      A: "In the project's .claude/commands/ directory but forgot to commit it to version control",
-      B: "In their personal ~/.claude/commands/ directory, which isn't shared with the team",
-      C: "In .claude/skills/ directory, which requires explicit team-level permission to access",
-      D: "In the project root as deploy-staging.claude.md, which requires special file permissions"
-    },
+    choices: { A: "In the project root as deploy-staging.claude.md, which requires special file permissions", B: "In their personal ~/.claude/commands/ directory, which isn't shared with the team", C: "In the project's .claude/commands/ directory but forgot to commit it to version control", D: "In .claude/skills/ directory, which requires explicit team-level permission to access" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: While forgetting to commit is plausible, this would mean the file exists locally but not in the repo. The question states 'they tell the team it's available,' suggesting the developer believes it's accessible, not that they forgot a git step.",
-      B: "CORRECT: ~/.claude/commands/ stores personal commands that only exist on the individual developer's machine. This is the most common mistake — creating team-intended commands in the personal directory instead of the project's .claude/commands/ directory, which is version-controlled and shared.",
-      C: "INCORRECT: While .claude/skills/ is a real concept, it doesn't require 'team-level permission' to access. The key distinction is between personal (~/.claude/) and project (.claude/) locations.",
-      D: "INCORRECT: Command files are not stored in the project root with a .claude.md extension. They belong in .claude/commands/ or ~/.claude/commands/ directories."
-    }
+    explanations: { A: "INCORRECT: Command files are not stored in the project root with a .claude.md extension. They belong in .claude/commands/ or ~/.claude/commands/ directories.", B: "CORRECT: ~/.claude/commands/ stores personal commands that only exist on the individual developer's machine. This is the most common mistake — creating team-intended commands in the personal directory instead of the project's .claude/commands/ directory, which is version-controlled and shared.", C: "INCORRECT: While forgetting to commit is plausible, this would mean the file exists locally but not in the repo. The question states 'they tell the team it's available,' suggesting the developer believes it's accessible, not that they forgot a git step.", D: "INCORRECT: While .claude/skills/ is a real concept, it doesn't require 'team-level permission' to access. The key distinction is between personal (~/.claude/) and project (.claude/) locations." }
   },
   {
     id: "d3-019",
@@ -430,19 +250,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Skills with context: fork provide conversation isolation critical for enterprise workflows where subagent tasks shouldn't pollute the main conversation state.",
     question: "A developer productivity team creates a skill for comprehensive code review. They want the skill to perform deep analysis without cluttering the user's main conversation with intermediate reasoning steps. They add 'context: fork' to the SKILL.md. What does this actually isolate?",
-    choices: {
-      A: "The skill runs in a separate filesystem sandbox, preventing writes to the main project directory",
-      B: "The skill runs with a forked copy of the conversation context, isolating intermediate messages from the main conversation",
-      C: "The skill runs with a separate API key and usage quota to isolate resource consumption",
-      D: "The skill runs in a Docker container with a forked copy of the entire project state"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: context: fork does NOT create filesystem isolation. The skill still has access to the same filesystem as the main session. It isolates CONVERSATION context, not file system access.",
-      B: "CORRECT: context: fork isolates the CONVERSATION, not the filesystem. The skill runs with its own conversation context, so intermediate reasoning and messages don't appear in or pollute the main conversation. The skill still operates on the same filesystem.",
-      C: "INCORRECT: context: fork has nothing to do with API keys or usage quotas. It's purely about conversation context isolation.",
-      D: "INCORRECT: context: fork does not involve Docker containers or project state forking. It's a lightweight conversation-level isolation mechanism."
-    }
+    choices: { A: "The skill runs in a separate filesystem sandbox, preventing writes to the main project directory", B: "The skill runs with a separate API key and usage quota to isolate resource consumption", C: "The skill runs with a forked copy of the conversation context, isolating intermediate messages from the main conversation", D: "The skill runs in a Docker container with a forked copy of the entire project state" },
+    correct: "C",
+    explanations: { A: "INCORRECT: context: fork does NOT create filesystem isolation. The skill still has access to the same filesystem as the main session. It isolates CONVERSATION context, not file system access.", B: "INCORRECT: context: fork has nothing to do with API keys or usage quotas. It's purely about conversation context isolation.", C: "CORRECT: context: fork isolates the CONVERSATION, not the filesystem. The skill runs with its own conversation context, so intermediate reasoning and messages don't appear in or pollute the main conversation. The skill still operates on the same filesystem.", D: "INCORRECT: context: fork does not involve Docker containers or project state forking. It's a lightweight conversation-level isolation mechanism." }
   },
   {
     id: "d3-020",
@@ -453,19 +263,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding SKILL.md metadata fields enables teams to build well-configured skills with appropriate tool access and documentation for team-wide use.",
     question: "A team is creating a custom skill for database schema analysis. The SKILL.md needs to specify that the skill should only use read-only tools and provide a hint about expected arguments. Which SKILL.md fields configure this?",
-    choices: {
-      A: "tools: [read-only] and description: for argument documentation",
-      B: "allowed-tools: for tool restrictions and argument-hint: for argument documentation",
-      C: "permissions: read-only and args: for argument schema definition",
-      D: "access: restricted and params: for expected argument format"
-    },
+    choices: { A: "access: restricted and params: for expected argument format", B: "allowed-tools: for tool restrictions and argument-hint: for argument documentation", C: "tools: [read-only] and description: for argument documentation", D: "permissions: read-only and args: for argument schema definition" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: 'tools' is not the correct field name, and 'description' serves a different purpose than argument documentation in SKILL.md.",
-      B: "CORRECT: SKILL.md supports 'allowed-tools' to restrict which tools the skill can use (e.g., only read operations) and 'argument-hint' to provide documentation about what arguments the skill expects from the user.",
-      C: "INCORRECT: 'permissions' and 'args' are not valid SKILL.md fields. The correct fields are 'allowed-tools' and 'argument-hint'.",
-      D: "INCORRECT: 'access' and 'params' are not valid SKILL.md metadata fields."
-    }
+    explanations: { A: "INCORRECT: 'access' and 'params' are not valid SKILL.md metadata fields.", B: "CORRECT: SKILL.md supports 'allowed-tools' to restrict which tools the skill can use (e.g., only read operations) and 'argument-hint' to provide documentation about what arguments the skill expects from the user.", C: "INCORRECT: 'tools' is not the correct field name, and 'description' serves a different purpose than argument documentation in SKILL.md.", D: "INCORRECT: 'permissions' and 'args' are not valid SKILL.md fields. The correct fields are 'allowed-tools' and 'argument-hint'." }
   },
   {
     id: "d3-021",
@@ -476,19 +276,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Enterprise teams need to understand the distinction between always-loaded CLAUDE.md instructions and on-demand skills to optimize context window usage across large teams.",
     question: "A developer productivity team has 25 reusable workflows. Currently, all 25 are documented as sections in CLAUDE.md. Developers complain that Claude Code seems 'distracted' and sometimes applies the wrong workflow. What is the root cause and best solution?",
-    choices: {
-      A: "CLAUDE.md has a 25-section limit; split into multiple CLAUDE.md files in subdirectories",
-      B: "All 25 workflows are always loaded into context, consuming window space and causing confusion; convert rarely-used workflows to on-demand skills",
-      C: "CLAUDE.md sections are loaded randomly; convert to .claude/rules/ files for deterministic ordering",
-      D: "Claude Code has a known bug with large CLAUDE.md files; reduce total line count below 500 lines"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no 25-section limit on CLAUDE.md. The issue is about context window management, not arbitrary limits.",
-      B: "CORRECT: CLAUDE.md content is always loaded into every session's context. Having 25 workflows permanently in context wastes context window space and can cause confusion when Claude has too many potentially-applicable instructions. Converting rarely-used workflows to skills makes them on-demand, reducing noise and improving accuracy.",
-      C: "INCORRECT: CLAUDE.md sections are not loaded randomly. They are loaded deterministically. The issue is context overload, not ordering.",
-      D: "INCORRECT: There is no known bug with large CLAUDE.md files and no 500-line limit. The issue is architectural (always-loaded vs on-demand), not a software bug."
-    }
+    choices: { A: "Claude Code has a known bug with large CLAUDE.md files; reduce total line count below 500 lines", B: "CLAUDE.md has a 25-section limit; split into multiple CLAUDE.md files in subdirectories", C: "CLAUDE.md sections are loaded randomly; convert to .claude/rules/ files for deterministic ordering", D: "All 25 workflows are always loaded into context, consuming window space and causing confusion; convert rarely-used workflows to on-demand skills" },
+    correct: "D",
+    explanations: { A: "INCORRECT: There is no known bug with large CLAUDE.md files and no 500-line limit. The issue is architectural (always-loaded vs on-demand), not a software bug.", B: "INCORRECT: There is no 25-section limit on CLAUDE.md. The issue is about context window management, not arbitrary limits.", C: "INCORRECT: CLAUDE.md sections are not loaded randomly. They are loaded deterministically. The issue is context overload, not ordering.", D: "CORRECT: CLAUDE.md content is always loaded into every session's context. Having 25 workflows permanently in context wastes context window space and can cause confusion when Claude has too many potentially-applicable instructions. Converting rarely-used workflows to skills makes them on-demand, reducing noise and improving accuracy." }
   },
   {
     id: "d3-022",
@@ -499,19 +289,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding how custom commands are invoked in CI/CD pipelines enables automation of complex multi-step workflows that need to be consistent across environments.",
     question: "A CI/CD team has a custom command at .claude/commands/security-audit.md that performs security analysis. How do they invoke this command in their CI pipeline using Claude Code's non-interactive mode?",
-    choices: {
-      A: "claude -p '/security-audit' — using the slash command syntax in the prompt",
-      B: "claude --command security-audit — using a dedicated command flag",
-      C: "claude -p --skill security-audit — combining print mode with skill invocation",
-      D: "claude --run-command .claude/commands/security-audit.md — specifying the full file path"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Custom commands are invoked via slash command syntax (e.g., /security-audit). In CI mode, you pass this as the prompt using -p '/security-audit'. Claude Code resolves the slash command to the corresponding file in .claude/commands/.",
-      B: "INCORRECT: There is no --command flag in Claude Code CLI. Commands are invoked through the standard prompt mechanism using slash syntax.",
-      C: "INCORRECT: There is no --skill flag. Skills and commands are invoked via slash command syntax within the prompt.",
-      D: "INCORRECT: There is no --run-command flag. You don't specify command file paths directly."
-    }
+    choices: { A: "claude --run-command .claude/commands/security-audit.md — specifying the full file path", B: "claude -p --skill security-audit — combining print mode with skill invocation", C: "claude --command security-audit — using a dedicated command flag", D: "claude -p '/security-audit' — using the slash command syntax in the prompt" },
+    correct: "D",
+    explanations: { A: "INCORRECT: There is no --run-command flag. You don't specify command file paths directly.", B: "INCORRECT: There is no --skill flag. Skills and commands are invoked via slash command syntax within the prompt.", C: "INCORRECT: There is no --command flag in Claude Code CLI. Commands are invoked through the standard prompt mechanism using slash syntax.", D: "CORRECT: Custom commands are invoked via slash command syntax (e.g., /security-audit). In CI mode, you pass this as the prompt using -p '/security-audit'. Claude Code resolves the slash command to the corresponding file in .claude/commands/." }
   },
   {
     id: "d3-023",
@@ -522,19 +302,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Knowing the file structure and naming conventions for commands ensures they're discoverable and correctly mapped to slash command names.",
     question: "A team creates a command file at .claude/commands/generate/api-endpoint.md. When a developer types '/' to see available commands, how does this command appear?",
-    choices: {
-      A: "As /api-endpoint — subdirectory names are stripped from the command name",
-      B: "As /generate:api-endpoint — using colon notation for nested commands",
-      C: "As /generate/api-endpoint — preserving the directory structure in the command name",
-      D: "It doesn't appear — commands must be in the root of .claude/commands/ with no nesting"
-    },
+    choices: { A: "As /generate:api-endpoint — using colon notation for nested commands", B: "As /api-endpoint — subdirectory names are stripped from the command name", C: "As /generate/api-endpoint — preserving the directory structure in the command name", D: "It doesn't appear — commands must be in the root of .claude/commands/ with no nesting" },
     correct: "C",
-    explanations: {
-      A: "INCORRECT: Subdirectory names are NOT stripped. The directory structure is preserved in the command path.",
-      B: "INCORRECT: Colon notation is not used for nested commands. The slash/directory separator is preserved.",
-      C: "CORRECT: Commands in subdirectories of .claude/commands/ preserve the directory structure. A file at .claude/commands/generate/api-endpoint.md appears as /generate/api-endpoint, allowing teams to organize commands into logical groups.",
-      D: "INCORRECT: Commands CAN be nested in subdirectories. The .claude/commands/ directory supports hierarchical organization."
-    }
+    explanations: { A: "INCORRECT: Colon notation is not used for nested commands. The slash/directory separator is preserved.", B: "INCORRECT: Subdirectory names are NOT stripped. The directory structure is preserved in the command path.", C: "CORRECT: Commands in subdirectories of .claude/commands/ preserve the directory structure. A file at .claude/commands/generate/api-endpoint.md appears as /generate/api-endpoint, allowing teams to organize commands into logical groups.", D: "INCORRECT: Commands CAN be nested in subdirectories. The .claude/commands/ directory supports hierarchical organization." }
   },
   {
     id: "d3-024",
@@ -545,19 +315,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Understanding argument passing to commands enables parameterized enterprise workflows that adapt to different contexts.",
     question: "A developer productivity team creates a command at .claude/commands/refactor.md that contains the prompt: 'Refactor the module at $ARGUMENTS using the strategy pattern.' How does a developer pass the module path when invoking this command?",
-    choices: {
-      A: "/refactor --path src/auth/handler.ts — using named parameter flags",
-      B: "/refactor src/auth/handler.ts — the text after the command name replaces $ARGUMENTS",
-      C: "/refactor(src/auth/handler.ts) — using parenthetical argument syntax",
-      D: "/refactor and then Claude Code prompts for the required arguments interactively"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Custom commands don't support named parameter flags like --path. Arguments are passed as free-form text.",
-      B: "CORRECT: When invoking a custom command, any text after the command name is substituted into the $ARGUMENTS placeholder in the command template. So '/refactor src/auth/handler.ts' replaces $ARGUMENTS with 'src/auth/handler.ts'.",
-      C: "INCORRECT: Parenthetical syntax is not used for command arguments. Arguments are simply space-separated text after the command name.",
-      D: "INCORRECT: Claude Code does not interactively prompt for command arguments. The $ARGUMENTS placeholder is filled from the invocation text."
-    }
+    choices: { A: "/refactor(src/auth/handler.ts) — using parenthetical argument syntax", B: "/refactor --path src/auth/handler.ts — using named parameter flags", C: "/refactor src/auth/handler.ts — the text after the command name replaces $ARGUMENTS", D: "/refactor and then Claude Code prompts for the required arguments interactively" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Parenthetical syntax is not used for command arguments. Arguments are simply space-separated text after the command name.", B: "INCORRECT: Custom commands don't support named parameter flags like --path. Arguments are passed as free-form text.", C: "CORRECT: When invoking a custom command, any text after the command name is substituted into the $ARGUMENTS placeholder in the command template. So '/refactor src/auth/handler.ts' replaces $ARGUMENTS with 'src/auth/handler.ts'.", D: "INCORRECT: Claude Code does not interactively prompt for command arguments. The $ARGUMENTS placeholder is filled from the invocation text." }
   },
   {
     id: "d3-025",
@@ -568,19 +328,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Skills differ from commands in important ways for enterprise automation — understanding when to use each prevents architectural mistakes in tooling design.",
     question: "A CI/CD team is deciding between implementing a deployment validation workflow as a custom command (.claude/commands/validate-deploy.md) or as a skill with SKILL.md. The workflow needs to: (1) run in an isolated conversation context, (2) restrict tool usage to read-only operations, and (3) accept structured arguments. Which should they choose and why?",
-    choices: {
-      A: "Custom command, because commands support all three requirements and are simpler to maintain",
-      B: "Skill, because SKILL.md supports context: fork for isolation, allowed-tools for restrictions, and argument-hint for structured arguments",
-      C: "Custom command with a YAML frontmatter block that supports all three requirements",
-      D: "Either approach — commands and skills are functionally identical with different file locations"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Custom commands are simple prompt templates with $ARGUMENTS substitution. They do NOT natively support conversation isolation, tool restrictions, or structured argument hints.",
-      B: "CORRECT: Skills with SKILL.md offer advanced configuration: 'context: fork' for conversation isolation, 'allowed-tools' for tool restrictions, and 'argument-hint' for structured argument documentation. These features make skills the right choice for complex, controlled workflows.",
-      C: "INCORRECT: Custom commands do not support YAML frontmatter blocks with these configuration options. The advanced metadata is exclusive to SKILL.md.",
-      D: "INCORRECT: Commands and skills are NOT functionally identical. Skills have SKILL.md with metadata fields (context, allowed-tools, argument-hint) that commands lack."
-    }
+    choices: { A: "Skill, because SKILL.md supports context: fork for isolation, allowed-tools for restrictions, and argument-hint for structured arguments", B: "Custom command with a YAML frontmatter block that supports all three requirements", C: "Either approach — commands and skills are functionally identical with different file locations", D: "Custom command, because commands support all three requirements and are simpler to maintain" },
+    correct: "A",
+    explanations: { A: "CORRECT: Skills with SKILL.md offer advanced configuration: 'context: fork' for conversation isolation, 'allowed-tools' for tool restrictions, and 'argument-hint' for structured argument documentation. These features make skills the right choice for complex, controlled workflows.", B: "INCORRECT: Custom commands do not support YAML frontmatter blocks with these configuration options. The advanced metadata is exclusive to SKILL.md.", C: "INCORRECT: Commands and skills are NOT functionally identical. Skills have SKILL.md with metadata fields (context, allowed-tools, argument-hint) that commands lack.", D: "INCORRECT: Custom commands are simple prompt templates with $ARGUMENTS substitution. They do NOT natively support conversation isolation, tool restrictions, or structured argument hints." }
   },
   {
     id: "d3-026",
@@ -591,19 +341,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding that skills can be scoped to project or personal level prevents the common mistake of putting team skills in personal directories.",
     question: "An enterprise code generation team has both shared team skills (for standardized code patterns) and personal developer skills (for individual workflows). How should they organize these for correct scoping?",
-    choices: {
-      A: "Team skills in .claude/commands/ and personal skills in ~/.claude/commands/ — skills are just specialized commands",
-      B: "All skills in .claude/skills/ with a 'scope: personal' flag in individual SKILL.md files",
-      C: "Team skills in the project's .claude/ directory (version-controlled) and personal skills in ~/.claude/ (not version-controlled)",
-      D: "Team skills deployed via npm package and personal skills in .claude/local-skills/"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Skills and commands are separate concepts with different file structures. Skills have SKILL.md with metadata; commands are simple prompt templates.",
-      B: "INCORRECT: There is no 'scope: personal' flag in SKILL.md. Scoping is determined by file location, not metadata flags.",
-      C: "CORRECT: The scoping model follows the same pattern as CLAUDE.md: project-level files in .claude/ are version-controlled and shared with the team, while ~/.claude/ files are personal and local. Team skills go in the project's .claude/ directory, personal skills in ~/.claude/.",
-      D: "INCORRECT: Skills are not deployed via npm packages, and there is no .claude/local-skills/ directory convention."
-    }
+    choices: { A: "Team skills in the project's .claude/ directory (version-controlled) and personal skills in ~/.claude/ (not version-controlled)", B: "All skills in .claude/skills/ with a 'scope: personal' flag in individual SKILL.md files", C: "Team skills in .claude/commands/ and personal skills in ~/.claude/commands/ — skills are just specialized commands", D: "Team skills deployed via npm package and personal skills in .claude/local-skills/" },
+    correct: "A",
+    explanations: { A: "CORRECT: The scoping model follows the same pattern as CLAUDE.md: project-level files in .claude/ are version-controlled and shared with the team, while ~/.claude/ files are personal and local. Team skills go in the project's .claude/ directory, personal skills in ~/.claude/.", B: "INCORRECT: There is no 'scope: personal' flag in SKILL.md. Scoping is determined by file location, not metadata flags.", C: "INCORRECT: Skills and commands are separate concepts with different file structures. Skills have SKILL.md with metadata; commands are simple prompt templates.", D: "INCORRECT: Skills are not deployed via npm packages, and there is no .claude/local-skills/ directory convention." }
   },
   {
     id: "d3-027",
@@ -637,19 +377,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Enterprise CI/CD pipelines often need multiple specialized Claude Code invocations — understanding how to chain commands and skills in automation is critical.",
     question: "A CI pipeline needs to: (1) run a security audit skill, (2) based on its output, run a fix-generation command, and (3) validate the fixes. The team wants each step to have isolated context. What is the CORRECT architecture?",
-    choices: {
-      A: "A single Claude Code session with three sequential skill invocations using /audit, /fix, and /validate",
-      B: "Three separate Claude Code -p invocations, each running independently, with output from each piped as context to the next",
-      C: "A single skill with context: fork that internally delegates to sub-skills for each step",
-      D: "Use claude --session-id to maintain a persistent session across all three steps while forking context for each"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: A single session would share conversation context across all three steps, violating the isolation requirement. Skills within the same session share the parent conversation unless each uses context: fork.",
-      B: "CORRECT: Three separate Claude Code -p invocations provide true session isolation — each runs as an independent instance with its own context. Output from one invocation can be captured and passed as input context to the next, creating a clean pipeline with full isolation between steps.",
-      C: "INCORRECT: While context: fork provides conversation isolation, a single skill can't reliably orchestrate three independent multi-step workflows. Separate invocations provide stronger isolation guarantees suitable for CI.",
-      D: "INCORRECT: There is no --session-id flag for maintaining persistent sessions across separate invocations in this manner."
-    }
+    choices: { A: "Three separate Claude Code -p invocations, each running independently, with output from each piped as context to the next", B: "A single skill with context: fork that internally delegates to sub-skills for each step", C: "A single Claude Code session with three sequential skill invocations using /audit, /fix, and /validate", D: "Use claude --session-id to maintain a persistent session across all three steps while forking context for each" },
+    correct: "A",
+    explanations: { A: "CORRECT: Three separate Claude Code -p invocations provide true session isolation — each runs as an independent instance with its own context. Output from one invocation can be captured and passed as input context to the next, creating a clean pipeline with full isolation between steps.", B: "INCORRECT: While context: fork provides conversation isolation, a single skill can't reliably orchestrate three independent multi-step workflows. Separate invocations provide stronger isolation guarantees suitable for CI.", C: "INCORRECT: A single session would share conversation context across all three steps, violating the isolation requirement. Skills within the same session share the parent conversation unless each uses context: fork.", D: "INCORRECT: There is no --session-id flag for maintaining persistent sessions across separate invocations in this manner." }
   },
   {
     id: "d3-029",
@@ -660,19 +390,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding command file format prevents common mistakes when creating team workflows that must work reliably across all developer environments.",
     question: "A developer creates a custom command file at .claude/commands/lint-fix.md with the content: 'Run the linter on $ARGUMENTS and fix all auto-fixable issues. Use the project's ESLint configuration.' What format is this command file?",
-    choices: {
-      A: "YAML with a prompt field that contains the instruction text",
-      B: "Plain markdown where the entire file content becomes the prompt template",
-      C: "JSON with command metadata and a 'prompt' property",
-      D: "A shell script that Claude Code executes directly"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Command files are not YAML. They are plain markdown files where the content IS the prompt.",
-      B: "CORRECT: Custom command files (.md) are plain markdown where the entire file content serves as the prompt template. The $ARGUMENTS placeholder is replaced with user-provided text at invocation time.",
-      C: "INCORRECT: Command files are not JSON. They're simple markdown prompt templates.",
-      D: "INCORRECT: Command files are not shell scripts. They're prompt templates that Claude Code interprets and acts upon, not scripts executed directly."
-    }
+    choices: { A: "YAML with a prompt field that contains the instruction text", B: "A shell script that Claude Code executes directly", C: "JSON with command metadata and a 'prompt' property", D: "Plain markdown where the entire file content becomes the prompt template" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Command files are not YAML. They are plain markdown files where the content IS the prompt.", B: "INCORRECT: Command files are not shell scripts. They're prompt templates that Claude Code interprets and acts upon, not scripts executed directly.", C: "INCORRECT: Command files are not JSON. They're simple markdown prompt templates.", D: "CORRECT: Custom command files (.md) are plain markdown where the entire file content serves as the prompt template. The $ARGUMENTS placeholder is replaced with user-provided text at invocation time." }
   },
   {
     id: "d3-030",
@@ -683,19 +403,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "The allowed-tools restriction in SKILL.md is critical for enterprise security — preventing skills from performing unintended operations like file writes or command execution.",
     question: "A developer productivity team creates a code analysis skill that should ONLY read files and search code — never modify anything. The SKILL.md specifies 'allowed-tools' appropriately. A developer invokes the skill and asks it to 'also fix the issues you found.' What happens?",
-    choices: {
-      A: "The skill fixes the issues because user requests override allowed-tools restrictions",
-      B: "The skill is unable to make edits because allowed-tools restricts it to only the specified read/search tools, regardless of user requests",
-      C: "The skill asks for elevated permissions before proceeding with the fix",
-      D: "The skill forks a new conversation without tool restrictions to handle the fix"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: User requests do NOT override allowed-tools restrictions. The tool restrictions defined in SKILL.md are enforced regardless of what the user asks within the skill's context.",
-      B: "CORRECT: The allowed-tools field in SKILL.md strictly limits which tools the skill can use. If only read/search tools are allowed, the skill cannot perform file edits even if the user requests it. This is a security feature for enterprise environments.",
-      C: "INCORRECT: Skills don't have a permission escalation mechanism. allowed-tools restrictions are absolute within the skill's context.",
-      D: "INCORRECT: Skills don't automatically fork new unrestricted conversations. The tool restrictions apply to the skill's execution scope."
-    }
+    choices: { A: "The skill fixes the issues because user requests override allowed-tools restrictions", B: "The skill asks for elevated permissions before proceeding with the fix", C: "The skill forks a new conversation without tool restrictions to handle the fix", D: "The skill is unable to make edits because allowed-tools restricts it to only the specified read/search tools, regardless of user requests" },
+    correct: "D",
+    explanations: { A: "INCORRECT: User requests do NOT override allowed-tools restrictions. The tool restrictions defined in SKILL.md are enforced regardless of what the user asks within the skill's context.", B: "INCORRECT: Skills don't have a permission escalation mechanism. allowed-tools restrictions are absolute within the skill's context.", C: "INCORRECT: Skills don't automatically fork new unrestricted conversations. The tool restrictions apply to the skill's execution scope.", D: "CORRECT: The allowed-tools field in SKILL.md strictly limits which tools the skill can use. If only read/search tools are allowed, the skill cannot perform file edits even if the user requests it. This is a security feature for enterprise environments." }
   },
   {
     id: "d3-031",
@@ -706,19 +416,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Teams need to understand how to discover and list available commands/skills to onboard new developers efficiently.",
     question: "A new developer on a CI/CD team wants to see all available custom commands and skills in their project. What is the simplest way to discover them?",
-    choices: {
-      A: "Run 'claude --list-commands' to see all registered commands and skills",
-      B: "Type '/' in a Claude Code session to see the autocomplete list of available commands",
-      C: "Read the .claude/manifest.json file that indexes all commands and skills",
-      D: "Run '/help commands' to get a formatted list of all available commands"
-    },
+    choices: { A: "Run 'claude --list-commands' to see all registered commands and skills", B: "Type '/' in a Claude Code session to see the autocomplete list of available commands", C: "Run '/help commands' to get a formatted list of all available commands", D: "Read the .claude/manifest.json file that indexes all commands and skills" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no --list-commands CLI flag for listing available commands.",
-      B: "CORRECT: Typing '/' in a Claude Code interactive session triggers autocomplete that shows all available commands and skills, including both project-level (.claude/commands/) and personal (~/.claude/commands/) commands.",
-      C: "INCORRECT: There is no .claude/manifest.json file. Commands are discovered by scanning the .claude/commands/ directory structure.",
-      D: "INCORRECT: '/help commands' is not a recognized Claude Code command for listing available commands."
-    }
+    explanations: { A: "INCORRECT: There is no --list-commands CLI flag for listing available commands.", B: "CORRECT: Typing '/' in a Claude Code interactive session triggers autocomplete that shows all available commands and skills, including both project-level (.claude/commands/) and personal (~/.claude/commands/) commands.", C: "INCORRECT: '/help commands' is not a recognized Claude Code command for listing available commands.", D: "INCORRECT: There is no .claude/manifest.json file. Commands are discovered by scanning the .claude/commands/ directory structure." }
   },
   {
     id: "d3-032",
@@ -729,19 +429,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Enterprise teams creating shared skills need to understand context: fork's precise semantics to avoid data leakage between skill executions and the main conversation.",
     question: "A code generation team has a skill with context: fork that analyzes code quality. During execution, the skill discovers a critical security vulnerability. After the skill completes and returns to the main conversation, does the main conversation have access to the skill's intermediate analysis steps?",
-    choices: {
-      A: "Yes — context: fork only isolates tool usage, not conversation history",
-      B: "No — context: fork means the skill's intermediate conversation messages are NOT visible in the main conversation; only the skill's final output is returned",
-      C: "Yes — context: fork only affects the skill's input, not its output or conversation trail",
-      D: "No — context: fork completely isolates the skill, and no output is returned to the main conversation"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: context: fork isolates the conversation context, not just tool usage. The skill runs with its own conversation state.",
-      B: "CORRECT: With context: fork, the skill runs in an isolated conversation context. Its intermediate reasoning steps and messages are not visible in the main conversation. Only the skill's final output/result is communicated back. This keeps the main conversation clean.",
-      C: "INCORRECT: context: fork affects the full conversation context — both input and intermediate messages. It's not an input-only isolation.",
-      D: "INCORRECT: While the intermediate steps are isolated, the skill DOES return its final output to the main conversation. Complete isolation with no return value would make the skill useless."
-    }
+    choices: { A: "Yes — context: fork only affects the skill's input, not its output or conversation trail", B: "No — context: fork completely isolates the skill, and no output is returned to the main conversation", C: "No — context: fork means the skill's intermediate conversation messages are NOT visible in the main conversation; only the skill's final output is returned", D: "Yes — context: fork only isolates tool usage, not conversation history" },
+    correct: "C",
+    explanations: { A: "INCORRECT: context: fork affects the full conversation context — both input and intermediate messages. It's not an input-only isolation.", B: "INCORRECT: While the intermediate steps are isolated, the skill DOES return its final output to the main conversation. Complete isolation with no return value would make the skill useless.", C: "CORRECT: With context: fork, the skill runs in an isolated conversation context. Its intermediate reasoning steps and messages are not visible in the main conversation. Only the skill's final output/result is communicated back. This keeps the main conversation clean.", D: "INCORRECT: context: fork isolates the conversation context, not just tool usage. The skill runs with its own conversation state." }
   },
   {
     id: "d3-033",
@@ -752,19 +442,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Enterprise teams must understand command/skill precedence when personal and project commands share the same name to prevent unexpected behavior.",
     question: "A developer has a personal command at ~/.claude/commands/deploy.md with their custom deployment steps, and the project also has .claude/commands/deploy.md with the team's standard deployment process. When the developer types '/deploy', which executes?",
-    choices: {
-      A: "The personal command always takes precedence over project commands to respect developer preferences",
-      B: "The project command takes precedence because project-level configuration overrides user-level in command resolution",
-      C: "Claude Code shows both options and asks the developer to choose which deploy command to run",
-      D: "Claude Code raises an error about conflicting command names and refuses to execute either"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Personal commands do NOT override project commands. In the command resolution order, project-level commands take precedence to ensure team consistency.",
-      B: "CORRECT: When a command exists at both project (.claude/commands/) and personal (~/.claude/commands/) levels with the same name, the project-level command takes precedence. This ensures team-standard workflows are used consistently.",
-      C: "INCORRECT: Claude Code does not present a disambiguation dialog for conflicting command names. It uses a defined precedence order.",
-      D: "INCORRECT: Conflicting command names are resolved through precedence, not errors. Claude Code handles this gracefully."
-    }
+    choices: { A: "Claude Code raises an error about conflicting command names and refuses to execute either", B: "Claude Code shows both options and asks the developer to choose which deploy command to run", C: "The personal command always takes precedence over project commands to respect developer preferences", D: "The project command takes precedence because project-level configuration overrides user-level in command resolution" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Conflicting command names are resolved through precedence, not errors. Claude Code handles this gracefully.", B: "INCORRECT: Claude Code does not present a disambiguation dialog for conflicting command names. It uses a defined precedence order.", C: "INCORRECT: Personal commands do NOT override project commands. In the command resolution order, project-level commands take precedence to ensure team consistency.", D: "CORRECT: When a command exists at both project (.claude/commands/) and personal (~/.claude/commands/) levels with the same name, the project-level command takes precedence. This ensures team-standard workflows are used consistently." }
   },
   {
     id: "d3-034",
@@ -775,19 +455,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding how skills interact with CLAUDE.md instructions helps teams design coherent configuration where skills complement rather than conflict with base instructions.",
     question: "A CI/CD team has CLAUDE.md instructions saying 'Always use TypeScript strict mode' and a code generation skill that produces JavaScript output. When the skill is invoked, do the CLAUDE.md instructions still apply?",
-    choices: {
-      A: "No — skills operate independently from CLAUDE.md instructions to maintain clean separation of concerns",
-      B: "Yes — CLAUDE.md instructions apply to all Claude Code operations, including skill executions, unless the skill uses context: fork",
-      C: "Only if the skill's SKILL.md explicitly includes 'inherit-rules: true'",
-      D: "CLAUDE.md instructions are paused during skill execution and resume after the skill completes"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Skills do NOT operate independently from CLAUDE.md. The base instructions from CLAUDE.md generally apply to all operations in the session.",
-      B: "CORRECT: CLAUDE.md instructions apply to all Claude Code operations within a session. Skills inherit these base instructions. If the skill uses context: fork, it gets a forked copy of the context which still includes CLAUDE.md instructions, though the conversation state is isolated.",
-      C: "INCORRECT: There is no 'inherit-rules' field in SKILL.md. CLAUDE.md instructions apply by default without explicit opt-in.",
-      D: "INCORRECT: CLAUDE.md instructions are not paused during skill execution. They remain active throughout the session."
-    }
+    choices: { A: "Only if the skill's SKILL.md explicitly includes 'inherit-rules: true'", B: "CLAUDE.md instructions are paused during skill execution and resume after the skill completes", C: "Yes — CLAUDE.md instructions apply to all Claude Code operations, including skill executions, unless the skill uses context: fork", D: "No — skills operate independently from CLAUDE.md instructions to maintain clean separation of concerns" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There is no 'inherit-rules' field in SKILL.md. CLAUDE.md instructions apply by default without explicit opt-in.", B: "INCORRECT: CLAUDE.md instructions are not paused during skill execution. They remain active throughout the session.", C: "CORRECT: CLAUDE.md instructions apply to all Claude Code operations within a session. Skills inherit these base instructions. If the skill uses context: fork, it gets a forked copy of the context which still includes CLAUDE.md instructions, though the conversation state is isolated.", D: "INCORRECT: Skills do NOT operate independently from CLAUDE.md. The base instructions from CLAUDE.md generally apply to all operations in the session." }
   },
 
   // ============================================================
@@ -802,19 +472,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "YAML frontmatter path patterns determine WHEN rules load, and glob pattern mistakes can cause rules to either never fire or fire too broadly across enterprise codebases.",
     question: "A code generation team creates a rule file in .claude/rules/test-conventions.md with YAML frontmatter: 'paths: [\"*.test.tsx\"]'. Developers report the testing conventions only apply when editing test files in the project root, not in subdirectories like src/components/__tests__/Button.test.tsx. What is the fix?",
-    choices: {
-      A: "Change to paths: ['test.tsx'] to match all files ending in test.tsx",
-      B: "Change to paths: ['**/*.test.tsx'] to match test files in ALL directories, not just the root",
-      C: "Change to paths: ['src/**/*.test.tsx'] to explicitly target the src directory",
-      D: "Change to paths: ['*.test.tsx', '**/*.test.tsx'] to cover both root and nested"
-    },
+    choices: { A: "Change to paths: ['src/**/*.test.tsx'] to explicitly target the src directory", B: "Change to paths: ['**/*.test.tsx'] to match test files in ALL directories, not just the root", C: "Change to paths: ['test.tsx'] to match all files ending in test.tsx", D: "Change to paths: ['*.test.tsx', '**/*.test.tsx'] to cover both root and nested" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: 'test.tsx' without the wildcard would only match a file literally named 'test.tsx', missing files like Button.test.tsx.",
-      B: "CORRECT: The glob pattern '*.test.tsx' matches only in the root directory. '**/*.test.tsx' uses the ** glob to span ALL directories recursively, matching test files anywhere in the project like src/components/__tests__/Button.test.tsx.",
-      C: "INCORRECT: While this would match test files in src/, it's too narrow — it would miss test files in other directories like lib/ or packages/. The ** at the start is needed for universal matching.",
-      D: "INCORRECT: While technically this would work, it's redundant. '**/*.test.tsx' already covers root-level files. The ** pattern matches zero or more directory levels, including none (root)."
-    }
+    explanations: { A: "INCORRECT: While this would match test files in src/, it's too narrow — it would miss test files in other directories like lib/ or packages/. The ** at the start is needed for universal matching.", B: "CORRECT: The glob pattern '*.test.tsx' matches only in the root directory. '**/*.test.tsx' uses the ** glob to span ALL directories recursively, matching test files anywhere in the project like src/components/__tests__/Button.test.tsx.", C: "INCORRECT: 'test.tsx' without the wildcard would only match a file literally named 'test.tsx', missing files like Button.test.tsx.", D: "INCORRECT: While technically this would work, it's redundant. '**/*.test.tsx' already covers root-level files. The ** pattern matches zero or more directory levels, including none (root)." }
   },
   {
     id: "d3-036",
@@ -825,19 +485,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Path-specific rules load ONLY when editing matching files — understanding this conditional loading prevents confusion when rules seem to 'not work' in enterprise environments.",
     question: "A developer productivity team creates a rule at .claude/rules/api-security.md with paths: ['**/api/**/*.ts']. A developer is writing a design document at docs/api-security-plan.md and asks Claude Code to review it against the API security rules. The rules don't seem to apply. Why?",
-    choices: {
-      A: "The rule file has a syntax error in the YAML frontmatter preventing it from loading",
-      B: "Path-specific rules only load when EDITING files matching the pattern; docs/api-security-plan.md doesn't match '**/api/**/*.ts'",
-      C: "Rule files in .claude/rules/ need to be explicitly enabled in .claude/settings.json",
-      D: "The ** glob pattern doesn't work in YAML frontmatter; use regex patterns instead"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There's no evidence of a syntax error. The pattern '**/api/**/*.ts' is valid glob syntax.",
-      B: "CORRECT: Path-specific rules load ONLY when editing files that match the glob pattern. The file docs/api-security-plan.md is a .md file that doesn't match '**/api/**/*.ts' (which requires .ts extension). The rules are correctly configured but appropriately not loading for a non-matching file.",
-      C: "INCORRECT: Rule files in .claude/rules/ are automatically loaded without explicit enablement in settings.json.",
-      D: "INCORRECT: Glob patterns (including **) are fully supported in YAML frontmatter paths. Regex is not the expected format."
-    }
+    choices: { A: "The ** glob pattern doesn't work in YAML frontmatter; use regex patterns instead", B: "The rule file has a syntax error in the YAML frontmatter preventing it from loading", C: "Path-specific rules only load when EDITING files matching the pattern; docs/api-security-plan.md doesn't match '**/api/**/*.ts'", D: "Rule files in .claude/rules/ need to be explicitly enabled in .claude/settings.json" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Glob patterns (including **) are fully supported in YAML frontmatter paths. Regex is not the expected format.", B: "INCORRECT: There's no evidence of a syntax error. The pattern '**/api/**/*.ts' is valid glob syntax.", C: "CORRECT: Path-specific rules load ONLY when editing files that match the glob pattern. The file docs/api-security-plan.md is a .md file that doesn't match '**/api/**/*.ts' (which requires .ts extension). The rules are correctly configured but appropriately not loading for a non-matching file.", D: "INCORRECT: Rule files in .claude/rules/ are automatically loaded without explicit enablement in settings.json." }
   },
   {
     id: "d3-037",
@@ -848,19 +498,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding YAML frontmatter format for path-specific rules prevents syntax errors that silently disable rules in enterprise projects.",
     question: "A team wants to create a path-specific rule that applies to all Python files in the data pipeline directory. Which YAML frontmatter in the .claude/rules/ file is correctly formatted?",
-    choices: {
-      A: "---\npath: data-pipeline/**/*.py\n---",
-      B: "---\npaths:\n  - \"data-pipeline/**/*.py\"\n---",
-      C: "---\nglob: \"data-pipeline/**/*.py\"\n---",
-      D: "---\nmatch: [\"data-pipeline/**/*.py\"]\n---"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: The field name is 'paths' (plural), not 'path'. Also, the value should be a list, not a bare string.",
-      B: "CORRECT: The YAML frontmatter uses 'paths' as the field name with a list of glob pattern strings. This format correctly matches all Python files in the data-pipeline directory and its subdirectories.",
-      C: "INCORRECT: The field name is 'paths', not 'glob'. Claude Code's rule system uses 'paths' for the frontmatter field.",
-      D: "INCORRECT: The field name is 'paths', not 'match'. While the array format is close, the field name must be exactly 'paths'."
-    }
+    choices: { A: "---\npaths:\n  - \"data-pipeline/**/*.py\"\n---", B: "---\nmatch: [\"data-pipeline/**/*.py\"]\n---", C: "---\npath: data-pipeline/**/*.py\n---", D: "---\nglob: \"data-pipeline/**/*.py\"\n---" },
+    correct: "A",
+    explanations: { A: "CORRECT: The YAML frontmatter uses 'paths' as the field name with a list of glob pattern strings. This format correctly matches all Python files in the data-pipeline directory and its subdirectories.", B: "INCORRECT: The field name is 'paths', not 'match'. While the array format is close, the field name must be exactly 'paths'.", C: "INCORRECT: The field name is 'paths' (plural), not 'path'. Also, the value should be a list, not a bare string.", D: "INCORRECT: The field name is 'paths', not 'glob'. Claude Code's rule system uses 'paths' for the frontmatter field." }
   },
   {
     id: "d3-038",
@@ -871,19 +511,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "In CI/CD pipelines processing specific file types, path-specific rules must match correctly to ensure automated reviews apply the right standards to the right files.",
     question: "A CI/CD pipeline runs Claude Code to review Terraform infrastructure changes. The team has path-specific rules for Terraform files (paths: ['**/*.tf']) and Kubernetes manifests (paths: ['**/*.yaml', '**/k8s/**']). A PR modifies both types. During CI review, how does Claude Code apply these rules?",
-    choices: {
-      A: "Both rule sets load simultaneously regardless of which files are being reviewed",
-      B: "Only the Terraform rules load because .tf files are listed first in the PR diff",
-      C: "Each rule set loads conditionally when Claude Code is editing/reviewing files matching that rule's path patterns",
-      D: "CI mode ignores path-specific rules and loads all .claude/rules/ files unconditionally"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Path-specific rules don't load simultaneously regardless of context. They are conditional on the files being worked with.",
-      B: "INCORRECT: Rule loading is not based on file ordering in a PR diff. Each rule set loads based on its own path pattern matching.",
-      C: "CORRECT: Path-specific rules load conditionally based on which files Claude Code is currently editing or reviewing. When reviewing .tf files, the Terraform rules load. When reviewing .yaml or k8s files, the Kubernetes rules load. Both may be active simultaneously if Claude is working with both file types.",
-      D: "INCORRECT: CI mode does NOT ignore path-specific rules. CLAUDE.md and all rules (including path-specific ones) still apply in CI mode with the -p flag."
-    }
+    choices: { A: "Each rule set loads conditionally when Claude Code is editing/reviewing files matching that rule's path patterns", B: "Both rule sets load simultaneously regardless of which files are being reviewed", C: "Only the Terraform rules load because .tf files are listed first in the PR diff", D: "CI mode ignores path-specific rules and loads all .claude/rules/ files unconditionally" },
+    correct: "A",
+    explanations: { A: "CORRECT: Path-specific rules load conditionally based on which files Claude Code is currently editing or reviewing. When reviewing .tf files, the Terraform rules load. When reviewing .yaml or k8s files, the Kubernetes rules load. Both may be active simultaneously if Claude is working with both file types.", B: "INCORRECT: Path-specific rules don't load simultaneously regardless of context. They are conditional on the files being worked with.", C: "INCORRECT: Rule loading is not based on file ordering in a PR diff. Each rule set loads based on its own path pattern matching.", D: "INCORRECT: CI mode does NOT ignore path-specific rules. CLAUDE.md and all rules (including path-specific ones) still apply in CI mode with the -p flag." }
   },
   {
     id: "d3-039",
@@ -894,19 +524,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Path-specific rules are more effective than directory CLAUDE.md files for cross-directory conventions, which is a common enterprise need.",
     question: "A developer productivity team needs testing conventions to apply consistently to ALL test files across a monorepo, regardless of which package or directory they're in. Test files follow the pattern *.spec.ts. What is the MOST effective approach?",
-    choices: {
-      A: "Place a CLAUDE.md with testing conventions in every directory that contains test files",
-      B: "Create a path-specific rule in .claude/rules/ with paths: ['**/*.spec.ts'] containing the testing conventions",
-      C: "Add testing conventions to the root CLAUDE.md so they always load",
-      D: "Create a testing skill that developers must invoke before writing tests"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Placing CLAUDE.md in every test directory is redundant, hard to maintain, and prone to drift. If a new directory is added, it might miss the CLAUDE.md.",
-      B: "CORRECT: Path-specific rules with glob patterns are ideal for cross-directory conventions. A single rule file with paths: ['**/*.spec.ts'] automatically applies testing conventions to ALL test files anywhere in the monorepo, regardless of directory structure.",
-      C: "INCORRECT: While this works, it loads testing conventions into EVERY session, even when the developer isn't working with tests. Path-specific rules are more efficient because they only load when relevant files are being edited.",
-      D: "INCORRECT: Requiring developers to manually invoke a skill before writing tests adds friction and is easily forgotten. Path-specific rules apply automatically."
-    }
+    choices: { A: "Add testing conventions to the root CLAUDE.md so they always load", B: "Place a CLAUDE.md with testing conventions in every directory that contains test files", C: "Create a testing skill that developers must invoke before writing tests", D: "Create a path-specific rule in .claude/rules/ with paths: ['**/*.spec.ts'] containing the testing conventions" },
+    correct: "D",
+    explanations: { A: "INCORRECT: While this works, it loads testing conventions into EVERY session, even when the developer isn't working with tests. Path-specific rules are more efficient because they only load when relevant files are being edited.", B: "INCORRECT: Placing CLAUDE.md in every test directory is redundant, hard to maintain, and prone to drift. If a new directory is added, it might miss the CLAUDE.md.", C: "INCORRECT: Requiring developers to manually invoke a skill before writing tests adds friction and is easily forgotten. Path-specific rules apply automatically.", D: "CORRECT: Path-specific rules with glob patterns are ideal for cross-directory conventions. A single rule file with paths: ['**/*.spec.ts'] automatically applies testing conventions to ALL test files anywhere in the monorepo, regardless of directory structure." }
   },
   {
     id: "d3-040",
@@ -940,19 +560,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Path-specific rules content format is the same markdown as CLAUDE.md — understanding this prevents format confusion.",
     question: "A developer creates a path-specific rule file at .claude/rules/migration-safety.md for database migration files. After the YAML frontmatter with paths, what format should the rule content use?",
-    choices: {
-      A: "JSON format with structured rule definitions and severity levels",
-      B: "Plain markdown with natural language instructions, just like CLAUDE.md content",
-      C: "YAML format continuing from the frontmatter with rule: and action: fields",
-      D: "A specialized DSL (domain-specific language) for defining code rules and constraints"
-    },
+    choices: { A: "YAML format continuing from the frontmatter with rule: and action: fields", B: "Plain markdown with natural language instructions, just like CLAUDE.md content", C: "A specialized DSL (domain-specific language) for defining code rules and constraints", D: "JSON format with structured rule definitions and severity levels" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Rule content is not JSON. It uses the same markdown format as CLAUDE.md.",
-      B: "CORRECT: After the YAML frontmatter (paths field), the rule content is plain markdown with natural language instructions, identical in format to CLAUDE.md. You write instructions the same way you'd write them in CLAUDE.md.",
-      C: "INCORRECT: The YAML frontmatter is only for metadata like paths. The actual rule content below the frontmatter is markdown.",
-      D: "INCORRECT: There is no specialized DSL. Rules use the same natural language markdown format as all other Claude Code instructions."
-    }
+    explanations: { A: "INCORRECT: The YAML frontmatter is only for metadata like paths. The actual rule content below the frontmatter is markdown.", B: "CORRECT: After the YAML frontmatter (paths field), the rule content is plain markdown with natural language instructions, identical in format to CLAUDE.md. You write instructions the same way you'd write them in CLAUDE.md.", C: "INCORRECT: There is no specialized DSL. Rules use the same natural language markdown format as all other Claude Code instructions.", D: "INCORRECT: Rule content is not JSON. It uses the same markdown format as CLAUDE.md." }
   },
   {
     id: "d3-042",
@@ -963,19 +573,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Enterprise monorepos often have multiple overlapping path patterns — understanding that multiple rules can apply simultaneously prevents unexpected behavior.",
     question: "A CI/CD monorepo has three rule files: (1) security.md with paths: ['**/*.ts'], (2) react-conventions.md with paths: ['**/*.tsx'], and (3) testing.md with paths: ['**/*.test.tsx']. When Claude Code reviews a file named UserProfile.test.tsx, how many rule files load?",
-    choices: {
-      A: "One — only testing.md because it has the most specific matching pattern",
-      B: "Two — react-conventions.md and testing.md, because .tsx matches both but .ts doesn't match .tsx",
-      C: "Three — all rules load because *.ts matches .tsx files (tsx contains ts), *.tsx matches, and *.test.tsx matches",
-      D: "Two — security.md and testing.md, following a precedence order where the most general and most specific both apply"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code does not use specificity-based exclusion. Multiple matching rules load simultaneously.",
-      B: "CORRECT: The glob pattern '**/*.ts' matches files ending in exactly '.ts', NOT '.tsx'. The pattern '**/*.tsx' matches '.tsx' files. And '**/*.test.tsx' also matches. So UserProfile.test.tsx matches react-conventions.md (*.tsx) and testing.md (*.test.tsx), but NOT security.md (*.ts doesn't match .tsx).",
-      C: "INCORRECT: The glob pattern *.ts does NOT match .tsx files. Glob patterns are literal — '*.ts' matches files ending in '.ts', not '.tsx'. These are different extensions.",
-      D: "INCORRECT: There is no precedence system, and '*.ts' does not match '.tsx' files."
-    }
+    choices: { A: "One — only testing.md because it has the most specific matching pattern", B: "Three — all rules load because *.ts matches .tsx files (tsx contains ts), *.tsx matches, and *.test.tsx matches", C: "Two — security.md and testing.md, following a precedence order where the most general and most specific both apply", D: "Two — react-conventions.md and testing.md, because .tsx matches both but .ts doesn't match .tsx" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Claude Code does not use specificity-based exclusion. Multiple matching rules load simultaneously.", B: "INCORRECT: The glob pattern *.ts does NOT match .tsx files. Glob patterns are literal — '*.ts' matches files ending in '.ts', not '.tsx'. These are different extensions.", C: "INCORRECT: There is no precedence system, and '*.ts' does not match '.tsx' files.", D: "CORRECT: The glob pattern '**/*.ts' matches files ending in exactly '.ts', NOT '.tsx'. The pattern '**/*.tsx' matches '.tsx' files. And '**/*.test.tsx' also matches. So UserProfile.test.tsx matches react-conventions.md (*.tsx) and testing.md (*.test.tsx), but NOT security.md (*.ts doesn't match .tsx)." }
   },
   {
     id: "d3-043",
@@ -986,19 +586,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding that path rules without frontmatter load unconditionally prevents the common mistake of creating 'always-on' rules when conditional loading was intended.",
     question: "A developer adds a new file to .claude/rules/api-versioning.md but forgets to include the YAML frontmatter with paths. They expect it to apply only when editing API route files. What actually happens?",
-    choices: {
-      A: "The file is ignored because all .claude/rules/ files require YAML frontmatter to be recognized",
-      B: "The rule loads unconditionally for ALL files since there's no path restriction — it behaves like CLAUDE.md content",
-      C: "Claude Code infers the intended paths from the filename 'api-versioning.md'",
-      D: "The rule causes a configuration parse error at session start"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: YAML frontmatter is optional for .claude/rules/ files. Files without frontmatter are still loaded — they just lack path restrictions.",
-      B: "CORRECT: A rule file without YAML frontmatter (or without a paths field) loads unconditionally for all files. Without path restrictions, the API versioning rules would apply to every file the developer edits, not just API routes. This is a common configuration mistake.",
-      C: "INCORRECT: Claude Code does not infer path patterns from filenames. Path restrictions must be explicitly defined in YAML frontmatter.",
-      D: "INCORRECT: Missing frontmatter does not cause parse errors. The file is simply treated as an unconditional rule."
-    }
+    choices: { A: "The rule causes a configuration parse error at session start", B: "Claude Code infers the intended paths from the filename 'api-versioning.md'", C: "The file is ignored because all .claude/rules/ files require YAML frontmatter to be recognized", D: "The rule loads unconditionally for ALL files since there's no path restriction — it behaves like CLAUDE.md content" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Missing frontmatter does not cause parse errors. The file is simply treated as an unconditional rule.", B: "INCORRECT: Claude Code does not infer path patterns from filenames. Path restrictions must be explicitly defined in YAML frontmatter.", C: "INCORRECT: YAML frontmatter is optional for .claude/rules/ files. Files without frontmatter are still loaded — they just lack path restrictions.", D: "CORRECT: A rule file without YAML frontmatter (or without a paths field) loads unconditionally for all files. Without path restrictions, the API versioning rules would apply to every file the developer edits, not just API routes. This is a common configuration mistake." }
   },
   {
     id: "d3-044",
@@ -1009,19 +599,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Directory-scoped patterns allow rules to target entire feature areas in enterprise monorepos, not just individual file types.",
     question: "A developer productivity team wants rules to apply whenever any file in the payments/ directory is edited, regardless of file extension. Which paths pattern achieves this?",
-    choices: {
-      A: "paths: ['payments/']",
-      B: "paths: ['payments/**']",
-      C: "paths: ['**/payments/*']",
-      D: "paths: ['payments/*.*']"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: 'payments/' matches only the directory itself, not files within it. Glob patterns need wildcards to match contents.",
-      B: "CORRECT: 'payments/**' matches any file at any depth within the payments/ directory. The ** wildcard spans all subdirectories and files, regardless of extension.",
-      C: "INCORRECT: '**/payments/*' would match files in any payments/ directory anywhere in the tree but only one level deep — not subdirectories like payments/processors/stripe.ts.",
-      D: "INCORRECT: 'payments/*.*' only matches files with extensions in the immediate payments/ directory. It misses subdirectories and files without extensions."
-    }
+    choices: { A: "paths: ['**/payments/*']", B: "paths: ['payments/*.*']", C: "paths: ['payments/**']", D: "paths: ['payments/']" },
+    correct: "C",
+    explanations: { A: "INCORRECT: '**/payments/*' would match files in any payments/ directory anywhere in the tree but only one level deep — not subdirectories like payments/processors/stripe.ts.", B: "INCORRECT: 'payments/*.*' only matches files with extensions in the immediate payments/ directory. It misses subdirectories and files without extensions.", C: "CORRECT: 'payments/**' matches any file at any depth within the payments/ directory. The ** wildcard spans all subdirectories and files, regardless of extension.", D: "INCORRECT: 'payments/' matches only the directory itself, not files within it. Glob patterns need wildcards to match contents." }
   },
   {
     id: "d3-045",
@@ -1032,19 +612,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "In CI/CD pipelines, understanding how path-specific rules interact with changed files in a PR ensures automated reviews apply the correct standards.",
     question: "A CI pipeline uses Claude Code to review PRs. The team has path-specific rules for backend Go files (**/*.go), frontend React files (**/*.tsx), and infrastructure Terraform files (**/*.tf). A large PR touches all three types. The CI command is 'claude -p \"Review this PR for issues\"'. How does Claude Code determine which path-specific rules to load?",
-    choices: {
-      A: "All three rule sets load because Claude Code detects all changed file types in the PR diff",
-      B: "No path-specific rules load because -p mode doesn't support path-conditional rules",
-      C: "Path-specific rules load dynamically as Claude Code reads and analyzes each file type during the review",
-      D: "Only the rule set for the most-changed file type loads to keep context focused"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Path-specific rules don't all load preemptively based on a PR diff scan. They load conditionally as files are accessed.",
-      B: "INCORRECT: The -p flag does support path-specific rules. All CLAUDE.md and rules features work in CI mode.",
-      C: "CORRECT: Path-specific rules load dynamically based on which files Claude Code is currently editing or reviewing. As Claude Code analyzes Go files, the Go rules load; when it moves to React files, those rules load. This dynamic loading ensures the right context is available at the right time.",
-      D: "INCORRECT: There is no 'most-changed file type' heuristic. Rules load based on individual file matching, not aggregate change volume."
-    }
+    choices: { A: "All three rule sets load because Claude Code detects all changed file types in the PR diff", B: "Path-specific rules load dynamically as Claude Code reads and analyzes each file type during the review", C: "No path-specific rules load because -p mode doesn't support path-conditional rules", D: "Only the rule set for the most-changed file type loads to keep context focused" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Path-specific rules don't all load preemptively based on a PR diff scan. They load conditionally as files are accessed.", B: "CORRECT: Path-specific rules load dynamically based on which files Claude Code is currently editing or reviewing. As Claude Code analyzes Go files, the Go rules load; when it moves to React files, those rules load. This dynamic loading ensures the right context is available at the right time.", C: "INCORRECT: The -p flag does support path-specific rules. All CLAUDE.md and rules features work in CI mode.", D: "INCORRECT: There is no 'most-changed file type' heuristic. Rules load based on individual file matching, not aggregate change volume." }
   },
   {
     id: "d3-046",
@@ -1055,19 +625,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding the relationship between path-specific rules and CLAUDE.md prevents confusion about which instructions apply when.",
     question: "A code generation team has general coding standards in CLAUDE.md and specific React component patterns in .claude/rules/react-patterns.md (paths: ['**/*.tsx']). When a developer edits a .tsx file, what instructions apply?",
-    choices: {
-      A: "Only the React-specific rules — path-specific rules replace CLAUDE.md instructions for matching files",
-      B: "Both CLAUDE.md instructions AND the React-specific rules — they merge, just like CLAUDE.md hierarchy merging",
-      C: "CLAUDE.md first, then React rules override any conflicting CLAUDE.md instructions",
-      D: "React rules first, supplemented by non-conflicting CLAUDE.md instructions"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Path-specific rules do NOT replace CLAUDE.md. They are additive, not exclusive.",
-      B: "CORRECT: Path-specific rules merge with CLAUDE.md instructions, following the same merging principle as the CLAUDE.md hierarchy. When editing a .tsx file, the developer gets both the general CLAUDE.md standards AND the React-specific path rules.",
-      C: "INCORRECT: There is no override mechanism. Instructions from both sources apply simultaneously without a defined conflict resolution order.",
-      D: "INCORRECT: There is no prioritized loading order where one source supplements the other. Both apply equally."
-    }
+    choices: { A: "Only the React-specific rules — path-specific rules replace CLAUDE.md instructions for matching files", B: "React rules first, supplemented by non-conflicting CLAUDE.md instructions", C: "CLAUDE.md first, then React rules override any conflicting CLAUDE.md instructions", D: "Both CLAUDE.md instructions AND the React-specific rules — they merge, just like CLAUDE.md hierarchy merging" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Path-specific rules do NOT replace CLAUDE.md. They are additive, not exclusive.", B: "INCORRECT: There is no prioritized loading order where one source supplements the other. Both apply equally.", C: "INCORRECT: There is no override mechanism. Instructions from both sources apply simultaneously without a defined conflict resolution order.", D: "CORRECT: Path-specific rules merge with CLAUDE.md instructions, following the same merging principle as the CLAUDE.md hierarchy. When editing a .tsx file, the developer gets both the general CLAUDE.md standards AND the React-specific path rules." }
   },
   {
     id: "d3-047",
@@ -1078,19 +638,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Complex glob patterns are needed for enterprise codebases with sophisticated naming conventions — getting them wrong means rules silently don't apply.",
     question: "A team's API route handlers follow the convention src/routes/[version]/[domain]/handler.ts (e.g., src/routes/v2/payments/handler.ts). They want a rule to apply ONLY to these handler files, not to other .ts files in the routes directory like middleware.ts. Which pattern is MOST precise?",
-    choices: {
-      A: "paths: ['src/routes/**/*.ts']",
-      B: "paths: ['src/routes/**/handler.ts']",
-      C: "paths: ['src/routes/*/*/handler.ts']",
-      D: "paths: ['**/handler.ts']"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: This matches ALL .ts files in routes, including middleware.ts and other non-handler files.",
-      B: "INCORRECT: While this matches handler.ts at any depth, it would also match handler.ts files in unexpected nested subdirectories beyond the version/domain pattern.",
-      C: "CORRECT: 'src/routes/*/*/handler.ts' precisely matches the two-level nesting pattern (version/domain) followed by handler.ts. The single * matches exactly one directory level, enforcing the expected structure. This won't match handler.ts at other depths.",
-      D: "INCORRECT: '**/handler.ts' matches ANY handler.ts file anywhere in the project, not just in the routes directory. This is too broad."
-    }
+    choices: { A: "paths: ['src/routes/**/*.ts']", B: "paths: ['src/routes/*/*/handler.ts']", C: "paths: ['**/handler.ts']", D: "paths: ['src/routes/**/handler.ts']" },
+    correct: "B",
+    explanations: { A: "INCORRECT: This matches ALL .ts files in routes, including middleware.ts and other non-handler files.", B: "CORRECT: 'src/routes/*/*/handler.ts' precisely matches the two-level nesting pattern (version/domain) followed by handler.ts. The single * matches exactly one directory level, enforcing the expected structure. This won't match handler.ts at other depths.", C: "INCORRECT: '**/handler.ts' matches ANY handler.ts file anywhere in the project, not just in the routes directory. This is too broad.", D: "INCORRECT: While this matches handler.ts at any depth, it would also match handler.ts files in unexpected nested subdirectories beyond the version/domain pattern." }
   },
   {
     id: "d3-048",
@@ -1101,19 +651,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding path rule limitations helps enterprises make correct architectural decisions about when to use path rules vs other configuration approaches.",
     question: "A CI/CD team wants to apply different review standards based on file CONTENT (e.g., files containing database queries should follow SQL injection rules). Can path-specific rules achieve this?",
-    choices: {
-      A: "Yes — use paths: ['content:*SQL*'] to match files containing SQL keywords",
-      B: "Yes — use paths: ['**/*.sql', '**/*.ts'] and add a condition field to check file content",
-      C: "No — path-specific rules match on file PATHS (names/locations) only, not content; use CLAUDE.md instructions to describe content-based rules",
-      D: "Yes — use a regex in the paths field: paths: ['/.*SELECT.*FROM.*/']"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: There is no 'content:' prefix for content-based matching in the paths field. Paths match filesystem paths only.",
-      B: "INCORRECT: There is no 'condition' field in rule frontmatter for content-based filtering.",
-      C: "CORRECT: Path-specific rules match solely on file paths using glob patterns. They cannot inspect file content. For content-based rules (like 'apply SQL injection patterns to any file containing database queries'), use CLAUDE.md instructions that describe the content-based criteria in natural language for Claude to interpret.",
-      D: "INCORRECT: The paths field does not support regex patterns. It uses glob syntax only."
-    }
+    choices: { A: "No — path-specific rules match on file PATHS (names/locations) only, not content; use CLAUDE.md instructions to describe content-based rules", B: "Yes — use a regex in the paths field: paths: ['/.*SELECT.*FROM.*/']", C: "Yes — use paths: ['content:*SQL*'] to match files containing SQL keywords", D: "Yes — use paths: ['**/*.sql', '**/*.ts'] and add a condition field to check file content" },
+    correct: "A",
+    explanations: { A: "CORRECT: Path-specific rules match solely on file paths using glob patterns. They cannot inspect file content. For content-based rules (like 'apply SQL injection patterns to any file containing database queries'), use CLAUDE.md instructions that describe the content-based criteria in natural language for Claude to interpret.", B: "INCORRECT: The paths field does not support regex patterns. It uses glob syntax only.", C: "INCORRECT: There is no 'content:' prefix for content-based matching in the paths field. Paths match filesystem paths only.", D: "INCORRECT: There is no 'condition' field in rule frontmatter for content-based filtering." }
   },
   {
     id: "d3-049",
@@ -1124,19 +664,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Enterprise teams with shared component libraries need path-specific rules that work across consuming packages without requiring each package to duplicate rules.",
     question: "A developer productivity team maintains a shared UI component library at packages/ui-lib/. They want rules to apply whenever ANY package in the monorepo imports and uses components from this library. They create a rule with paths: ['packages/ui-lib/**']. The rule doesn't apply when a developer in packages/dashboard/ creates a file that imports from ui-lib. Why?",
-    choices: {
-      A: "The rule only matches files WITHIN packages/ui-lib/, not files in other packages that import from it",
-      B: "Monorepo path-specific rules don't work across package boundaries",
-      C: "The import statement isn't detected by the glob pattern matching engine",
-      D: "Path-specific rules require both the source and importing files to match the pattern"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Path-specific rules match based on the file being EDITED, not the files being imported or referenced. A rule with paths: ['packages/ui-lib/**'] only loads when editing files physically located in packages/ui-lib/. A file in packages/dashboard/ that imports from ui-lib doesn't match the pattern because the rule looks at file paths, not import relationships.",
-      B: "INCORRECT: Path-specific rules work anywhere in a monorepo. The issue is that the glob pattern matches file locations, not dependency relationships.",
-      C: "INCORRECT: Glob patterns don't analyze imports at all — they match filesystem paths. The import statement is irrelevant to path matching.",
-      D: "INCORRECT: Path-specific rules only consider the file being edited. There is no concept of matching both source and importing files."
-    }
+    choices: { A: "Path-specific rules require both the source and importing files to match the pattern", B: "The rule only matches files WITHIN packages/ui-lib/, not files in other packages that import from it", C: "Monorepo path-specific rules don't work across package boundaries", D: "The import statement isn't detected by the glob pattern matching engine" },
+    correct: "B",
+    explanations: { A: "INCORRECT: Path-specific rules only consider the file being edited. There is no concept of matching both source and importing files.", B: "CORRECT: Path-specific rules match based on the file being EDITED, not the files being imported or referenced. A rule with paths: ['packages/ui-lib/**'] only loads when editing files physically located in packages/ui-lib/. A file in packages/dashboard/ that imports from ui-lib doesn't match the pattern because the rule looks at file paths, not import relationships.", C: "INCORRECT: Path-specific rules work anywhere in a monorepo. The issue is that the glob pattern matches file locations, not dependency relationships.", D: "INCORRECT: Glob patterns don't analyze imports at all — they match filesystem paths. The import statement is irrelevant to path matching." }
   },
   {
     id: "d3-050",
@@ -1147,19 +677,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Organizing rule files by concern rather than path helps teams maintain clear, non-overlapping rule sets.",
     question: "A code generation team has 20+ rule files in .claude/rules/. Some rules are for security, some for performance, some for accessibility. The team wants to organize these into logical groups. What is the recommended approach?",
-    choices: {
-      A: "Create subdirectories like .claude/rules/security/, .claude/rules/performance/ for organization",
-      B: "Prefix filenames like security-auth.md, security-xss.md, perf-queries.md for organization while keeping all files flat",
-      C: "Create separate .claude/rules-security/, .claude/rules-performance/ directories",
-      D: "Merge related rules into fewer files to reduce the number of rule files below 10"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: The .claude/rules/ directory supports subdirectories for organization. Creating .claude/rules/security/, .claude/rules/performance/, etc. keeps rules logically grouped while all still being automatically loaded.",
-      B: "INCORRECT: While filename prefixing works for basic organization, it doesn't provide the same level of clarity as subdirectories, especially as the number of files grows. It's not the recommended approach.",
-      C: "INCORRECT: Claude Code recognizes .claude/rules/ specifically. Custom-named directories like .claude/rules-security/ would not be automatically scanned.",
-      D: "INCORRECT: There is no file count limit requiring consolidation. Merging rules reduces maintainability and makes path-specific targeting harder."
-    }
+    choices: { A: "Prefix filenames like security-auth.md, security-xss.md, perf-queries.md for organization while keeping all files flat", B: "Merge related rules into fewer files to reduce the number of rule files below 10", C: "Create separate .claude/rules-security/, .claude/rules-performance/ directories", D: "Create subdirectories like .claude/rules/security/, .claude/rules/performance/ for organization" },
+    correct: "D",
+    explanations: { A: "INCORRECT: While filename prefixing works for basic organization, it doesn't provide the same level of clarity as subdirectories, especially as the number of files grows. It's not the recommended approach.", B: "INCORRECT: There is no file count limit requiring consolidation. Merging rules reduces maintainability and makes path-specific targeting harder.", C: "INCORRECT: Claude Code recognizes .claude/rules/ specifically. Custom-named directories like .claude/rules-security/ would not be automatically scanned.", D: "CORRECT: The .claude/rules/ directory supports subdirectories for organization. Creating .claude/rules/security/, .claude/rules/performance/, etc. keeps rules logically grouped while all still being automatically loaded." }
   },
 
   // ============================================================
@@ -1174,19 +694,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Choosing plan mode vs direct execution for the right scenarios prevents wasted time on unnecessary planning for simple tasks and rushed execution on complex ones.",
     question: "A developer needs to rename a variable from 'userData' to 'customerProfile' across a large codebase. The variable is used in 47 files across 12 modules. Should they use plan mode or direct execution?",
-    choices: {
-      A: "Plan mode — the change spans many files, so Claude needs to plan the approach across modules",
-      B: "Direct execution — this is a well-scoped, mechanical transformation despite spanning many files",
-      C: "Plan mode first to identify all usages, then direct execution for the actual rename",
-      D: "Direct execution for each module separately to limit the blast radius"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: File count alone doesn't determine whether planning is needed. A variable rename is a simple, well-defined operation regardless of how many files it touches.",
-      B: "CORRECT: Direct execution is appropriate because variable renaming is a well-scoped, mechanical transformation. Despite touching 47 files, the task is simple and unambiguous — find and replace a specific identifier. Plan mode is for tasks requiring architectural decisions or multiple approaches, not mechanical operations.",
-      C: "INCORRECT: A plan step to 'identify all usages' is unnecessary overhead for a rename. Claude Code can search and replace systematically without a planning phase.",
-      D: "INCORRECT: Breaking the task into per-module direct executions adds unnecessary fragmentation. A single direct execution can handle cross-file renames efficiently."
-    }
+    choices: { A: "Plan mode first to identify all usages, then direct execution for the actual rename", B: "Plan mode — the change spans many files, so Claude needs to plan the approach across modules", C: "Direct execution — this is a well-scoped, mechanical transformation despite spanning many files", D: "Direct execution for each module separately to limit the blast radius" },
+    correct: "C",
+    explanations: { A: "INCORRECT: A plan step to 'identify all usages' is unnecessary overhead for a rename. Claude Code can search and replace systematically without a planning phase.", B: "INCORRECT: File count alone doesn't determine whether planning is needed. A variable rename is a simple, well-defined operation regardless of how many files it touches.", C: "CORRECT: Direct execution is appropriate because variable renaming is a well-scoped, mechanical transformation. Despite touching 47 files, the task is simple and unambiguous — find and replace a specific identifier. Plan mode is for tasks requiring architectural decisions or multiple approaches, not mechanical operations.", D: "INCORRECT: Breaking the task into per-module direct executions adds unnecessary fragmentation. A single direct execution can handle cross-file renames efficiently." }
   },
   {
     id: "d3-052",
@@ -1197,19 +707,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Understanding when plan mode provides value for architectural decisions prevents both over-planning simple tasks and under-planning complex ones.",
     question: "A developer needs to refactor a monolithic Express.js application into a microservices architecture. The existing app has 15 route handlers, 8 database models, and shared middleware. What is the recommended approach with Claude Code?",
-    choices: {
-      A: "Direct execution — let Claude Code start refactoring files immediately using its judgment",
-      B: "Plan mode — this is a complex, multi-file architectural change with multiple valid approaches that needs upfront design",
-      C: "Explore mode to read the codebase, then direct execution to implement the changes",
-      D: "Direct execution with very detailed instructions specifying exact microservice boundaries"
-    },
+    choices: { A: "Explore mode to read the codebase, then direct execution to implement the changes", B: "Plan mode — this is a complex, multi-file architectural change with multiple valid approaches that needs upfront design", C: "Direct execution with very detailed instructions specifying exact microservice boundaries", D: "Direct execution — let Claude Code start refactoring files immediately using its judgment" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Immediately executing on an architectural refactor without a plan risks poor service boundaries, missed dependencies, and rework. The complexity demands planning.",
-      B: "CORRECT: Monolith-to-microservices refactoring is exactly the type of task that benefits from plan mode — it's complex, multi-file, architectural, and has multiple valid approaches (how to split services, handle shared state, define boundaries). Plan mode lets Claude propose and the developer validate an approach before execution.",
-      C: "INCORRECT: Explore mode (subagent) is for read-only investigation, NOT for planning architectural changes. It doesn't produce an actionable implementation plan. Plan mode is the correct tool for this.",
-      D: "INCORRECT: Even with detailed instructions, direct execution of an architectural refactor is risky. The developer may miss interdependencies that plan mode would surface."
-    }
+    explanations: { A: "INCORRECT: Explore mode (subagent) is for read-only investigation, NOT for planning architectural changes. It doesn't produce an actionable implementation plan. Plan mode is the correct tool for this.", B: "CORRECT: Monolith-to-microservices refactoring is exactly the type of task that benefits from plan mode — it's complex, multi-file, architectural, and has multiple valid approaches (how to split services, handle shared state, define boundaries). Plan mode lets Claude propose and the developer validate an approach before execution.", C: "INCORRECT: Even with detailed instructions, direct execution of an architectural refactor is risky. The developer may miss interdependencies that plan mode would surface.", D: "INCORRECT: Immediately executing on an architectural refactor without a plan risks poor service boundaries, missed dependencies, and rework. The complexity demands planning." }
   },
   {
     id: "d3-053",
@@ -1220,19 +720,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Correctly distinguishing explore subagent from plan mode prevents teams from using the wrong tool for investigation vs planning tasks.",
     question: "A CI/CD engineer wants Claude Code to investigate why a test suite is flaky before making any changes. They want a read-only investigation that examines test files, configuration, and recent changes. Which mode is appropriate?",
-    choices: {
-      A: "Plan mode — because investigation should happen before execution",
-      B: "Direct execution with a prompt that says 'investigate but don't change anything'",
-      C: "Explore subagent — designed for read-only investigation of the codebase",
-      D: "A custom skill with allowed-tools restricted to read operations"
-    },
+    choices: { A: "Direct execution with a prompt that says 'investigate but don't change anything'", B: "A custom skill with allowed-tools restricted to read operations", C: "Explore subagent — designed for read-only investigation of the codebase", D: "Plan mode — because investigation should happen before execution" },
     correct: "C",
-    explanations: {
-      A: "INCORRECT: Plan mode is for creating implementation plans, not for open-ended investigation. It's designed to produce a plan of ACTION, not just analyze code.",
-      B: "INCORRECT: Telling direct execution 'don't change anything' is fragile. Direct execution mode is inherently action-oriented, and relying on prompt instructions for safety is less reliable than using the right mode.",
-      C: "CORRECT: The explore subagent is specifically designed for read-only investigation of the codebase. It can examine files, search code, and analyze patterns without making changes. This is the right tool for understanding flaky tests before deciding on fixes.",
-      D: "INCORRECT: While a custom skill could work, it's over-engineering for a one-off investigation. The explore subagent is the built-in tool for this exact use case."
-    }
+    explanations: { A: "INCORRECT: Telling direct execution 'don't change anything' is fragile. Direct execution mode is inherently action-oriented, and relying on prompt instructions for safety is less reliable than using the right mode.", B: "INCORRECT: While a custom skill could work, it's over-engineering for a one-off investigation. The explore subagent is the built-in tool for this exact use case.", C: "CORRECT: The explore subagent is specifically designed for read-only investigation of the codebase. It can examine files, search code, and analyze patterns without making changes. This is the right tool for understanding flaky tests before deciding on fixes.", D: "INCORRECT: Plan mode is for creating implementation plans, not for open-ended investigation. It's designed to produce a plan of ACTION, not just analyze code." }
   },
   {
     id: "d3-054",
@@ -1243,19 +733,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "The combined approach — plan for investigation, direct for implementation — is the most effective pattern for complex enterprise tasks that need both understanding and action.",
     question: "A developer needs to add comprehensive error handling to a payment processing service. The service has 12 endpoints, each with different error scenarios. What is the MOST effective execution strategy?",
-    choices: {
-      A: "Direct execution for all 12 endpoints simultaneously with a comprehensive prompt",
-      B: "Plan mode for the entire implementation, then have Claude execute the full plan automatically",
-      C: "Plan mode to investigate error scenarios and design the error handling strategy, then direct execution to implement each endpoint's error handling",
-      D: "12 separate direct execution sessions, one per endpoint, to isolate changes"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Attempting all 12 endpoints simultaneously without planning risks inconsistent error handling patterns across endpoints.",
-      B: "INCORRECT: While plan mode should come first, the plan output isn't automatically executed. The combined approach uses plan mode for design and then transitions to direct execution for implementation.",
-      C: "CORRECT: The combined approach is optimal here. Plan mode first to investigate the codebase, understand error scenarios, and design a consistent error handling strategy. Then direct execution to implement the strategy endpoint by endpoint. This ensures consistency (from planning) and efficiency (from focused execution).",
-      D: "INCORRECT: While isolating per endpoint has some value, starting without a plan means the first few endpoints might use different patterns than later ones. The plan phase ensures consistency."
-    }
+    choices: { A: "12 separate direct execution sessions, one per endpoint, to isolate changes", B: "Plan mode to investigate error scenarios and design the error handling strategy, then direct execution to implement each endpoint's error handling", C: "Direct execution for all 12 endpoints simultaneously with a comprehensive prompt", D: "Plan mode for the entire implementation, then have Claude execute the full plan automatically" },
+    correct: "B",
+    explanations: { A: "INCORRECT: While isolating per endpoint has some value, starting without a plan means the first few endpoints might use different patterns than later ones. The plan phase ensures consistency.", B: "CORRECT: The combined approach is optimal here. Plan mode first to investigate the codebase, understand error scenarios, and design a consistent error handling strategy. Then direct execution to implement the strategy endpoint by endpoint. This ensures consistency (from planning) and efficiency (from focused execution).", C: "INCORRECT: Attempting all 12 endpoints simultaneously without planning risks inconsistent error handling patterns across endpoints.", D: "INCORRECT: While plan mode should come first, the plan output isn't automatically executed. The combined approach uses plan mode for design and then transitions to direct execution for implementation." }
   },
   {
     id: "d3-055",
@@ -1266,19 +746,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Single-file, well-scoped changes are the bread and butter of developer productivity — knowing these don't need planning saves time.",
     question: "A developer asks Claude Code to add input validation to a single form component in React. The component is self-contained with no external dependencies beyond the existing prop types. Which execution approach is appropriate?",
-    choices: {
-      A: "Plan mode to analyze the component's prop types and design the validation schema",
-      B: "Direct execution — this is a single-file, well-scoped task with clear requirements",
-      C: "Explore mode to understand the component, then plan mode for the validation design",
-      D: "Plan mode because input validation can have multiple valid approaches (Zod, Yup, custom)"
-    },
+    choices: { A: "Plan mode because input validation can have multiple valid approaches (Zod, Yup, custom)", B: "Direct execution — this is a single-file, well-scoped task with clear requirements", C: "Plan mode to analyze the component's prop types and design the validation schema", D: "Explore mode to understand the component, then plan mode for the validation design" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Planning is unnecessary overhead for adding validation to a single, self-contained component. The task is simple and well-scoped.",
-      B: "CORRECT: Adding input validation to a single, self-contained form component is a textbook direct execution task — single-file, well-scoped, and clear requirements. Claude Code can implement this directly without needing a planning phase.",
-      C: "INCORRECT: Using both explore and plan modes for a single-component change is massive overhead. This is a simple task.",
-      D: "INCORRECT: While multiple validation libraries exist, this doesn't make the task complex enough to warrant planning. Claude Code can make a reasonable default choice or the developer can specify their preference in the prompt."
-    }
+    explanations: { A: "INCORRECT: While multiple validation libraries exist, this doesn't make the task complex enough to warrant planning. Claude Code can make a reasonable default choice or the developer can specify their preference in the prompt.", B: "CORRECT: Adding input validation to a single, self-contained form component is a textbook direct execution task — single-file, well-scoped, and clear requirements. Claude Code can implement this directly without needing a planning phase.", C: "INCORRECT: Planning is unnecessary overhead for adding validation to a single, self-contained component. The task is simple and well-scoped.", D: "INCORRECT: Using both explore and plan modes for a single-component change is massive overhead. This is a simple task." }
   },
   {
     id: "d3-056",
@@ -1289,19 +759,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "In CI/CD automation, choosing the right execution mode affects pipeline reliability and cost. Plan mode in CI is wasteful without human review.",
     question: "A CI/CD pipeline uses Claude Code to automatically fix linting errors in PRs. The fixes are mechanical (import ordering, trailing commas, semicolons). Should the pipeline use plan mode or direct execution?",
-    choices: {
-      A: "Plan mode to ensure Claude doesn't make unintended changes to the code logic",
-      B: "Direct execution — linting fixes are mechanical, well-scoped transformations that don't need planning",
-      C: "Plan mode to generate a fix plan, then a second CI step to approve and apply",
-      D: "Either mode — for mechanical fixes, both produce identical results"
-    },
+    choices: { A: "Plan mode to generate a fix plan, then a second CI step to approve and apply", B: "Direct execution — linting fixes are mechanical, well-scoped transformations that don't need planning", C: "Either mode — for mechanical fixes, both produce identical results", D: "Plan mode to ensure Claude doesn't make unintended changes to the code logic" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Plan mode for mechanical linting fixes is unnecessary overhead. These changes are deterministic and don't risk logic changes.",
-      B: "CORRECT: Linting fixes (import ordering, commas, semicolons) are mechanical, well-scoped, and deterministic. Direct execution is the efficient choice for CI automation of these fixes. Plan mode would add latency and cost without providing value for such simple transformations.",
-      C: "INCORRECT: A two-step plan-then-approve pipeline for linting fixes is over-engineered. The mechanical nature of these fixes doesn't warrant human review of a plan.",
-      D: "INCORRECT: While both might produce similar final results, plan mode adds unnecessary API calls, latency, and cost. For CI automation of simple fixes, direct execution is clearly preferable."
-    }
+    explanations: { A: "INCORRECT: A two-step plan-then-approve pipeline for linting fixes is over-engineered. The mechanical nature of these fixes doesn't warrant human review of a plan.", B: "CORRECT: Linting fixes (import ordering, commas, semicolons) are mechanical, well-scoped, and deterministic. Direct execution is the efficient choice for CI automation of these fixes. Plan mode would add latency and cost without providing value for such simple transformations.", C: "INCORRECT: While both might produce similar final results, plan mode adds unnecessary API calls, latency, and cost. For CI automation of simple fixes, direct execution is clearly preferable.", D: "INCORRECT: Plan mode for mechanical linting fixes is unnecessary overhead. These changes are deterministic and don't risk logic changes." }
   },
   {
     id: "d3-057",
@@ -1312,19 +772,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding what makes a task 'complex enough for planning' helps enterprise developers calibrate their workflow correctly.",
     question: "Which set of characteristics BEST indicates a task should use plan mode rather than direct execution?",
-    choices: {
-      A: "Large file count, long execution time, high-risk production code",
-      B: "Multiple valid approaches, cross-module dependencies, architectural decisions required",
-      C: "Unfamiliar codebase, new technology stack, first time performing the task type",
-      D: "Strict compliance requirements, audit trail needs, regulatory code changes"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Large file count and long execution time don't inherently require planning. A massive but mechanical rename doesn't need a plan. Risk level is relevant but not the primary indicator.",
-      B: "CORRECT: Plan mode is indicated by tasks with multiple valid approaches (architectural decisions), cross-module dependencies (need to understand interaction points), and design decisions (where the 'how' is non-obvious). These are the characteristics where upfront planning provides real value.",
-      C: "INCORRECT: Unfamiliarity with a codebase is better addressed by explore mode (read-only investigation), not plan mode. Plan mode is for tasks where you understand the problem but need to design a solution.",
-      D: "INCORRECT: Compliance and audit requirements are about process, not execution mode. They may require specific documentation but don't inherently make plan mode necessary."
-    }
+    choices: { A: "Large file count, long execution time, high-risk production code", B: "Unfamiliar codebase, new technology stack, first time performing the task type", C: "Strict compliance requirements, audit trail needs, regulatory code changes", D: "Multiple valid approaches, cross-module dependencies, architectural decisions required" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Large file count and long execution time don't inherently require planning. A massive but mechanical rename doesn't need a plan. Risk level is relevant but not the primary indicator.", B: "INCORRECT: Unfamiliarity with a codebase is better addressed by explore mode (read-only investigation), not plan mode. Plan mode is for tasks where you understand the problem but need to design a solution.", C: "INCORRECT: Compliance and audit requirements are about process, not execution mode. They may require specific documentation but don't inherently make plan mode necessary.", D: "CORRECT: Plan mode is indicated by tasks with multiple valid approaches (architectural decisions), cross-module dependencies (need to understand interaction points), and design decisions (where the 'how' is non-obvious). These are the characteristics where upfront planning provides real value." }
   },
   {
     id: "d3-058",
@@ -1335,19 +785,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Developers must understand that explore subagent is NOT the same as plan mode to avoid using the wrong tool for the wrong purpose.",
     question: "A developer types 'explore how the authentication flow works in this codebase' in Claude Code. What type of operation does Claude Code perform?",
-    choices: {
-      A: "Creates an implementation plan for modifying the authentication flow",
-      B: "Performs a read-only investigation using an explore subagent that examines auth-related files without making changes",
-      C: "Opens an interactive planning session where the developer and Claude discuss architectural options",
-      D: "Runs the test suite for authentication-related tests to understand the flow through test behavior"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Explore does not create implementation plans. That's what plan mode does. Explore is purely investigative.",
-      B: "CORRECT: The explore subagent performs read-only investigation — it reads files, searches code, traces call flows, and reports findings without making any modifications. This is distinct from plan mode, which designs implementation strategies.",
-      C: "INCORRECT: Explore is not an interactive planning session. It's a focused, read-only investigation that reports findings.",
-      D: "INCORRECT: Explore reads and analyzes code, it doesn't execute test suites. Running tests is a different operation."
-    }
+    choices: { A: "Performs a read-only investigation using an explore subagent that examines auth-related files without making changes", B: "Runs the test suite for authentication-related tests to understand the flow through test behavior", C: "Opens an interactive planning session where the developer and Claude discuss architectural options", D: "Creates an implementation plan for modifying the authentication flow" },
+    correct: "A",
+    explanations: { A: "CORRECT: The explore subagent performs read-only investigation — it reads files, searches code, traces call flows, and reports findings without making any modifications. This is distinct from plan mode, which designs implementation strategies.", B: "INCORRECT: Explore reads and analyzes code, it doesn't execute test suites. Running tests is a different operation.", C: "INCORRECT: Explore is not an interactive planning session. It's a focused, read-only investigation that reports findings.", D: "INCORRECT: Explore does not create implementation plans. That's what plan mode does. Explore is purely investigative." }
   },
   {
     id: "d3-059",
@@ -1358,19 +798,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "CI/CD pipelines benefit from understanding when to use planning steps vs direct automation to balance thoroughness with pipeline speed.",
     question: "A CI pipeline has two Claude Code steps: (1) analyze a PR for potential issues, and (2) suggest fixes for found issues. The team notices step 1 sometimes makes code modifications instead of just analyzing. How should they fix this?",
-    choices: {
-      A: "Add 'Do not modify any files' to the CLAUDE.md and hope the instruction is followed",
-      B: "Use explore subagent or a skill with read-only allowed-tools for step 1 to enforce investigation-only behavior",
-      C: "Run step 1 in plan mode, which is inherently read-only",
-      D: "Add --read-only flag to the step 1 Claude Code invocation"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Prompt-based instructions ('do not modify') are suggestions, not enforcement. Claude might still make modifications. This is not reliable for CI.",
-      B: "CORRECT: For reliable read-only behavior in CI, use an explore subagent or a custom skill with allowed-tools restricted to read/search operations. This enforces the constraint at the tool level, preventing modifications regardless of how the prompt is interpreted.",
-      C: "INCORRECT: Plan mode is NOT inherently read-only. While it focuses on creating plans, it can still access write tools. Plan mode is about workflow, not access control.",
-      D: "INCORRECT: There is no --read-only flag in Claude Code CLI."
-    }
+    choices: { A: "Add --read-only flag to the step 1 Claude Code invocation", B: "Run step 1 in plan mode, which is inherently read-only", C: "Use explore subagent or a skill with read-only allowed-tools for step 1 to enforce investigation-only behavior", D: "Add 'Do not modify any files' to the CLAUDE.md and hope the instruction is followed" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There is no --read-only flag in Claude Code CLI.", B: "INCORRECT: Plan mode is NOT inherently read-only. While it focuses on creating plans, it can still access write tools. Plan mode is about workflow, not access control.", C: "CORRECT: For reliable read-only behavior in CI, use an explore subagent or a custom skill with allowed-tools restricted to read/search operations. This enforces the constraint at the tool level, preventing modifications regardless of how the prompt is interpreted.", D: "INCORRECT: Prompt-based instructions ('do not modify') are suggestions, not enforcement. Claude might still make modifications. This is not reliable for CI." }
   },
   {
     id: "d3-060",
@@ -1381,19 +811,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding how plan mode outputs work helps developers review and approve plans effectively before committing to implementation.",
     question: "A developer uses plan mode to design a database migration strategy. Claude Code produces a plan. What happens next in the workflow?",
-    choices: {
-      A: "The plan is automatically executed unless the developer presses Cancel within 30 seconds",
-      B: "The developer reviews the plan and can approve, modify, or reject it before any implementation begins",
-      C: "The plan is saved to .claude/plans/ and a separate command must be run to execute it",
-      D: "The plan is sent to the team lead for review through Claude Code's built-in approval workflow"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Plans are not auto-executed with a countdown timer. This would be dangerous for enterprise use.",
-      B: "CORRECT: In plan mode, Claude Code presents the plan for the developer to review. The developer can approve it (proceeding to implementation), modify the plan, or reject it entirely. No implementation occurs until the developer actively approves.",
-      C: "INCORRECT: Plans are not persisted to a .claude/plans/ directory. They exist within the conversation and are acted upon interactively.",
-      D: "INCORRECT: Claude Code does not have a built-in team approval workflow for plans. Review happens within the developer's session."
-    }
+    choices: { A: "The developer reviews the plan and can approve, modify, or reject it before any implementation begins", B: "The plan is automatically executed unless the developer presses Cancel within 30 seconds", C: "The plan is saved to .claude/plans/ and a separate command must be run to execute it", D: "The plan is sent to the team lead for review through Claude Code's built-in approval workflow" },
+    correct: "A",
+    explanations: { A: "CORRECT: In plan mode, Claude Code presents the plan for the developer to review. The developer can approve it (proceeding to implementation), modify the plan, or reject it entirely. No implementation occurs until the developer actively approves.", B: "INCORRECT: Plans are not auto-executed with a countdown timer. This would be dangerous for enterprise use.", C: "INCORRECT: Plans are not persisted to a .claude/plans/ directory. They exist within the conversation and are acted upon interactively.", D: "INCORRECT: Claude Code does not have a built-in team approval workflow for plans. Review happens within the developer's session." }
   },
   {
     id: "d3-061",
@@ -1404,19 +824,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Enterprise teams need to understand how to prompt for plan mode vs direct execution to get the right behavior from Claude Code.",
     question: "A developer wants Claude Code to analyze a complex billing module and propose THREE different refactoring approaches before implementing anything. What is the MOST effective way to achieve this?",
-    choices: {
-      A: "Use direct execution with: 'Analyze the billing module and implement the best refactoring approach'",
-      B: "Use plan mode with: 'Analyze the billing module and propose three different refactoring approaches for me to evaluate before any implementation'",
-      C: "Run explore mode three times, each with a different refactoring constraint",
-      D: "Use three separate direct execution sessions, each implementing a different approach, then compare outputs"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Direct execution with 'implement the best' would skip the review step and immediately start coding. The developer wants to evaluate options first.",
-      B: "CORRECT: Plan mode is designed for exactly this — proposing approaches for developer evaluation before implementation. Explicitly asking for three approaches and stating 'before any implementation' ensures Claude presents options without coding anything.",
-      C: "INCORRECT: Explore mode is for read-only investigation, not for proposing refactoring approaches. It examines code but doesn't design solutions.",
-      D: "INCORRECT: Implementing three full approaches and comparing is massively wasteful. Plan mode achieves the comparison at the design level without writing code."
-    }
+    choices: { A: "Use direct execution with: 'Analyze the billing module and implement the best refactoring approach'", B: "Use three separate direct execution sessions, each implementing a different approach, then compare outputs", C: "Use plan mode with: 'Analyze the billing module and propose three different refactoring approaches for me to evaluate before any implementation'", D: "Run explore mode three times, each with a different refactoring constraint" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Direct execution with 'implement the best' would skip the review step and immediately start coding. The developer wants to evaluate options first.", B: "INCORRECT: Implementing three full approaches and comparing is massively wasteful. Plan mode achieves the comparison at the design level without writing code.", C: "CORRECT: Plan mode is designed for exactly this — proposing approaches for developer evaluation before implementation. Explicitly asking for three approaches and stating 'before any implementation' ensures Claude presents options without coding anything.", D: "INCORRECT: Explore mode is for read-only investigation, not for proposing refactoring approaches. It examines code but doesn't design solutions." }
   },
   {
     id: "d3-062",
@@ -1427,19 +837,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding the transition from plan to implementation in automated pipelines ensures CI/CD workflows are structured correctly.",
     question: "A CI pipeline needs to: (1) analyze code quality issues, (2) create a remediation plan, (3) implement the plan. Currently it runs all three as a single -p prompt. The team reports inconsistent results. What is the MOST reliable architecture?",
-    choices: {
-      A: "Keep as a single -p prompt but add 'Be consistent' to the CLAUDE.md",
-      B: "Split into three separate -p invocations: explore for analysis, plan for strategy, direct execution for implementation — passing outputs between steps",
-      C: "Use a single session with --multi-step flag to enforce sequential phase execution",
-      D: "Replace with a single plan mode invocation that handles all three phases internally"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Adding 'Be consistent' to CLAUDE.md is not a reliable engineering solution. Consistency issues stem from trying to do too much in a single prompt.",
-      B: "CORRECT: Separating concerns into distinct invocations — explore for read-only analysis, a planning step for strategy, and direct execution for implementation — provides the most reliable results. Each step has a clear purpose, and outputs from earlier steps can be passed as context to later steps. This follows the combined approach principle.",
-      C: "INCORRECT: There is no --multi-step flag in Claude Code. Sequential phase enforcement must be achieved through separate invocations.",
-      D: "INCORRECT: A single plan mode invocation doesn't naturally handle all three phases. Plan mode focuses on creating plans, not executing them. The implementation step needs a separate execution."
-    }
+    choices: { A: "Split into three separate -p invocations: explore for analysis, plan for strategy, direct execution for implementation — passing outputs between steps", B: "Keep as a single -p prompt but add 'Be consistent' to the CLAUDE.md", C: "Use a single session with --multi-step flag to enforce sequential phase execution", D: "Replace with a single plan mode invocation that handles all three phases internally" },
+    correct: "A",
+    explanations: { A: "CORRECT: Separating concerns into distinct invocations — explore for read-only analysis, a planning step for strategy, and direct execution for implementation — provides the most reliable results. Each step has a clear purpose, and outputs from earlier steps can be passed as context to later steps. This follows the combined approach principle.", B: "INCORRECT: Adding 'Be consistent' to CLAUDE.md is not a reliable engineering solution. Consistency issues stem from trying to do too much in a single prompt.", C: "INCORRECT: There is no --multi-step flag in Claude Code. Sequential phase enforcement must be achieved through separate invocations.", D: "INCORRECT: A single plan mode invocation doesn't naturally handle all three phases. Plan mode focuses on creating plans, not executing them. The implementation step needs a separate execution." }
   },
   {
     id: "d3-063",
@@ -1450,19 +850,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Knowing when NOT to plan is as important as knowing when to plan. Over-planning simple tasks wastes developer time and API costs.",
     question: "Which of these tasks is LEAST appropriate for plan mode?",
-    choices: {
-      A: "Designing a caching layer for a distributed system",
-      B: "Adding a new field to an existing database model and updating all related serializers",
-      C: "Migrating from REST to GraphQL for a set of existing endpoints",
-      D: "Restructuring a module's public API to improve developer ergonomics"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Designing a caching layer involves architectural decisions (cache invalidation strategy, storage backend, consistency model) that benefit from planning.",
-      B: "CORRECT: Adding a field and updating serializers is a well-scoped, mechanical task. The 'what' is clear (add field X with type Y), and the 'how' is straightforward (update model, update serializers). This is ideal for direct execution.",
-      C: "INCORRECT: REST-to-GraphQL migration involves design decisions about schema design, resolver structure, and migration strategy — plan mode is appropriate.",
-      D: "INCORRECT: API restructuring involves decisions about naming, grouping, backwards compatibility — these architectural choices benefit from planning."
-    }
+    choices: { A: "Designing a caching layer for a distributed system", B: "Migrating from REST to GraphQL for a set of existing endpoints", C: "Restructuring a module's public API to improve developer ergonomics", D: "Adding a new field to an existing database model and updating all related serializers" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Designing a caching layer involves architectural decisions (cache invalidation strategy, storage backend, consistency model) that benefit from planning.", B: "INCORRECT: REST-to-GraphQL migration involves design decisions about schema design, resolver structure, and migration strategy — plan mode is appropriate.", C: "INCORRECT: API restructuring involves decisions about naming, grouping, backwards compatibility — these architectural choices benefit from planning.", D: "CORRECT: Adding a field and updating serializers is a well-scoped, mechanical task. The 'what' is clear (add field X with type Y), and the 'how' is straightforward (update model, update serializers). This is ideal for direct execution." }
   },
   {
     id: "d3-064",
@@ -1473,19 +863,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Understanding that plan mode helps surface edge cases and dependencies before implementation reduces expensive rework in enterprise codebases.",
     question: "A developer uses direct execution to implement OAuth2 integration in a SaaS product. After implementation, code review reveals 5 critical issues: missing token refresh logic, no PKCE support, incorrect scope handling, missing state parameter validation, and broken redirect URI validation. How could plan mode have helped?",
-    choices: {
-      A: "Plan mode would have caught these as compilation errors before implementation",
-      B: "Plan mode would have surfaced these security considerations during the planning phase, allowing the developer to address them before writing code",
-      C: "Plan mode would have run the OAuth2 test suite to detect issues before implementation",
-      D: "Plan mode would have queried a security vulnerability database to identify missing requirements"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Plan mode doesn't compile code. These are design issues, not compilation errors.",
-      B: "CORRECT: Plan mode's value for complex integrations like OAuth2 is that it surfaces considerations, edge cases, and security requirements BEFORE implementation begins. During planning, Claude would likely identify token refresh, PKCE, scope handling, state validation, and redirect validation as necessary components, allowing the developer to ensure they're all addressed in the plan.",
-      C: "INCORRECT: Plan mode doesn't run test suites. It's a design and planning phase, not a testing phase.",
-      D: "INCORRECT: Plan mode doesn't query external databases. It uses its knowledge to reason about the problem and surface considerations."
-    }
+    choices: { A: "Plan mode would have surfaced these security considerations during the planning phase, allowing the developer to address them before writing code", B: "Plan mode would have queried a security vulnerability database to identify missing requirements", C: "Plan mode would have run the OAuth2 test suite to detect issues before implementation", D: "Plan mode would have caught these as compilation errors before implementation" },
+    correct: "A",
+    explanations: { A: "CORRECT: Plan mode's value for complex integrations like OAuth2 is that it surfaces considerations, edge cases, and security requirements BEFORE implementation begins. During planning, Claude would likely identify token refresh, PKCE, scope handling, state validation, and redirect validation as necessary components, allowing the developer to ensure they're all addressed in the plan.", B: "INCORRECT: Plan mode doesn't query external databases. It uses its knowledge to reason about the problem and surface considerations.", C: "INCORRECT: Plan mode doesn't run test suites. It's a design and planning phase, not a testing phase.", D: "INCORRECT: Plan mode doesn't compile code. These are design issues, not compilation errors." }
   },
   {
     id: "d3-065",
@@ -1496,19 +876,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "The boundary between plan mode and direct execution is a judgment call — understanding the decision criteria helps developers make the right call consistently.",
     question: "A developer needs to add logging to 5 functions in a service. Each function should log entry, exit, and errors with structured JSON format. Plan mode or direct execution?",
-    choices: {
-      A: "Plan mode — logging across 5 functions requires coordination to ensure consistent format",
-      B: "Direct execution — the task is well-scoped with clear requirements (structured JSON, entry/exit/error) and doesn't need architectural decisions",
-      C: "Plan mode — multiple functions means multiple files which requires multi-file coordination",
-      D: "Explore first to understand the functions, then plan to design the logging approach"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: The consistency requirements (structured JSON format, entry/exit/error) are fully specified in the prompt. No planning is needed to ensure consistency — the developer already defined the format.",
-      B: "CORRECT: This is a well-scoped task with clear, specific requirements. The logging format is defined (structured JSON), the patterns are specified (entry, exit, error), and the scope is known (5 functions). Direct execution is appropriate because there are no design decisions to make.",
-      C: "INCORRECT: Multiple files don't automatically require plan mode. The task is still mechanical — apply the same pattern to 5 functions.",
-      D: "INCORRECT: Over-engineering for a straightforward logging task. The requirements are already clear."
-    }
+    choices: { A: "Plan mode — logging across 5 functions requires coordination to ensure consistent format", B: "Explore first to understand the functions, then plan to design the logging approach", C: "Plan mode — multiple functions means multiple files which requires multi-file coordination", D: "Direct execution — the task is well-scoped with clear requirements (structured JSON, entry/exit/error) and doesn't need architectural decisions" },
+    correct: "D",
+    explanations: { A: "INCORRECT: The consistency requirements (structured JSON format, entry/exit/error) are fully specified in the prompt. No planning is needed to ensure consistency — the developer already defined the format.", B: "INCORRECT: Over-engineering for a straightforward logging task. The requirements are already clear.", C: "INCORRECT: Multiple files don't automatically require plan mode. The task is still mechanical — apply the same pattern to 5 functions.", D: "CORRECT: This is a well-scoped task with clear, specific requirements. The logging format is defined (structured JSON), the patterns are specified (entry, exit, error), and the scope is known (5 functions). Direct execution is appropriate because there are no design decisions to make." }
   },
   {
     id: "d3-066",
@@ -1519,19 +889,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Enterprise teams working with legacy codebases need to understand when plan mode reveals hidden dependencies that direct execution would miss, preventing costly production incidents.",
     question: "A developer needs to replace a deprecated authentication library across a large enterprise application. The library is used in 30+ files including middleware, route guards, and session management. A colleague suggests 'just use direct execution — it's a mechanical replacement.' Why might plan mode be more appropriate?",
-    choices: {
-      A: "Plan mode is faster for multi-file changes than direct execution",
-      B: "The deprecated library may have subtle behavioral differences from its replacement (token format, session handling, error codes) that plan mode would surface during analysis before making changes",
-      C: "Direct execution cannot modify more than 10 files in a single session",
-      D: "Plan mode automatically creates a rollback strategy in case changes break production"
-    },
+    choices: { A: "Plan mode automatically creates a rollback strategy in case changes break production", B: "The deprecated library may have subtle behavioral differences from its replacement (token format, session handling, error codes) that plan mode would surface during analysis before making changes", C: "Direct execution cannot modify more than 10 files in a single session", D: "Plan mode is faster for multi-file changes than direct execution" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Plan mode adds a planning step, making it slower, not faster. Speed is not the advantage of plan mode.",
-      B: "CORRECT: Library replacement appears mechanical but often has hidden complexity — different token formats, changed error codes, altered session handling semantics. Plan mode would analyze these differences and surface them BEFORE changes begin, preventing partial replacements that break at runtime. The 30+ usage sites may use different features of the library, each requiring different migration strategies.",
-      C: "INCORRECT: There is no 10-file limit on direct execution. Claude Code can modify many files in a single session.",
-      D: "INCORRECT: Plan mode does not automatically create rollback strategies. It surfaces considerations and proposes approaches, but rollback planning would need to be explicitly requested."
-    }
+    explanations: { A: "INCORRECT: Plan mode does not automatically create rollback strategies. It surfaces considerations and proposes approaches, but rollback planning would need to be explicitly requested.", B: "CORRECT: Library replacement appears mechanical but often has hidden complexity — different token formats, changed error codes, altered session handling semantics. Plan mode would analyze these differences and surface them BEFORE changes begin, preventing partial replacements that break at runtime. The 30+ usage sites may use different features of the library, each requiring different migration strategies.", C: "INCORRECT: There is no 10-file limit on direct execution. Claude Code can modify many files in a single session.", D: "INCORRECT: Plan mode adds a planning step, making it slower, not faster. Speed is not the advantage of plan mode." }
   },
   {
     id: "d3-067",
@@ -1542,19 +902,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Understanding that plan mode output can influence subsequent direct execution enables powerful two-phase workflows in enterprise development.",
     question: "A developer uses plan mode to design a comprehensive API versioning strategy. Claude Code produces a detailed plan with 3 phases. The developer approves Phase 1 but wants to modify Phase 2. What is the BEST workflow?",
-    choices: {
-      A: "Approve the full plan and then undo Phase 2 changes after implementation",
-      B: "Reject the plan entirely and start over with a new prompt that specifies the Phase 2 modifications",
-      C: "Discuss the Phase 2 modifications in the conversation, update the plan, then proceed to direct execution of the approved plan",
-      D: "Execute Phase 1 in direct mode, then start a new plan mode session for the modified Phase 2"
-    },
-    correct: "C",
-    explanations: {
-      A: "INCORRECT: Implementing and then undoing is wasteful and risky. It's better to fix the plan before implementation.",
-      B: "INCORRECT: Rejecting the entire plan and starting over loses the good parts (Phase 1 and Phase 3). Iterating on the existing plan is more efficient.",
-      C: "CORRECT: The interactive nature of Claude Code sessions allows discussion and modification of plans before execution. The developer can discuss Phase 2 changes, get an updated plan, and then proceed to implementation. This preserves the good parts of the plan while fixing the issues.",
-      D: "INCORRECT: While this could work, breaking context between phases loses the holistic understanding of the full versioning strategy. Keeping it in one session with plan modification is more coherent."
-    }
+    choices: { A: "Discuss the Phase 2 modifications in the conversation, update the plan, then proceed to direct execution of the approved plan", B: "Approve the full plan and then undo Phase 2 changes after implementation", C: "Reject the plan entirely and start over with a new prompt that specifies the Phase 2 modifications", D: "Execute Phase 1 in direct mode, then start a new plan mode session for the modified Phase 2" },
+    correct: "A",
+    explanations: { A: "CORRECT: The interactive nature of Claude Code sessions allows discussion and modification of plans before execution. The developer can discuss Phase 2 changes, get an updated plan, and then proceed to implementation. This preserves the good parts of the plan while fixing the issues.", B: "INCORRECT: Implementing and then undoing is wasteful and risky. It's better to fix the plan before implementation.", C: "INCORRECT: Rejecting the entire plan and starting over loses the good parts (Phase 1 and Phase 3). Iterating on the existing plan is more efficient.", D: "INCORRECT: While this could work, breaking context between phases loses the holistic understanding of the full versioning strategy. Keeping it in one session with plan modification is more coherent." }
   },
 
   // ============================================================
@@ -1569,19 +919,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Concrete input/output examples are the MOST effective technique for achieving consistent transforms — this is the highest-value iterative refinement skill for enterprises.",
     question: "A code generation team needs Claude Code to consistently transform legacy API responses into a new standardized format. After 10 iterations, results are still inconsistent. What refinement technique is MOST effective for achieving consistent transformations?",
-    choices: {
-      A: "Add more detailed prose descriptions of the transformation rules in CLAUDE.md",
-      B: "Provide concrete input/output examples showing exactly what the legacy format looks like and what the transformed output should be",
-      C: "Create a JSON schema for the output format and reference it in the prompt",
-      D: "Use plan mode to have Claude analyze the transformation requirements before each execution"
-    },
+    choices: { A: "Create a JSON schema for the output format and reference it in the prompt", B: "Provide concrete input/output examples showing exactly what the legacy format looks like and what the transformed output should be", C: "Use plan mode to have Claude analyze the transformation requirements before each execution", D: "Add more detailed prose descriptions of the transformation rules in CLAUDE.md" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Prose descriptions are ambiguous and can be interpreted differently across invocations. After 10 inconsistent iterations, more prose won't solve the problem.",
-      B: "CORRECT: Concrete input/output examples are the MOST effective technique for achieving consistent transformations. Examples disambiguate edge cases, demonstrate exact formatting expectations, and provide a 'template' that Claude can pattern-match against. This is more reliable than prose descriptions for mechanical transformations.",
-      C: "INCORRECT: A JSON schema defines structure but not transformation logic. It specifies what the output should look like but not how to derive it from the input. Examples show both.",
-      D: "INCORRECT: Plan mode for each execution adds overhead without addressing the core issue — inconsistency in understanding the transformation. Examples solve this more directly."
-    }
+    explanations: { A: "INCORRECT: A JSON schema defines structure but not transformation logic. It specifies what the output should look like but not how to derive it from the input. Examples show both.", B: "CORRECT: Concrete input/output examples are the MOST effective technique for achieving consistent transformations. Examples disambiguate edge cases, demonstrate exact formatting expectations, and provide a 'template' that Claude can pattern-match against. This is more reliable than prose descriptions for mechanical transformations.", C: "INCORRECT: Plan mode for each execution adds overhead without addressing the core issue — inconsistency in understanding the transformation. Examples solve this more directly.", D: "INCORRECT: Prose descriptions are ambiguous and can be interpreted differently across invocations. After 10 inconsistent iterations, more prose won't solve the problem." }
   },
   {
     id: "d3-069",
@@ -1592,19 +932,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Test-driven iteration — writing tests first and sharing failures — is the most rigorous refinement approach for enterprise code quality.",
     question: "A developer productivity team is iterating on a data validation module. After three rounds of prompt refinement, the output still has edge case bugs. What is the MOST effective test-driven iteration strategy?",
-    choices: {
-      A: "Ask Claude Code to write comprehensive tests, then manually verify the implementation",
-      B: "Write tests covering the edge cases FIRST, run them to confirm they fail, then share the test failures with Claude Code to guide the next implementation iteration",
-      C: "Ask Claude Code to simultaneously write tests and implementation, then iterate on both",
-      D: "Describe the edge cases in prose in the prompt and ask Claude to handle them"
-    },
+    choices: { A: "Ask Claude Code to simultaneously write tests and implementation, then iterate on both", B: "Write tests covering the edge cases FIRST, run them to confirm they fail, then share the test failures with Claude Code to guide the next implementation iteration", C: "Ask Claude Code to write comprehensive tests, then manually verify the implementation", D: "Describe the edge cases in prose in the prompt and ask Claude to handle them" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Having Claude write both tests and implementation is circular — the tests may miss the same edge cases the implementation misses.",
-      B: "CORRECT: The test-driven refinement approach writes tests FIRST (covering known edge cases), runs them to confirm failure, then shares the failure output with Claude Code. The concrete failure messages guide Claude to fix exactly the right issues. This is the most rigorous iteration pattern for producing correct code.",
-      C: "INCORRECT: Simultaneous test and implementation writing lacks the feedback loop of test-first development. The tests won't properly validate the implementation if they're written with the same assumptions.",
-      D: "INCORRECT: Prose descriptions of edge cases are less precise than failing test cases. Test output provides exact inputs, expected outputs, and actual outputs — far more actionable than prose."
-    }
+    explanations: { A: "INCORRECT: Simultaneous test and implementation writing lacks the feedback loop of test-first development. The tests won't properly validate the implementation if they're written with the same assumptions.", B: "CORRECT: The test-driven refinement approach writes tests FIRST (covering known edge cases), runs them to confirm failure, then shares the failure output with Claude Code. The concrete failure messages guide Claude to fix exactly the right issues. This is the most rigorous iteration pattern for producing correct code.", C: "INCORRECT: Having Claude write both tests and implementation is circular — the tests may miss the same edge cases the implementation misses.", D: "INCORRECT: Prose descriptions of edge cases are less precise than failing test cases. Test output provides exact inputs, expected outputs, and actual outputs — far more actionable than prose." }
   },
   {
     id: "d3-070",
@@ -1615,19 +945,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "The interview pattern — where Claude asks questions to surface considerations — helps developers think through requirements they might miss, reducing iteration cycles.",
     question: "A developer asks Claude Code to build a notification system but realizes mid-implementation that they didn't specify delivery channels, retry logic, or rate limiting. What iterative refinement technique could have surfaced these requirements upfront?",
-    choices: {
-      A: "Plan mode to have Claude analyze the codebase for notification patterns",
-      B: "The interview pattern — prompting Claude to ask clarifying questions about requirements before starting implementation",
-      C: "Writing a detailed specification document before engaging Claude Code",
-      D: "Running explore mode on the existing codebase to find similar notification implementations"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Plan mode analyzes implementation approaches, not missing requirements. It wouldn't necessarily surface that delivery channels and retry logic weren't specified.",
-      B: "CORRECT: The interview pattern prompts Claude to ask clarifying questions before starting work. By asking Claude to 'interview me about requirements before building,' the developer would be prompted about delivery channels, retry logic, rate limiting, and other considerations they hadn't thought of. This surfaces gaps early, reducing iteration cycles.",
-      C: "INCORRECT: While a specification document is good practice, it's not a Claude Code iterative refinement technique. The interview pattern achieves similar goal discovery within the Claude Code workflow.",
-      D: "INCORRECT: Explore mode would find existing patterns but wouldn't surface requirements for a new notification system. It's investigative, not requirements-eliciting."
-    }
+    choices: { A: "Running explore mode on the existing codebase to find similar notification implementations", B: "Plan mode to have Claude analyze the codebase for notification patterns", C: "The interview pattern — prompting Claude to ask clarifying questions about requirements before starting implementation", D: "Writing a detailed specification document before engaging Claude Code" },
+    correct: "C",
+    explanations: { A: "INCORRECT: Explore mode would find existing patterns but wouldn't surface requirements for a new notification system. It's investigative, not requirements-eliciting.", B: "INCORRECT: Plan mode analyzes implementation approaches, not missing requirements. It wouldn't necessarily surface that delivery channels and retry logic weren't specified.", C: "CORRECT: The interview pattern prompts Claude to ask clarifying questions before starting work. By asking Claude to 'interview me about requirements before building,' the developer would be prompted about delivery channels, retry logic, rate limiting, and other considerations they hadn't thought of. This surfaces gaps early, reducing iteration cycles.", D: "INCORRECT: While a specification document is good practice, it's not a Claude Code iterative refinement technique. The interview pattern achieves similar goal discovery within the Claude Code workflow." }
   },
   {
     id: "d3-071",
@@ -1638,19 +958,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "In CI/CD pipelines, understanding how to structure iterative feedback loops with Claude Code enables self-correcting automated workflows.",
     question: "A CI pipeline runs Claude Code to generate integration tests. The generated tests sometimes fail due to incorrect mock data or missing setup steps. The team wants to create a self-correcting CI loop. What is the MOST effective approach?",
-    choices: {
-      A: "Run the tests, capture failure output, feed it back to Claude Code with -p to fix the specific failures, then re-run tests",
-      B: "Add retry: 3 to the CI configuration to re-run the Claude Code step hoping for better output",
-      C: "Include all possible mock data patterns in CLAUDE.md so Claude always generates correct mocks",
-      D: "Run Claude Code in plan mode first to validate test design before generating tests"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: This implements a test-driven iteration loop in CI: generate tests → run tests → capture failures → feed failures back to Claude Code → regenerate → re-run tests. The concrete failure output gives Claude precise information about what went wrong, enabling targeted fixes. This is the test-driven refinement pattern applied to CI.",
-      B: "INCORRECT: Blind retries without feedback don't address the root cause. Running the same prompt again without failure context may produce the same errors.",
-      C: "INCORRECT: Enumerating all possible mock data patterns in CLAUDE.md is impractical and brittle. New patterns would constantly need to be added.",
-      D: "INCORRECT: Plan mode for test design adds overhead without solving the concrete problem of incorrect mocks or missing setup. The failure feedback loop is more direct."
-    }
+    choices: { A: "Add retry: 3 to the CI configuration to re-run the Claude Code step hoping for better output", B: "Include all possible mock data patterns in CLAUDE.md so Claude always generates correct mocks", C: "Run Claude Code in plan mode first to validate test design before generating tests", D: "Run the tests, capture failure output, feed it back to Claude Code with -p to fix the specific failures, then re-run tests" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Blind retries without feedback don't address the root cause. Running the same prompt again without failure context may produce the same errors.", B: "INCORRECT: Enumerating all possible mock data patterns in CLAUDE.md is impractical and brittle. New patterns would constantly need to be added.", C: "INCORRECT: Plan mode for test design adds overhead without solving the concrete problem of incorrect mocks or missing setup. The failure feedback loop is more direct.", D: "CORRECT: This implements a test-driven iteration loop in CI: generate tests → run tests → capture failures → feed failures back to Claude Code → regenerate → re-run tests. The concrete failure output gives Claude precise information about what went wrong, enabling targeted fixes. This is the test-driven refinement pattern applied to CI." }
   },
   {
     id: "d3-072",
@@ -1661,19 +971,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Knowing when to use a single message vs sequential messages for refinement prevents context pollution and enables cleaner iteration cycles.",
     question: "A developer is iterating on two issues in Claude Code's output: (1) incorrect date formatting in utility functions and (2) missing null checks in API handlers. These issues are unrelated. How should they structure their feedback?",
-    choices: {
-      A: "A single message addressing both issues together for efficiency",
-      B: "Two sequential messages — one for date formatting, then one for null checks — because the issues are independent",
-      C: "Open two separate Claude Code sessions, one for each issue",
-      D: "Create two separate CLAUDE.md rules to prevent these issues in the future"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Combining unrelated issues in a single message can cause confusion — fixes for one issue might inadvertently affect the other. Single messages are for INTERACTING issues.",
-      B: "CORRECT: For independent issues, sequential messages are recommended. Each message focuses on one concern, allowing Claude to address it fully before moving to the next. This prevents cross-contamination of fixes between unrelated issues.",
-      C: "INCORRECT: Separate sessions lose the context of the current work. Sequential messages within the same session maintain context while keeping concerns separate.",
-      D: "INCORRECT: While CLAUDE.md rules could prevent future occurrences, they don't address the immediate iteration need. Rules and iterative refinement serve different purposes."
-    }
+    choices: { A: "Create two separate CLAUDE.md rules to prevent these issues in the future", B: "A single message addressing both issues together for efficiency", C: "Two sequential messages — one for date formatting, then one for null checks — because the issues are independent", D: "Open two separate Claude Code sessions, one for each issue" },
+    correct: "C",
+    explanations: { A: "INCORRECT: While CLAUDE.md rules could prevent future occurrences, they don't address the immediate iteration need. Rules and iterative refinement serve different purposes.", B: "INCORRECT: Combining unrelated issues in a single message can cause confusion — fixes for one issue might inadvertently affect the other. Single messages are for INTERACTING issues.", C: "CORRECT: For independent issues, sequential messages are recommended. Each message focuses on one concern, allowing Claude to address it fully before moving to the next. This prevents cross-contamination of fixes between unrelated issues.", D: "INCORRECT: Separate sessions lose the context of the current work. Sequential messages within the same session maintain context while keeping concerns separate." }
   },
   {
     id: "d3-073",
@@ -1684,19 +984,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Understanding when to use single vs sequential messages for INTERACTING issues prevents broken fixes that solve one problem but introduce another.",
     question: "A developer is iterating on Claude Code's output for a data processing pipeline. They find two issues: (1) the transform function has a type error, and (2) the filter function references the wrong field from the transform output. These issues are related because the filter depends on the transform's output shape. How should they structure feedback?",
-    choices: {
-      A: "Two sequential messages, fixing the transform first then the filter",
-      B: "A single message addressing both issues together, because the issues interact — fixing the transform changes the shape that the filter depends on",
-      C: "Fix the transform, verify the output, then address the filter in a new session",
-      D: "Ask Claude to analyze the dependency chain first with explore mode, then fix both"
-    },
+    choices: { A: "Fix the transform, verify the output, then address the filter in a new session", B: "A single message addressing both issues together, because the issues interact — fixing the transform changes the shape that the filter depends on", C: "Two sequential messages, fixing the transform first then the filter", D: "Ask Claude to analyze the dependency chain first with explore mode, then fix both" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Sequential messages for interacting issues risks the filter being 'fixed' based on the old transform shape, then breaking again when the transform is fixed. The dependency means they must be addressed together.",
-      B: "CORRECT: For INTERACTING issues where one fix affects the other, use a single message addressing both together. This allows Claude to reason about the dependency (transform output shape → filter input) and fix both consistently. The rule is: single message for interacting issues, sequential for independent ones.",
-      C: "INCORRECT: A new session loses the context of both issues. Since they're related, maintaining conversation context is valuable for a coherent fix.",
-      D: "INCORRECT: Explore mode for a known dependency chain is unnecessary overhead. The developer already understands the dependency; they just need Claude to fix both issues together."
-    }
+    explanations: { A: "INCORRECT: A new session loses the context of both issues. Since they're related, maintaining conversation context is valuable for a coherent fix.", B: "CORRECT: For INTERACTING issues where one fix affects the other, use a single message addressing both together. This allows Claude to reason about the dependency (transform output shape → filter input) and fix both consistently. The rule is: single message for interacting issues, sequential for independent ones.", C: "INCORRECT: Sequential messages for interacting issues risks the filter being 'fixed' based on the old transform shape, then breaking again when the transform is fixed. The dependency means they must be addressed together.", D: "INCORRECT: Explore mode for a known dependency chain is unnecessary overhead. The developer already understands the dependency; they just need Claude to fix both issues together." }
   },
   {
     id: "d3-074",
@@ -1707,19 +997,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Providing specific, actionable feedback rather than vague direction is key to efficient iteration cycles in enterprise development.",
     question: "A developer's first iteration with Claude Code produced error handling that catches all exceptions with a generic message. They want more specific error handling. Which feedback is MOST effective for the next iteration?",
-    choices: {
-      A: "'Make the error handling better'",
-      B: "'Catch ValidationError, DatabaseError, and TimeoutError separately with specific error messages and appropriate HTTP status codes (400, 500, 504 respectively)'",
-      C: "'Add more error handling'",
-      D: "'Follow error handling best practices'"
-    },
+    choices: { A: "'Add more error handling'", B: "'Catch ValidationError, DatabaseError, and TimeoutError separately with specific error messages and appropriate HTTP status codes (400, 500, 504 respectively)'", C: "'Follow error handling best practices'", D: "'Make the error handling better'" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: 'Better' is vague and subjective. Claude has no way to know what 'better' means in this context without specifics.",
-      B: "CORRECT: This feedback is specific and actionable — it names exact exception types, specifies that each should be caught separately, requires specific messages, and maps to HTTP status codes. This level of specificity enables Claude to produce exactly what's needed in one iteration.",
-      C: "INCORRECT: 'More error handling' is vague. It could mean more exception types, more logging, more retry logic — Claude would have to guess.",
-      D: "INCORRECT: 'Best practices' is subjective and context-dependent. What's best for a CLI tool differs from a REST API. Specific requirements lead to specific results."
-    }
+    explanations: { A: "INCORRECT: 'More error handling' is vague. It could mean more exception types, more logging, more retry logic — Claude would have to guess.", B: "CORRECT: This feedback is specific and actionable — it names exact exception types, specifies that each should be caught separately, requires specific messages, and maps to HTTP status codes. This level of specificity enables Claude to produce exactly what's needed in one iteration.", C: "INCORRECT: 'Best practices' is subjective and context-dependent. What's best for a CLI tool differs from a REST API. Specific requirements lead to specific results.", D: "INCORRECT: 'Better' is vague and subjective. Claude has no way to know what 'better' means in this context without specifics." }
   },
   {
     id: "d3-075",
@@ -1730,19 +1010,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Enterprise teams iterating on complex outputs need to understand how to provide examples that cover edge cases, not just the happy path.",
     question: "A code generation team provides Claude Code with one input/output example for a CSV-to-JSON transformation. The output is correct for simple CSVs but fails for CSVs with quoted fields containing commas, escaped quotes, and multiline values. What refinement approach fixes this?",
-    choices: {
-      A: "Add a detailed prose specification explaining all CSV edge cases",
-      B: "Provide additional input/output examples that specifically demonstrate the edge cases (quoted commas, escaped quotes, multiline values)",
-      C: "Reference the RFC 4180 CSV specification in the prompt",
-      D: "Switch to plan mode to have Claude analyze the CSV format before implementing"
-    },
+    choices: { A: "Switch to plan mode to have Claude analyze the CSV format before implementing", B: "Provide additional input/output examples that specifically demonstrate the edge cases (quoted commas, escaped quotes, multiline values)", C: "Reference the RFC 4180 CSV specification in the prompt", D: "Add a detailed prose specification explaining all CSV edge cases" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: While prose specifications help, they're less effective than concrete examples for edge cases. Claude may interpret prose differently across runs.",
-      B: "CORRECT: Additional input/output examples demonstrating specific edge cases are the most effective way to handle transformation edge cases. Show a CSV with 'field,with,commas' as input and the correct JSON output. Show escaped quotes in input and correct output. Concrete examples eliminate ambiguity that prose descriptions leave open.",
-      C: "INCORRECT: Referencing an RFC is indirect — Claude has to interpret the specification. Direct examples of expected behavior for edge cases are more immediate and less error-prone.",
-      D: "INCORRECT: Plan mode doesn't help with transformation correctness for known edge cases. Examples directly demonstrate the expected behavior."
-    }
+    explanations: { A: "INCORRECT: Plan mode doesn't help with transformation correctness for known edge cases. Examples directly demonstrate the expected behavior.", B: "CORRECT: Additional input/output examples demonstrating specific edge cases are the most effective way to handle transformation edge cases. Show a CSV with 'field,with,commas' as input and the correct JSON output. Show escaped quotes in input and correct output. Concrete examples eliminate ambiguity that prose descriptions leave open.", C: "INCORRECT: Referencing an RFC is indirect — Claude has to interpret the specification. Direct examples of expected behavior for edge cases are more immediate and less error-prone.", D: "INCORRECT: While prose specifications help, they're less effective than concrete examples for edge cases. Claude may interpret prose differently across runs." }
   },
   {
     id: "d3-076",
@@ -1753,19 +1023,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "The test-driven iteration loop is especially powerful in CI where feedback can be automated, reducing the need for human intervention in the refinement cycle.",
     question: "A developer is iterating on a React component generated by Claude Code. They have a comprehensive test suite. After Claude generates the component, 3 of 20 tests fail. What is the MOST efficient next step?",
-    choices: {
-      A: "Copy the 3 failing test names and error messages and paste them to Claude Code as the next prompt",
-      B: "Describe the 3 failures in prose: 'the component doesn't handle empty states, loading states, or error boundaries correctly'",
-      C: "Share the FULL test output (all 20 results) so Claude has complete context about what passes and what fails",
-      D: "Rewrite the 3 failing tests to be less strict so the generated component passes"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Sharing the specific failing test names and error messages is the most efficient approach. The error messages contain precise information about what's wrong (expected vs actual values, assertion failures). This gives Claude exactly what it needs to make targeted fixes without noise from passing tests.",
-      B: "INCORRECT: Prose descriptions lose the precision of actual error messages. The test output contains exact expected values, actual values, and stack traces that are more actionable than summaries.",
-      C: "INCORRECT: Sharing all 20 test results adds noise — 17 passing tests don't provide useful information for fixing the 3 failures. Focused feedback is more efficient.",
-      D: "INCORRECT: Weakening tests to match incorrect output defeats the purpose of test-driven iteration. The tests define correctness; the code should match the tests."
-    }
+    choices: { A: "Rewrite the 3 failing tests to be less strict so the generated component passes", B: "Describe the 3 failures in prose: 'the component doesn't handle empty states, loading states, or error boundaries correctly'", C: "Share the FULL test output (all 20 results) so Claude has complete context about what passes and what fails", D: "Copy the 3 failing test names and error messages and paste them to Claude Code as the next prompt" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Weakening tests to match incorrect output defeats the purpose of test-driven iteration. The tests define correctness; the code should match the tests.", B: "INCORRECT: Prose descriptions lose the precision of actual error messages. The test output contains exact expected values, actual values, and stack traces that are more actionable than summaries.", C: "INCORRECT: Sharing all 20 test results adds noise — 17 passing tests don't provide useful information for fixing the 3 failures. Focused feedback is more efficient.", D: "CORRECT: Sharing the specific failing test names and error messages is the most efficient approach. The error messages contain precise information about what's wrong (expected vs actual values, assertion failures). This gives Claude exactly what it needs to make targeted fixes without noise from passing tests." }
   },
   {
     id: "d3-077",
@@ -1776,19 +1036,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding iterative refinement in CI/CD prevents teams from over-engineering prompt perfection when feedback loops are more practical.",
     question: "A CI/CD team is trying to craft the 'perfect prompt' for automated code review before deploying the pipeline. After two weeks of prompt engineering, results are still inconsistent. What approach would be more effective?",
-    choices: {
-      A: "Continue refining the prompt — perfect prompts require extensive engineering",
-      B: "Deploy with a good-enough prompt and implement an iterative feedback loop where review results are evaluated and the prompt is refined based on real-world outcomes",
-      C: "Switch to a different AI model that requires less prompt engineering",
-      D: "Abandon the Claude Code approach and use traditional static analysis tools"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Two weeks of prompt engineering with inconsistent results suggests diminishing returns. Real-world feedback is more valuable than theoretical perfection.",
-      B: "CORRECT: Iterative refinement works better than trying to achieve perfection upfront. Deploy with a reasonable prompt, collect real-world results, identify systematic failures, and refine based on concrete evidence. This is more efficient than theoretical prompt engineering.",
-      C: "INCORRECT: Model switching doesn't address the fundamental issue — any AI model benefits from iterative refinement based on real-world feedback.",
-      D: "INCORRECT: Abandoning the approach entirely discards the work invested. Iterative refinement can likely fix the inconsistencies without starting over."
-    }
+    choices: { A: "Deploy with a good-enough prompt and implement an iterative feedback loop where review results are evaluated and the prompt is refined based on real-world outcomes", B: "Abandon the Claude Code approach and use traditional static analysis tools", C: "Continue refining the prompt — perfect prompts require extensive engineering", D: "Switch to a different AI model that requires less prompt engineering" },
+    correct: "A",
+    explanations: { A: "CORRECT: Iterative refinement works better than trying to achieve perfection upfront. Deploy with a reasonable prompt, collect real-world results, identify systematic failures, and refine based on concrete evidence. This is more efficient than theoretical prompt engineering.", B: "INCORRECT: Abandoning the approach entirely discards the work invested. Iterative refinement can likely fix the inconsistencies without starting over.", C: "INCORRECT: Two weeks of prompt engineering with inconsistent results suggests diminishing returns. Real-world feedback is more valuable than theoretical perfection.", D: "INCORRECT: Model switching doesn't address the fundamental issue — any AI model benefits from iterative refinement based on real-world feedback." }
   },
   {
     id: "d3-078",
@@ -1799,19 +1049,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Knowing how to structure long refinement sessions prevents context window exhaustion and conversation quality degradation.",
     question: "A developer has been iterating with Claude Code on a complex data processing module for 40+ messages. They notice Claude's responses are becoming less precise and seem to forget earlier corrections. What is the MOST likely cause and remedy?",
-    choices: {
-      A: "Claude Code has a session timeout — restart and provide a fresh summary of current state",
-      B: "The conversation context window is getting crowded with earlier iterations, pushing important context out — start a fresh session with a clear summary of requirements and the latest code state",
-      C: "Claude Code has a message count limit — upgrade to an enterprise tier for longer sessions",
-      D: "The CLAUDE.md instructions are conflicting with the accumulated conversation context"
-    },
+    choices: { A: "The CLAUDE.md instructions are conflicting with the accumulated conversation context", B: "The conversation context window is getting crowded with earlier iterations, pushing important context out — start a fresh session with a clear summary of requirements and the latest code state", C: "Claude Code has a session timeout — restart and provide a fresh summary of current state", D: "Claude Code has a message count limit — upgrade to an enterprise tier for longer sessions" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: There's no fixed session timeout causing quality degradation. The issue is context window management.",
-      B: "CORRECT: Long conversation sessions accumulate context (all previous messages, corrections, code versions). As the context window fills, earlier important context may become less accessible. Starting a fresh session with a clear summary of current requirements and the latest code state gives Claude the most relevant context without noise from 40+ messages of iteration history.",
-      C: "INCORRECT: The issue isn't a message count limit but context window utilization. Quality degrades because of context competition, not hard limits.",
-      D: "INCORRECT: CLAUDE.md instructions don't conflict with conversation context. The issue is the volume of conversation history competing for context window space."
-    }
+    explanations: { A: "INCORRECT: CLAUDE.md instructions don't conflict with conversation context. The issue is the volume of conversation history competing for context window space.", B: "CORRECT: Long conversation sessions accumulate context (all previous messages, corrections, code versions). As the context window fills, earlier important context may become less accessible. Starting a fresh session with a clear summary of current requirements and the latest code state gives Claude the most relevant context without noise from 40+ messages of iteration history.", C: "INCORRECT: There's no fixed session timeout causing quality degradation. The issue is context window management.", D: "INCORRECT: The issue isn't a message count limit but context window utilization. Quality degrades because of context competition, not hard limits." }
   },
   {
     id: "d3-079",
@@ -1822,19 +1062,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "The interview pattern is underutilized in enterprise settings but can dramatically reduce iteration cycles by front-loading requirements discovery.",
     question: "A developer types: 'Build a caching layer for our microservices.' Claude Code immediately starts implementing with Redis. The developer wanted an in-memory cache with LRU eviction. How could the interview pattern have prevented this wasted iteration?",
-    choices: {
-      A: "By having Claude ask: 'What cache backend, eviction policy, and invalidation strategy do you need?' before starting",
-      B: "By having Claude research caching best practices before implementing",
-      C: "By having Claude generate multiple caching implementations for the developer to choose from",
-      D: "By having Claude check the existing codebase for caching patterns"
-    },
+    choices: { A: "By having Claude ask: 'What cache backend, eviction policy, and invalidation strategy do you need?' before starting", B: "By having Claude check the existing codebase for caching patterns", C: "By having Claude generate multiple caching implementations for the developer to choose from", D: "By having Claude research caching best practices before implementing" },
     correct: "A",
-    explanations: {
-      A: "CORRECT: The interview pattern prompts Claude to ask clarifying questions before implementing. Questions about backend (Redis vs in-memory), eviction policy (LRU, LFU, TTL), and invalidation strategy would have surfaced the developer's actual requirements before any code was written, avoiding the wasted Redis implementation.",
-      B: "INCORRECT: Researching best practices doesn't surface the developer's specific requirements. It would lead to a recommendation but might still not match what's needed.",
-      C: "INCORRECT: Generating multiple implementations is wasteful. The interview pattern is more efficient — ask first, implement once.",
-      D: "INCORRECT: Checking existing patterns helps with consistency but doesn't surface new requirements for a new feature."
-    }
+    explanations: { A: "CORRECT: The interview pattern prompts Claude to ask clarifying questions before implementing. Questions about backend (Redis vs in-memory), eviction policy (LRU, LFU, TTL), and invalidation strategy would have surfaced the developer's actual requirements before any code was written, avoiding the wasted Redis implementation.", B: "INCORRECT: Checking existing patterns helps with consistency but doesn't surface new requirements for a new feature.", C: "INCORRECT: Generating multiple implementations is wasteful. The interview pattern is more efficient — ask first, implement once.", D: "INCORRECT: Researching best practices doesn't surface the developer's specific requirements. It would lead to a recommendation but might still not match what's needed." }
   },
   {
     id: "d3-080",
@@ -1845,19 +1075,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "CI/CD iteration loops need structured output to enable programmatic evaluation of Claude Code results between iterations.",
     question: "A CI pipeline iterates on generated API documentation. Each iteration's output needs to be programmatically evaluated for completeness (all endpoints documented, all parameters described, all response codes listed). What enables this automated evaluation between iterations?",
-    choices: {
-      A: "Use --output-format json with a --json-schema to get structured output that can be programmatically checked for required fields",
-      B: "Parse the markdown output with a custom script to check for required sections",
-      C: "Use a second Claude Code invocation to evaluate the first one's output",
-      D: "Add a 'self-check' instruction in the prompt asking Claude to verify its own completeness"
-    },
+    choices: { A: "Use --output-format json with a --json-schema to get structured output that can be programmatically checked for required fields", B: "Use a second Claude Code invocation to evaluate the first one's output", C: "Parse the markdown output with a custom script to check for required sections", D: "Add a 'self-check' instruction in the prompt asking Claude to verify its own completeness" },
     correct: "A",
-    explanations: {
-      A: "CORRECT: Using --output-format json with --json-schema forces Claude Code to produce structured output matching a defined schema. The CI pipeline can programmatically validate that all required fields (endpoints, parameters, response codes) are present, enabling automated evaluation between refinement iterations.",
-      B: "INCORRECT: Parsing markdown output is fragile and error-prone. Structured JSON output with schema validation is far more reliable for programmatic evaluation.",
-      C: "INCORRECT: While possible, using a second Claude Code invocation for evaluation is more expensive and less deterministic than schema-based validation.",
-      D: "INCORRECT: Self-check instructions are unreliable — Claude may claim completeness even when fields are missing. Programmatic validation is more trustworthy."
-    }
+    explanations: { A: "CORRECT: Using --output-format json with --json-schema forces Claude Code to produce structured output matching a defined schema. The CI pipeline can programmatically validate that all required fields (endpoints, parameters, response codes) are present, enabling automated evaluation between refinement iterations.", B: "INCORRECT: While possible, using a second Claude Code invocation for evaluation is more expensive and less deterministic than schema-based validation.", C: "INCORRECT: Parsing markdown output is fragile and error-prone. Structured JSON output with schema validation is far more reliable for programmatic evaluation.", D: "INCORRECT: Self-check instructions are unreliable — Claude may claim completeness even when fields are missing. Programmatic validation is more trustworthy." }
   },
   {
     id: "d3-081",
@@ -1868,19 +1088,9 @@ export const d3Questions = [
     scenario: 2,
     importance: "Enterprise developers need to know the optimal number of examples and when to stop adding them to avoid diminishing returns.",
     question: "A code generation team is refining a data transformation skill. They've provided 2 input/output examples and Claude handles most cases correctly but fails on a specific edge case involving null nested objects. What is the MOST targeted refinement?",
-    choices: {
-      A: "Add 10 more examples covering every possible input variation",
-      B: "Add ONE specific example that demonstrates the null nested object edge case with the correct output",
-      C: "Rewrite the existing 2 examples to be more comprehensive",
-      D: "Add a prose rule in CLAUDE.md: 'Handle null nested objects carefully'"
-    },
+    choices: { A: "Rewrite the existing 2 examples to be more comprehensive", B: "Add ONE specific example that demonstrates the null nested object edge case with the correct output", C: "Add 10 more examples covering every possible input variation", D: "Add a prose rule in CLAUDE.md: 'Handle null nested objects carefully'" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Adding 10 examples is scattershot. If the specific issue is null nested objects, one targeted example is more efficient than many generic ones.",
-      B: "CORRECT: The most efficient refinement is adding a single, targeted example that demonstrates exactly the failing edge case. One example showing input with null nested objects and the correct output directly addresses the gap without noise from unnecessary additional examples.",
-      C: "INCORRECT: Rewriting existing working examples risks breaking the cases they currently handle correctly. It's better to add a new targeted example.",
-      D: "INCORRECT: 'Handle null nested objects carefully' is vague. A concrete example showing correct null handling is far more effective than prose advice."
-    }
+    explanations: { A: "INCORRECT: Rewriting existing working examples risks breaking the cases they currently handle correctly. It's better to add a new targeted example.", B: "CORRECT: The most efficient refinement is adding a single, targeted example that demonstrates exactly the failing edge case. One example showing input with null nested objects and the correct output directly addresses the gap without noise from unnecessary additional examples.", C: "INCORRECT: Adding 10 examples is scattershot. If the specific issue is null nested objects, one targeted example is more efficient than many generic ones.", D: "INCORRECT: 'Handle null nested objects carefully' is vague. A concrete example showing correct null handling is far more effective than prose advice." }
   },
   {
     id: "d3-082",
@@ -1891,19 +1101,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "In enterprise CI/CD, knowing how to structure feedback from automated tests back into Claude Code prompts enables self-improving code generation pipelines.",
     question: "A CI pipeline generates database migration scripts using Claude Code. After generation, an automated validator checks for common issues: missing rollback scripts, unsafe ALTER operations on large tables, and missing index considerations. The validator reports 2 of 3 checks failed. How should the pipeline feed this back to Claude Code for iteration?",
-    choices: {
-      A: "Re-run Claude Code with the original prompt plus 'And this time, don't forget rollback scripts and index considerations'",
-      B: "Feed the validator's SPECIFIC failure output (which checks failed, what was expected, what was found) as context to a new Claude Code invocation targeting only the failures",
-      C: "Add the validation rules to CLAUDE.md so future generations include these requirements from the start",
-      D: "Both B for immediate fix AND C for long-term prevention — use specific failures for iteration and update CLAUDE.md for future generations"
-    },
-    correct: "D",
-    explanations: {
-      A: "INCORRECT: Vague reminders ('don't forget') are less effective than specific failure data. Without the validator's concrete output, Claude may still miss the specific issues.",
-      B: "INCORRECT: While feeding specific failures is correct for the immediate iteration, it doesn't prevent the same issues from recurring in future pipeline runs. This addresses the symptom but not the root cause.",
-      C: "INCORRECT: While updating CLAUDE.md prevents future occurrences, it doesn't fix the current failed generation. Both immediate iteration and long-term prevention are needed.",
-      D: "CORRECT: The best approach combines both strategies. For the immediate iteration, feed the validator's specific failure output to Claude Code for targeted fixes (iterative refinement). For long-term prevention, add the validation requirements to CLAUDE.md so future generations include rollback scripts and index considerations from the start. This is the transition from iterative refinement to persistent configuration."
-    }
+    choices: { A: "Feed the validator's SPECIFIC failure output (which checks failed, what was expected, what was found) as context to a new Claude Code invocation targeting only the failures", B: "Add the validation rules to CLAUDE.md so future generations include these requirements from the start", C: "Both B for immediate fix AND C for long-term prevention — use specific failures for iteration and update CLAUDE.md for future generations", D: "Re-run Claude Code with the original prompt plus 'And this time, don't forget rollback scripts and index considerations'" },
+    correct: "C",
+    explanations: { A: "INCORRECT: While feeding specific failures is correct for the immediate iteration, it doesn't prevent the same issues from recurring in future pipeline runs. This addresses the symptom but not the root cause.", B: "INCORRECT: While updating CLAUDE.md prevents future occurrences, it doesn't fix the current failed generation. Both immediate iteration and long-term prevention are needed.", C: "CORRECT: The best approach combines both strategies. For the immediate iteration, feed the validator's specific failure output to Claude Code for targeted fixes (iterative refinement). For long-term prevention, add the validation requirements to CLAUDE.md so future generations include rollback scripts and index considerations from the start. This is the transition from iterative refinement to persistent configuration.", D: "INCORRECT: Vague reminders ('don't forget') are less effective than specific failure data. Without the validator's concrete output, Claude may still miss the specific issues." }
   },
   {
     id: "d3-083",
@@ -1914,19 +1114,9 @@ export const d3Questions = [
     scenario: 4,
     importance: "Understanding when to switch from refinement within a session to updating CLAUDE.md rules prevents recurring issues across sessions.",
     question: "A developer keeps correcting the same issue across multiple Claude Code sessions — Claude consistently generates class-based React components instead of functional components with hooks. What is the MOST effective long-term fix?",
-    choices: {
-      A: "Continue correcting Claude in each session — eventually it will learn the preference",
-      B: "Add a rule to CLAUDE.md or .claude/rules/ specifying 'Always use functional components with hooks, never class components'",
-      C: "File a bug report with Anthropic about Claude's React preferences",
-      D: "Create a custom command that always generates functional components"
-    },
+    choices: { A: "Create a custom command that always generates functional components", B: "Add a rule to CLAUDE.md or .claude/rules/ specifying 'Always use functional components with hooks, never class components'", C: "File a bug report with Anthropic about Claude's React preferences", D: "Continue correcting Claude in each session — eventually it will learn the preference" },
     correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code does not learn across sessions. Each session starts fresh. Correcting in every session is a waste of time.",
-      B: "CORRECT: When an issue recurs across sessions, it should be codified in CLAUDE.md or .claude/rules/ as a persistent instruction. This ensures the preference applies to every future session without requiring manual correction. This is the transition from iterative refinement to configuration.",
-      C: "INCORRECT: This isn't a bug — it's a preference that needs to be configured. Claude can generate both styles; the team just needs to specify their preference.",
-      D: "INCORRECT: A custom command is too narrow — it only applies when the command is explicitly invoked. A CLAUDE.md rule applies universally whenever React components are being generated."
-    }
+    explanations: { A: "INCORRECT: A custom command is too narrow — it only applies when the command is explicitly invoked. A CLAUDE.md rule applies universally whenever React components are being generated.", B: "CORRECT: When an issue recurs across sessions, it should be codified in CLAUDE.md or .claude/rules/ as a persistent instruction. This ensures the preference applies to every future session without requiring manual correction. This is the transition from iterative refinement to configuration.", C: "INCORRECT: This isn't a bug — it's a preference that needs to be configured. Claude can generate both styles; the team just needs to specify their preference.", D: "INCORRECT: Claude Code does not learn across sessions. Each session starts fresh. Correcting in every session is a waste of time." }
   },
 
   // ============================================================
@@ -1941,19 +1131,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "The -p / --print flag is the ONLY correct flag for non-interactive CI mode. Confusing it with --batch or environment variables is a critical enterprise mistake.",
     question: "A DevOps engineer is configuring Claude Code for automated PR review in GitHub Actions. The pipeline needs Claude Code to run non-interactively, process a prompt, output the result, and exit. Which invocation is correct?",
-    choices: {
-      A: "claude --batch 'Review this PR for security issues'",
-      B: "CLAUDE_HEADLESS=true claude 'Review this PR for security issues'",
-      C: "claude -p 'Review this PR for security issues'",
-      D: "claude --non-interactive 'Review this PR for security issues'"
-    },
+    choices: { A: "claude --non-interactive 'Review this PR for security issues'", B: "claude --batch 'Review this PR for security issues'", C: "claude -p 'Review this PR for security issues'", D: "CLAUDE_HEADLESS=true claude 'Review this PR for security issues'" },
     correct: "C",
-    explanations: {
-      A: "INCORRECT: There is no --batch flag in Claude Code. This is a common misconception, possibly confused with other CLI tools.",
-      B: "INCORRECT: There is no CLAUDE_HEADLESS environment variable. Claude Code's non-interactive mode is controlled by the -p/--print flag, not environment variables.",
-      C: "CORRECT: The -p (or --print) flag is the correct way to run Claude Code in non-interactive CI mode. It processes the given prompt, outputs the result to stdout, and exits — perfect for CI pipelines.",
-      D: "INCORRECT: There is no --non-interactive flag. The correct flag is -p or --print."
-    }
+    explanations: { A: "INCORRECT: There is no --non-interactive flag. The correct flag is -p or --print.", B: "INCORRECT: There is no --batch flag in Claude Code. This is a common misconception, possibly confused with other CLI tools.", C: "CORRECT: The -p (or --print) flag is the correct way to run Claude Code in non-interactive CI mode. It processes the given prompt, outputs the result to stdout, and exits — perfect for CI pipelines.", D: "INCORRECT: There is no CLAUDE_HEADLESS environment variable. Claude Code's non-interactive mode is controlled by the -p/--print flag, not environment variables." }
   },
   {
     id: "d3-085",
@@ -1987,19 +1167,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Session isolation in CI prevents cross-contamination between different automated tasks running in the same pipeline.",
     question: "A CI pipeline runs two Claude Code steps: (1) code review and (2) test generation. The team notices the test generation step sometimes references review comments from step 1 that shouldn't be in its context. What is the fix?",
-    choices: {
-      A: "Add --clear-context between the two steps",
-      B: "Run each step as a separate claude -p invocation, which creates isolated sessions automatically",
-      C: "Add --session-id with different IDs for each step",
-      D: "Set CLAUDE_ISOLATE=true for the test generation step"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no --clear-context flag in Claude Code.",
-      B: "CORRECT: Each separate claude -p invocation creates an independent session with its own context. Running code review and test generation as separate invocations ensures complete session isolation. No review context leaks into the test generation step.",
-      C: "INCORRECT: While session IDs can be used for session management, the simplest and most reliable approach for CI is separate invocations, which are inherently isolated.",
-      D: "INCORRECT: There is no CLAUDE_ISOLATE environment variable."
-    }
+    choices: { A: "Run each step as a separate claude -p invocation, which creates isolated sessions automatically", B: "Set CLAUDE_ISOLATE=true for the test generation step", C: "Add --clear-context between the two steps", D: "Add --session-id with different IDs for each step" },
+    correct: "A",
+    explanations: { A: "CORRECT: Each separate claude -p invocation creates an independent session with its own context. Running code review and test generation as separate invocations ensures complete session isolation. No review context leaks into the test generation step.", B: "INCORRECT: There is no CLAUDE_ISOLATE environment variable.", C: "INCORRECT: There is no --clear-context flag in Claude Code.", D: "INCORRECT: While session IDs can be used for session management, the simplest and most reliable approach for CI is separate invocations, which are inherently isolated." }
   },
   {
     id: "d3-087",
@@ -2010,19 +1180,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Including prior review findings in context prevents duplicate comments that annoy developers and reduce trust in automated review.",
     question: "A CI pipeline runs Claude Code for PR review on every push. After 3 pushes to the same PR, the review generates duplicate comments about the same issues. How should the pipeline be designed to avoid this?",
-    choices: {
-      A: "Store previous review comments and include them in the new review prompt with instructions to not repeat already-reported issues",
-      B: "Use --incremental flag to review only new changes since the last review",
-      C: "Check the PR comments API before posting to filter duplicates at the posting step",
-      D: "Use a persistent session ID across pushes so Claude remembers previous reviews"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: The recommended approach is to include prior review findings in the context of new review invocations. The pipeline should fetch previous review comments and include them in the prompt with instructions like 'The following issues have already been reported — do not comment on them again.' This prevents duplicate comments.",
-      B: "INCORRECT: There is no --incremental flag in Claude Code. Incremental review must be achieved by managing context explicitly.",
-      C: "INCORRECT: While post-processing deduplication could work, it's less efficient and may miss semantically similar but differently-worded duplicates. Preventing duplicates at the generation level (via context) is more reliable.",
-      D: "INCORRECT: Persistent sessions across separate CI runs are not a standard pattern. Each -p invocation is independent. Context management through the prompt is the correct approach."
-    }
+    choices: { A: "Check the PR comments API before posting to filter duplicates at the posting step", B: "Use a persistent session ID across pushes so Claude remembers previous reviews", C: "Use --incremental flag to review only new changes since the last review", D: "Store previous review comments and include them in the new review prompt with instructions to not repeat already-reported issues" },
+    correct: "D",
+    explanations: { A: "INCORRECT: While post-processing deduplication could work, it's less efficient and may miss semantically similar but differently-worded duplicates. Preventing duplicates at the generation level (via context) is more reliable.", B: "INCORRECT: Persistent sessions across separate CI runs are not a standard pattern. Each -p invocation is independent. Context management through the prompt is the correct approach.", C: "INCORRECT: There is no --incremental flag in Claude Code. Incremental review must be achieved by managing context explicitly.", D: "CORRECT: The recommended approach is to include prior review findings in the context of new review invocations. The pipeline should fetch previous review comments and include them in the prompt with instructions like 'The following issues have already been reported — do not comment on them again.' This prevents duplicate comments." }
   },
   {
     id: "d3-088",
@@ -2033,19 +1193,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "CLAUDE.md applying in CI mode means teams can configure review standards that apply both locally and in CI — a critical consistency feature.",
     question: "A team wants their CI Claude Code reviews to follow the same coding standards as local development. They have comprehensive standards in their project CLAUDE.md. Do these standards apply when Claude Code runs with -p in CI?",
-    choices: {
-      A: "No — CI mode uses a separate configuration system for automated workflows",
-      B: "Yes — CLAUDE.md files still apply when Claude Code runs in CI mode with the -p flag",
-      C: "Only if the CI configuration explicitly references the CLAUDE.md with a --config flag",
-      D: "Partially — only .claude/rules/ files apply in CI, not the root CLAUDE.md"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: CI mode does NOT use a separate configuration system. It uses the same CLAUDE.md and rules infrastructure as interactive mode.",
-      B: "CORRECT: CLAUDE.md files still apply in CI mode. When Claude Code runs with -p, it loads the project's CLAUDE.md, .claude/rules/, and any other configuration just as it would in an interactive session. This means review standards are consistent between local and CI usage.",
-      C: "INCORRECT: No --config flag is needed. CLAUDE.md is loaded automatically based on the working directory, just like in interactive mode.",
-      D: "INCORRECT: Both root CLAUDE.md and .claude/rules/ files apply in CI. There is no selective loading based on CI vs interactive mode."
-    }
+    choices: { A: "Yes — CLAUDE.md files still apply when Claude Code runs in CI mode with the -p flag", B: "Partially — only .claude/rules/ files apply in CI, not the root CLAUDE.md", C: "Only if the CI configuration explicitly references the CLAUDE.md with a --config flag", D: "No — CI mode uses a separate configuration system for automated workflows" },
+    correct: "A",
+    explanations: { A: "CORRECT: CLAUDE.md files still apply in CI mode. When Claude Code runs with -p, it loads the project's CLAUDE.md, .claude/rules/, and any other configuration just as it would in an interactive session. This means review standards are consistent between local and CI usage.", B: "INCORRECT: Both root CLAUDE.md and .claude/rules/ files apply in CI. There is no selective loading based on CI vs interactive mode.", C: "INCORRECT: No --config flag is needed. CLAUDE.md is loaded automatically based on the working directory, just like in interactive mode.", D: "INCORRECT: CI mode does NOT use a separate configuration system. It uses the same CLAUDE.md and rules infrastructure as interactive mode." }
   },
   {
     id: "d3-089",
@@ -2056,19 +1206,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Enterprise CI pipelines need to handle Claude Code failures gracefully — understanding exit codes and error handling is critical for reliable automation.",
     question: "A CI pipeline runs Claude Code for automated code review. The pipeline needs to: (1) fail the build if critical security issues are found, (2) post warnings for non-critical issues, and (3) pass the build if no issues are found. How should this be architected?",
-    choices: {
-      A: "Use Claude Code's built-in --severity-threshold flag to control exit codes based on finding severity",
-      B: "Use --output-format json with a schema that includes severity levels, then parse the JSON output with a script that sets the exit code based on findings",
-      C: "Run three separate Claude Code invocations, each checking for a different severity level",
-      D: "Use Claude Code's --exit-code-on-findings flag combined with severity levels in CLAUDE.md"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no --severity-threshold flag in Claude Code. Severity-based exit codes must be implemented in the pipeline logic.",
-      B: "CORRECT: The reliable approach is to use --output-format json with a schema that includes severity categorization, then use a pipeline script to parse the JSON output and determine the appropriate action (fail build for critical, post warnings for non-critical, pass for clean). This separates Claude's analysis from the build decision logic.",
-      C: "INCORRECT: Running three separate invocations is wasteful and may produce inconsistent findings. A single invocation with structured output is more efficient.",
-      D: "INCORRECT: There is no --exit-code-on-findings flag. Exit code control must be handled by the pipeline script."
-    }
+    choices: { A: "Use --output-format json with a schema that includes severity levels, then parse the JSON output with a script that sets the exit code based on findings", B: "Use Claude Code's built-in --severity-threshold flag to control exit codes based on finding severity", C: "Run three separate Claude Code invocations, each checking for a different severity level", D: "Use Claude Code's --exit-code-on-findings flag combined with severity levels in CLAUDE.md" },
+    correct: "A",
+    explanations: { A: "CORRECT: The reliable approach is to use --output-format json with a schema that includes severity categorization, then use a pipeline script to parse the JSON output and determine the appropriate action (fail build for critical, post warnings for non-critical, pass for clean). This separates Claude's analysis from the build decision logic.", B: "INCORRECT: There is no --severity-threshold flag in Claude Code. Severity-based exit codes must be implemented in the pipeline logic.", C: "INCORRECT: Running three separate invocations is wasteful and may produce inconsistent findings. A single invocation with structured output is more efficient.", D: "INCORRECT: There is no --exit-code-on-findings flag. Exit code control must be handled by the pipeline script." }
   },
   {
     id: "d3-090",
@@ -2079,19 +1219,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding how to pass PR context to Claude Code in CI enables more accurate automated reviews.",
     question: "A CI pipeline needs Claude Code to review only the changed files in a PR, not the entire codebase. How should the pipeline provide this context?",
-    choices: {
-      A: "Claude Code automatically detects PR changes when running in a CI environment with PR context",
-      B: "Use git diff to generate the changeset and pipe it as input to the -p prompt",
-      C: "Use --pr-diff flag to point Claude Code at the PR number",
-      D: "Set PR_NUMBER environment variable and Claude Code will fetch the diff automatically"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code doesn't automatically detect PR context from the CI environment. The pipeline must explicitly provide the changeset.",
-      B: "CORRECT: The standard approach is to use git diff (e.g., git diff origin/main...HEAD) to generate the changeset and include it in the prompt. This can be piped or included in the prompt string: claude -p \"Review these changes: $(git diff origin/main...HEAD)\".",
-      C: "INCORRECT: There is no --pr-diff flag in Claude Code. PR context must be provided explicitly through the prompt.",
-      D: "INCORRECT: Claude Code doesn't automatically read PR_NUMBER or any CI-specific environment variables to fetch diffs."
-    }
+    choices: { A: "Use --pr-diff flag to point Claude Code at the PR number", B: "Set PR_NUMBER environment variable and Claude Code will fetch the diff automatically", C: "Use git diff to generate the changeset and pipe it as input to the -p prompt", D: "Claude Code automatically detects PR changes when running in a CI environment with PR context" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There is no --pr-diff flag in Claude Code. PR context must be provided explicitly through the prompt.", B: "INCORRECT: Claude Code doesn't automatically read PR_NUMBER or any CI-specific environment variables to fetch diffs.", C: "CORRECT: The standard approach is to use git diff (e.g., git diff origin/main...HEAD) to generate the changeset and include it in the prompt. This can be piped or included in the prompt string: claude -p \"Review these changes: $(git diff origin/main...HEAD)\".", D: "INCORRECT: Claude Code doesn't automatically detect PR context from the CI environment. The pipeline must explicitly provide the changeset." }
   },
   {
     id: "d3-091",
@@ -2102,19 +1232,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Enterprise CI/CD pipelines need cost control and timeout management when using Claude Code to prevent runaway API usage.",
     question: "A CI pipeline running Claude Code for automated review occasionally takes 15+ minutes, blocking the deployment pipeline. What is the BEST approach to manage execution time?",
-    choices: {
-      A: "Set the CI job timeout and let the CI system kill the Claude Code process if it exceeds the limit",
-      B: "Use --max-turns to limit the number of conversation turns Claude Code can take in non-interactive mode",
-      C: "Add 'Be brief and concise' to CLAUDE.md to reduce response generation time",
-      D: "Use --timeout flag to set a maximum execution time in milliseconds"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: While CI job timeouts work as a safety net, killing the process doesn't produce useful partial output. It's better to limit Claude Code's work internally.",
-      B: "CORRECT: The --max-turns flag limits the number of agentic turns Claude Code can take in non-interactive mode. This prevents runaway sessions where Claude keeps iterating. Combined with a focused prompt, this controls execution time while still producing useful output.",
-      C: "INCORRECT: Prompt-based brevity instructions don't reliably control execution time. The issue is the number of agentic turns, not response verbosity.",
-      D: "INCORRECT: While a timeout mechanism exists, --max-turns is the more precise control because it limits the work done rather than arbitrarily cutting off execution, potentially mid-operation."
-    }
+    choices: { A: "Set the CI job timeout and let the CI system kill the Claude Code process if it exceeds the limit", B: "Use --timeout flag to set a maximum execution time in milliseconds", C: "Use --max-turns to limit the number of conversation turns Claude Code can take in non-interactive mode", D: "Add 'Be brief and concise' to CLAUDE.md to reduce response generation time" },
+    correct: "C",
+    explanations: { A: "INCORRECT: While CI job timeouts work as a safety net, killing the process doesn't produce useful partial output. It's better to limit Claude Code's work internally.", B: "INCORRECT: While a timeout mechanism exists, --max-turns is the more precise control because it limits the work done rather than arbitrarily cutting off execution, potentially mid-operation.", C: "CORRECT: The --max-turns flag limits the number of agentic turns Claude Code can take in non-interactive mode. This prevents runaway sessions where Claude keeps iterating. Combined with a focused prompt, this controls execution time while still producing useful output.", D: "INCORRECT: Prompt-based brevity instructions don't reliably control execution time. The issue is the number of agentic turns, not response verbosity." }
   },
   {
     id: "d3-092",
@@ -2125,19 +1245,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Running multiple Claude Code instances in parallel CI pipelines requires understanding session isolation to prevent interference.",
     question: "An enterprise CI system runs 20 parallel PR review pipelines, each using Claude Code. A team member worries about interference between parallel instances. Is this a valid concern?",
-    choices: {
-      A: "Yes — parallel instances may share a local cache and produce inconsistent results",
-      B: "No — each claude -p invocation runs as a completely independent process with its own context; parallel execution is safe",
-      C: "Yes — parallel instances may hit API rate limits causing some reviews to fail",
-      D: "No — but only if each instance uses a unique --session-id to prevent collisions"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Claude Code -p invocations don't share a local cache that would cause interference. Each invocation is independent.",
-      B: "CORRECT: Each claude -p invocation is a completely independent process with its own context, conversation state, and API session. Parallel execution is safe — instances don't interfere with each other. The main practical concern would be API rate limits, but that's an infrastructure issue, not a session isolation issue.",
-      C: "INCORRECT: While rate limits are a practical consideration for capacity planning, they're not a session interference issue. Rate limits cause failures, not incorrect results. The question asks about interference (correctness), not reliability.",
-      D: "INCORRECT: No --session-id is needed for isolation. Each -p invocation is inherently isolated as a separate process."
-    }
+    choices: { A: "No — each claude -p invocation runs as a completely independent process with its own context; parallel execution is safe", B: "Yes — parallel instances may hit API rate limits causing some reviews to fail", C: "No — but only if each instance uses a unique --session-id to prevent collisions", D: "Yes — parallel instances may share a local cache and produce inconsistent results" },
+    correct: "A",
+    explanations: { A: "CORRECT: Each claude -p invocation is a completely independent process with its own context, conversation state, and API session. Parallel execution is safe — instances don't interfere with each other. The main practical concern would be API rate limits, but that's an infrastructure issue, not a session isolation issue.", B: "INCORRECT: While rate limits are a practical consideration for capacity planning, they're not a session interference issue. Rate limits cause failures, not incorrect results. The question asks about interference (correctness), not reliability.", C: "INCORRECT: No --session-id is needed for isolation. Each -p invocation is inherently isolated as a separate process.", D: "INCORRECT: Claude Code -p invocations don't share a local cache that would cause interference. Each invocation is independent." }
   },
   {
     id: "d3-093",
@@ -2148,19 +1258,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding how to integrate Claude Code output with existing CI tools (GitHub PR comments, Slack notifications) is critical for enterprise adoption.",
     question: "A CI pipeline uses Claude Code to generate a code review summary. The team wants this summary posted as a PR comment on GitHub. What is the recommended approach?",
-    choices: {
-      A: "Use Claude Code's built-in --post-to-github flag to automatically create a PR comment",
-      B: "Capture Claude Code's stdout output from -p mode and use the GitHub API (gh pr comment) to post it",
-      C: "Configure a Claude Code webhook that sends results to GitHub automatically",
-      D: "Use Claude Code's GitHub integration plugin to post comments directly"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no --post-to-github flag. Claude Code outputs to stdout; posting to GitHub is handled by the pipeline.",
-      B: "CORRECT: The standard CI pattern is to capture Claude Code's stdout output (from -p mode) into a variable, then use the GitHub CLI (gh pr comment) or GitHub API to post it as a PR comment. Claude Code handles the analysis; the pipeline handles the delivery.",
-      C: "INCORRECT: Claude Code doesn't have a webhook system for result delivery. Output goes to stdout for the pipeline to handle.",
-      D: "INCORRECT: There is no built-in GitHub integration plugin for posting comments. This is handled by the CI pipeline script."
-    }
+    choices: { A: "Capture Claude Code's stdout output from -p mode and use the GitHub API (gh pr comment) to post it", B: "Configure a Claude Code webhook that sends results to GitHub automatically", C: "Use Claude Code's GitHub integration plugin to post comments directly", D: "Use Claude Code's built-in --post-to-github flag to automatically create a PR comment" },
+    correct: "A",
+    explanations: { A: "CORRECT: The standard CI pattern is to capture Claude Code's stdout output (from -p mode) into a variable, then use the GitHub CLI (gh pr comment) or GitHub API to post it as a PR comment. Claude Code handles the analysis; the pipeline handles the delivery.", B: "INCORRECT: Claude Code doesn't have a webhook system for result delivery. Output goes to stdout for the pipeline to handle.", C: "INCORRECT: There is no built-in GitHub integration plugin for posting comments. This is handled by the CI pipeline script.", D: "INCORRECT: There is no --post-to-github flag. Claude Code outputs to stdout; posting to GitHub is handled by the pipeline." }
   },
   {
     id: "d3-094",
@@ -2171,19 +1271,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Authentication and API key management in CI is a critical security consideration for enterprise Claude Code deployments.",
     question: "A security-conscious enterprise needs to configure Claude Code API authentication in their CI/CD pipeline. Which approach follows security best practices?",
-    choices: {
-      A: "Commit the API key in the project's .claude/settings.json file for consistent authentication",
-      B: "Store the API key as a CI secret/environment variable (ANTHROPIC_API_KEY) that is injected at runtime and never committed to source control",
-      C: "Use a shared team API key stored in the project's CLAUDE.md file",
-      D: "Generate a new API key for each CI run using Claude Code's key rotation feature"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: NEVER commit API keys to version control. .claude/settings.json is tracked in git, making this a critical security vulnerability.",
-      B: "CORRECT: The API key should be stored as a CI secret (e.g., GitHub Actions secret, GitLab CI variable) and injected as the ANTHROPIC_API_KEY environment variable at runtime. This keeps the key out of source control and limits exposure.",
-      C: "INCORRECT: NEVER put API keys in CLAUDE.md or any version-controlled file. This exposes the key to everyone with repo access.",
-      D: "INCORRECT: Claude Code doesn't have a built-in key rotation feature for CI runs. Key management is handled through the CI platform's secrets management."
-    }
+    choices: { A: "Store the API key as a CI secret/environment variable (ANTHROPIC_API_KEY) that is injected at runtime and never committed to source control", B: "Use a shared team API key stored in the project's CLAUDE.md file", C: "Generate a new API key for each CI run using Claude Code's key rotation feature", D: "Commit the API key in the project's .claude/settings.json file for consistent authentication" },
+    correct: "A",
+    explanations: { A: "CORRECT: The API key should be stored as a CI secret (e.g., GitHub Actions secret, GitLab CI variable) and injected as the ANTHROPIC_API_KEY environment variable at runtime. This keeps the key out of source control and limits exposure.", B: "INCORRECT: NEVER put API keys in CLAUDE.md or any version-controlled file. This exposes the key to everyone with repo access.", C: "INCORRECT: Claude Code doesn't have a built-in key rotation feature for CI runs. Key management is handled through the CI platform's secrets management.", D: "INCORRECT: NEVER commit API keys to version control. .claude/settings.json is tracked in git, making this a critical security vulnerability." }
   },
   {
     id: "d3-095",
@@ -2194,19 +1284,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding how to use Claude Code for automated test generation in CI enables shift-left testing strategies in enterprise pipelines.",
     question: "An enterprise CI pipeline should: (1) detect untested code paths in a PR, (2) generate tests for those paths, (3) run the generated tests, and (4) commit them if they pass. What is the CORRECT Claude Code architecture?",
-    choices: {
-      A: "A single claude -p invocation that does all four steps, using its agentic capabilities to run tests and commit",
-      B: "Four separate pipeline steps: coverage analysis → claude -p for test generation → test runner → conditional git commit",
-      C: "Two claude -p invocations: one to detect and generate tests, one to validate and commit",
-      D: "A Claude Code skill that handles the entire workflow with allowed-tools including git and test runner"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Giving a single Claude Code invocation git commit access in CI is risky. Each step should have appropriate permissions and the pipeline should control the flow.",
-      B: "CORRECT: The most reliable architecture separates concerns: (1) coverage analysis identifies untested paths, (2) Claude Code generates tests for those specific paths, (3) the CI test runner validates the generated tests independently, (4) the pipeline conditionally commits if tests pass. This gives the pipeline control over each step with appropriate permissions.",
-      C: "INCORRECT: Two invocations still mix concerns. The coverage analysis and test running should be separate pipeline steps with their own tooling.",
-      D: "INCORRECT: A skill with git access running in CI creates security concerns. Pipeline steps should have minimal permissions."
-    }
+    choices: { A: "Two claude -p invocations: one to detect and generate tests, one to validate and commit", B: "A single claude -p invocation that does all four steps, using its agentic capabilities to run tests and commit", C: "A Claude Code skill that handles the entire workflow with allowed-tools including git and test runner", D: "Four separate pipeline steps: coverage analysis → claude -p for test generation → test runner → conditional git commit" },
+    correct: "D",
+    explanations: { A: "INCORRECT: Two invocations still mix concerns. The coverage analysis and test running should be separate pipeline steps with their own tooling.", B: "INCORRECT: Giving a single Claude Code invocation git commit access in CI is risky. Each step should have appropriate permissions and the pipeline should control the flow.", C: "INCORRECT: A skill with git access running in CI creates security concerns. Pipeline steps should have minimal permissions.", D: "CORRECT: The most reliable architecture separates concerns: (1) coverage analysis identifies untested paths, (2) Claude Code generates tests for those specific paths, (3) the CI test runner validates the generated tests independently, (4) the pipeline conditionally commits if tests pass. This gives the pipeline control over each step with appropriate permissions." }
   },
   {
     id: "d3-096",
@@ -2217,19 +1297,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding stdin piping to Claude Code enables flexible CI integrations where context comes from other pipeline steps.",
     question: "A CI pipeline needs to pass a large diff (5000+ lines) as context to Claude Code for review. The diff exceeds the shell command argument length limit. How should the pipeline provide this input?",
-    choices: {
-      A: "Save the diff to a file and use --input-file diff.txt to reference it",
-      B: "Pipe the diff via stdin: git diff | claude -p 'Review these changes'",
-      C: "Split the diff into chunks and run multiple Claude Code invocations",
-      D: "Use --context-file diff.txt to load the diff as additional context"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: There is no --input-file flag in Claude Code for file-based input.",
-      B: "CORRECT: Claude Code accepts stdin input when used with -p. Piping the diff via stdin avoids shell argument length limits: git diff | claude -p 'Review these changes'. The piped content becomes part of the context available to Claude.",
-      C: "INCORRECT: Splitting the diff into chunks loses the holistic view needed for comprehensive review. Cross-chunk dependencies would be missed.",
-      D: "INCORRECT: There is no --context-file flag. The standard approach is stdin piping."
-    }
+    choices: { A: "Use --context-file diff.txt to load the diff as additional context", B: "Split the diff into chunks and run multiple Claude Code invocations", C: "Save the diff to a file and use --input-file diff.txt to reference it", D: "Pipe the diff via stdin: git diff | claude -p 'Review these changes'" },
+    correct: "D",
+    explanations: { A: "INCORRECT: There is no --context-file flag. The standard approach is stdin piping.", B: "INCORRECT: Splitting the diff into chunks loses the holistic view needed for comprehensive review. Cross-chunk dependencies would be missed.", C: "INCORRECT: There is no --input-file flag in Claude Code for file-based input.", D: "CORRECT: Claude Code accepts stdin input when used with -p. Piping the diff via stdin avoids shell argument length limits: git diff | claude -p 'Review these changes'. The piped content becomes part of the context available to Claude." }
   },
   {
     id: "d3-097",
@@ -2240,19 +1310,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Enterprise CI pipelines need to differentiate between Claude Code tool errors and genuine review findings to avoid false pipeline failures.",
     question: "A CI pipeline using Claude Code for review intermittently fails with exit code 1. The team can't distinguish between 'Claude found critical issues' and 'Claude Code encountered an API error.' How should they differentiate?",
-    choices: {
-      A: "Use --output-format json to capture structured output; API errors produce error JSON while findings produce result JSON with different shapes",
-      B: "Check stderr for API errors and stdout for review findings — Claude Code separates them",
-      C: "Use --exit-code-map to define custom exit codes for different failure types",
-      D: "Wrap the invocation in try/catch and check the error message string"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Using --output-format json provides structured output that the pipeline can parse. API errors and successful results have distinguishable structures. The pipeline script can check whether the JSON output is a review result (with findings) or an error object, and handle each case appropriately.",
-      B: "INCORRECT: While stderr may contain error information, relying on stream separation alone isn't robust for structured error handling.",
-      C: "INCORRECT: There is no --exit-code-map flag for custom exit code mapping.",
-      D: "INCORRECT: String-matching error messages is fragile and not suitable for production CI pipelines."
-    }
+    choices: { A: "Check stderr for API errors and stdout for review findings — Claude Code separates them", B: "Use --exit-code-map to define custom exit codes for different failure types", C: "Wrap the invocation in try/catch and check the error message string", D: "Use --output-format json to capture structured output; API errors produce error JSON while findings produce result JSON with different shapes" },
+    correct: "D",
+    explanations: { A: "INCORRECT: While stderr may contain error information, relying on stream separation alone isn't robust for structured error handling.", B: "INCORRECT: There is no --exit-code-map flag for custom exit code mapping.", C: "INCORRECT: String-matching error messages is fragile and not suitable for production CI pipelines.", D: "CORRECT: Using --output-format json provides structured output that the pipeline can parse. API errors and successful results have distinguishable structures. The pipeline script can check whether the JSON output is a review result (with findings) or an error object, and handle each case appropriately." }
   },
   {
     id: "d3-098",
@@ -2263,19 +1323,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Multi-stage CI pipelines with Claude Code need careful design to maintain context relevance without cross-contamination between stages.",
     question: "An enterprise CI pipeline has three sequential Claude Code stages for a monorepo PR: (1) backend review, (2) frontend review, (3) infrastructure review. Each stage should focus ONLY on its domain. How should context be managed?",
-    choices: {
-      A: "Run all three as separate -p invocations with domain-specific prompts that include only the relevant file diffs",
-      B: "Run a single -p invocation with a multi-domain prompt and let Claude Code handle separation",
-      C: "Use --context-domain backend, --context-domain frontend, --context-domain infra flags respectively",
-      D: "Run all three in the same session using /review-backend, /review-frontend, /review-infra commands"
-    },
-    correct: "A",
-    explanations: {
-      A: "CORRECT: Running separate -p invocations for each domain provides clean isolation. Each invocation receives only the relevant file diffs (e.g., backend review gets only *.go and *.sql changes, frontend gets only *.tsx and *.css changes). This prevents cross-domain noise and ensures focused reviews.",
-      B: "INCORRECT: A single invocation reviewing all domains may produce confused results where backend concerns bleed into frontend review. Separation of concerns requires separate invocations.",
-      C: "INCORRECT: There are no --context-domain flags in Claude Code. Domain separation must be achieved through separate invocations with filtered input.",
-      D: "INCORRECT: Running multiple commands in the same session shares context between stages, defeating the isolation purpose."
-    }
+    choices: { A: "Use --context-domain backend, --context-domain frontend, --context-domain infra flags respectively", B: "Run a single -p invocation with a multi-domain prompt and let Claude Code handle separation", C: "Run all three as separate -p invocations with domain-specific prompts that include only the relevant file diffs", D: "Run all three in the same session using /review-backend, /review-frontend, /review-infra commands" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There are no --context-domain flags in Claude Code. Domain separation must be achieved through separate invocations with filtered input.", B: "INCORRECT: A single invocation reviewing all domains may produce confused results where backend concerns bleed into frontend review. Separation of concerns requires separate invocations.", C: "CORRECT: Running separate -p invocations for each domain provides clean isolation. Each invocation receives only the relevant file diffs (e.g., backend review gets only *.go and *.sql changes, frontend gets only *.tsx and *.css changes). This prevents cross-domain noise and ensures focused reviews.", D: "INCORRECT: Running multiple commands in the same session shares context between stages, defeating the isolation purpose." }
   },
   {
     id: "d3-099",
@@ -2286,19 +1336,9 @@ export const d3Questions = [
     scenario: 5,
     importance: "Understanding how CLAUDE.md rules specifically enhance CI reviews ensures teams leverage their configuration investment in automated pipelines.",
     question: "A team has a .claude/rules/security-review.md with paths: ['**/*.ts'] containing detailed security review criteria. When their CI pipeline runs 'claude -p \"Review this PR\"' and the PR contains TypeScript files, what happens?",
-    choices: {
-      A: "The security review rules are ignored in CI because path-specific rules only work in interactive mode",
-      B: "The security review rules automatically load when Claude Code processes the TypeScript files, adding security criteria to the review",
-      C: "The security review rules must be explicitly referenced in the -p prompt to be loaded",
-      D: "The security review rules load but are applied with lower priority than the CI prompt instructions"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Path-specific rules work in CI mode just as they do in interactive mode. The -p flag doesn't disable rule loading.",
-      B: "CORRECT: Path-specific rules load automatically based on the files being processed. When Claude Code reviews TypeScript files in CI, the security-review.md rules (with paths: ['**/*.ts']) automatically load and apply their security criteria to the review.",
-      C: "INCORRECT: Path-specific rules don't need explicit references. They load automatically based on file pattern matching.",
-      D: "INCORRECT: There is no priority system between CI prompt and path-specific rules. Both apply simultaneously as merged context."
-    }
+    choices: { A: "The security review rules load but are applied with lower priority than the CI prompt instructions", B: "The security review rules are ignored in CI because path-specific rules only work in interactive mode", C: "The security review rules automatically load when Claude Code processes the TypeScript files, adding security criteria to the review", D: "The security review rules must be explicitly referenced in the -p prompt to be loaded" },
+    correct: "C",
+    explanations: { A: "INCORRECT: There is no priority system between CI prompt and path-specific rules. Both apply simultaneously as merged context.", B: "INCORRECT: Path-specific rules work in CI mode just as they do in interactive mode. The -p flag doesn't disable rule loading.", C: "CORRECT: Path-specific rules load automatically based on the files being processed. When Claude Code reviews TypeScript files in CI, the security-review.md rules (with paths: ['**/*.ts']) automatically load and apply their security criteria to the review.", D: "INCORRECT: Path-specific rules don't need explicit references. They load automatically based on file pattern matching." }
   },
   {
     id: "d3-100",
@@ -2309,18 +1349,8 @@ export const d3Questions = [
     scenario: 5,
     importance: "Enterprise teams need to understand how to use Claude Code for automated code generation in CI while maintaining safety guardrails.",
     question: "An enterprise CI pipeline uses Claude Code to auto-fix linting issues and commit the fixes. The team wants to ensure Claude Code only modifies files that the linter flagged — not make any other 'improvements.' What is the SAFEST configuration?",
-    choices: {
-      A: "Add 'Only fix linting issues, do not make other changes' to the CLAUDE.md and trust the instruction",
-      B: "Provide the exact list of flagged files and specific lint errors in the prompt, then use a post-step that verifies only those files were modified via git diff",
-      C: "Use --allow-files flag with the list of files to restrict Claude Code's write access",
-      D: "Run Claude Code in a Docker container with read-only filesystem except for the flagged files"
-    },
-    correct: "B",
-    explanations: {
-      A: "INCORRECT: Prompt-based restrictions are not reliable guardrails for CI. Claude might still make 'helpful' improvements beyond linting fixes.",
-      B: "CORRECT: The defense-in-depth approach provides the flagged files and specific errors in the prompt (guiding Claude's focus), then verifies the output with a post-step that checks git diff to ensure only the expected files were modified. If unexpected files changed, the step fails. This combines guidance with verification.",
-      C: "INCORRECT: There is no --allow-files flag in Claude Code for restricting file write access.",
-      D: "INCORRECT: While Docker isolation is theoretically possible, it's over-engineered for this use case. A git diff verification step is simpler and more practical."
-    }
+    choices: { A: "Run Claude Code in a Docker container with read-only filesystem except for the flagged files", B: "Add 'Only fix linting issues, do not make other changes' to the CLAUDE.md and trust the instruction", C: "Provide the exact list of flagged files and specific lint errors in the prompt, then use a post-step that verifies only those files were modified via git diff", D: "Use --allow-files flag with the list of files to restrict Claude Code's write access" },
+    correct: "C",
+    explanations: { A: "INCORRECT: While Docker isolation is theoretically possible, it's over-engineered for this use case. A git diff verification step is simpler and more practical.", B: "INCORRECT: Prompt-based restrictions are not reliable guardrails for CI. Claude might still make 'helpful' improvements beyond linting fixes.", C: "CORRECT: The defense-in-depth approach provides the flagged files and specific errors in the prompt (guiding Claude's focus), then verifies the output with a post-step that checks git diff to ensure only the expected files were modified. If unexpected files changed, the step fails. This combines guidance with verification.", D: "INCORRECT: There is no --allow-files flag in Claude Code for restricting file write access." }
   }
 ];
