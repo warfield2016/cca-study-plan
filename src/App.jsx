@@ -1045,6 +1045,7 @@ export default function App() {
     { id: "rules", label: "Decision Rules" },
     { id: "cheat", label: "Cheat Sheet" },
     { id: "quiz", label: "Quiz" },
+    { id: "cli", label: "CLI Guide" },
   ];
 
   const s = {
@@ -1229,6 +1230,7 @@ export default function App() {
         {tab === "rules" && <RulesTab rules={RULES} />}
         {tab === "cheat" && <CheatSheetTab data={CHEAT_SHEET} />}
         {tab === "quiz" && <QuizEngine userEmail={userEmail} />}
+        {tab === "cli" && <CLIGuideTab />}
       </div>
 
       <div style={{
@@ -2267,6 +2269,201 @@ function RulesTab({ rules }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ─── CLIGuideTab ─── */
+const CLI_GUIDE = [
+  {
+    title: "Why switch to the terminal?",
+    content: [
+      "Most of what the CCA exam tests — agentic loops, hooks, MCP, CLAUDE.md hierarchy, path-specific rules — happens in the CLI and the Agent SDK, not the desktop app.",
+      "The desktop app is great for chatting. But when you need hooks, skills, subagents, session forking, or CI/CD integration, you need the terminal.",
+      "Your Max subscription covers both. You're not paying extra — just changing the interface.",
+    ],
+  },
+  {
+    title: "Step 1 — Pick a terminal",
+    content: [
+      "macOS Terminal.app works fine out of the box. If you want something nicer:",
+      "iTerm2 — free, mature, supports image pasting. Install: brew install --cask iterm2",
+      "Warp — modern and fast. Install: brew install --cask warp",
+      "Ghostty — lightweight and native. Install: brew install --cask ghostty",
+      "Start with Terminal.app if you're unsure. You can always switch later.",
+    ],
+  },
+  {
+    title: "Step 2 — Install the CLI",
+    content: [
+      "The recommended install method (2026) is the native installer or Homebrew:",
+      "Option 1 (recommended): curl -fsSL https://claude.ai/install.sh | bash",
+      "Option 2 (Homebrew): brew install --cask claude-code",
+      "Verify it works: claude --version",
+      "The npm install method (npm install -g @anthropic-ai/claude-code) is deprecated.",
+    ],
+  },
+  {
+    title: "Step 3 — Sign in",
+    content: [
+      "Navigate to any project directory and run: claude",
+      "A browser window opens for OAuth sign-in. Use the same account that holds your Max subscription.",
+      "No API key needed. No separate payment. Your Max usage limits apply to the CLI automatically.",
+    ],
+  },
+  {
+    title: "Step 4 — Essential slash commands",
+    commands: [
+      { cmd: "/help", desc: "Lists every available command. Read this once." },
+      { cmd: "/clear", desc: "Clears the conversation. Fresh start." },
+      { cmd: "/compact", desc: "Summarises the conversation to reclaim context. Use at ~80% capacity." },
+      { cmd: "/resume", desc: "Resumes a prior named session." },
+      { cmd: "/model", desc: "Switches between available models." },
+      { cmd: "/tasks", desc: "Lists background tasks." },
+      { cmd: "/config", desc: "Adjusts settings for this session." },
+      { cmd: "/init", desc: "Creates a CLAUDE.md from the current project." },
+    ],
+  },
+  {
+    title: "Step 5 — Desktop habits → terminal equivalents",
+    translations: [
+      { desktop: "Clicked 'New chat'", terminal: "/clear (or quit and re-run claude)" },
+      { desktop: "Attached a file", terminal: "Just mention the file path — it gets read automatically" },
+      { desktop: "Dragged in a screenshot", terminal: "Paste the image (iTerm2, Warp support this) or mention the file path" },
+      { desktop: "Used the settings menu", terminal: "Edit ~/.claude/settings.json or .claude/settings.json in your project" },
+      { desktop: "Saved custom instructions", terminal: "Create CLAUDE.md at the project root — same purpose, version-controllable" },
+      { desktop: "Used Projects with context", terminal: "Use CLAUDE.md + .claude/rules/ with glob patterns" },
+    ],
+  },
+  {
+    title: "Step 6 — Set up your first CLAUDE.md",
+    content: [
+      "Inside any project directory, create a CLAUDE.md file:",
+      "# Project context",
+      "This is a [describe project] using [stack].",
+      "",
+      "## Conventions",
+      "- Use [naming convention]",
+      "- Tests live in [path]",
+      "- Don't modify [file/dir] without asking",
+      "",
+      "Then run claude and ask: 'What conventions should you follow in this project?'",
+      "If it reads them back, you've set up what the desktop app's custom instructions did — but in a file you own and can check into git.",
+    ],
+  },
+  {
+    title: "Antigravity (optional — Path B)",
+    content: [
+      "Google Antigravity is a free agent-first IDE that supports multiple models including Sonnet 4.6 and Opus 4.6.",
+      "Download from antigravity.google for macOS. Import your VS Code or Cursor settings on first launch.",
+      "Install the agy CLI tool so you can open projects with: agy .",
+      "Use Agent-assisted mode (recommended) — handles safe automations, asks for risky ones.",
+      "Open the integrated terminal (View → Terminal) and run claude there. You get two agent surfaces side by side.",
+      "Use Antigravity's agents for inline editing and quick refactors. Use the CLI for longer sessions, hooks, skills, and MCP.",
+    ],
+  },
+  {
+    title: "Common gotchas",
+    content: [
+      "'command not found' after installing — restart your terminal or run: source ~/.zshrc",
+      "Pasted images don't work — use iTerm2, Warp, or Ghostty. Terminal.app doesn't support image pasting.",
+      "CLI feels slower than the desktop app — same speed, different rendering. The CLI streams character by character; the desktop app buffers.",
+      "Context runs out faster — the desktop app does aggressive auto-compaction. In the CLI, you control it with /compact. Run it when the bar shows >80%.",
+      "Not sure which model you're using — /model tells you.",
+    ],
+  },
+  {
+    title: "7-day onboarding plan",
+    content: [
+      "Day 1 — Install the CLI, run claude --version, open a toy project, have one conversation. Don't do anything important yet.",
+      "Day 2 — Create a CLAUDE.md in one of your real projects. Have it follow your conventions.",
+      "Day 3 — Learn /compact and /clear. Use both at least once today.",
+      "Day 4 — Try .claude/commands/ — create one custom slash command for a repetitive task.",
+      "Day 5 — Try a hook. Add a PostToolUse hook in .claude/settings.json that echoes a message after file edits. This is heavily tested on the exam.",
+      "Day 6 — Install Antigravity if you want Path B. Otherwise, spend today in the terminal and notice what you miss from the desktop app.",
+      "Day 7 — Decide: terminal, Antigravity, or keep the desktop app for some things? All three are fine. Many people keep the desktop app for quick chats and use the CLI for coding.",
+    ],
+  },
+];
+
+function CLIGuideTab() {
+  const [openIdx, setOpenIdx] = useState(0);
+  return (
+    <div>
+      <p style={{ fontSize: 16, color: "var(--text-body)", marginTop: 0, marginBottom: 24, lineHeight: 1.7 }}>
+        A step-by-step guide to switching from the desktop app to the terminal — where hooks, skills, subagents, and everything the exam tests actually live.
+      </p>
+      {CLI_GUIDE.map((section, i) => {
+        const isOpen = openIdx === i;
+        return (
+          <div key={i} style={{ marginBottom: 8 }}>
+            <button
+              onClick={() => setOpenIdx(isOpen ? null : i)}
+              style={{
+                width: "100%", padding: "16px 20px", background: isOpen ? "var(--bg-panel-alt)" : "var(--bg-panel)",
+                border: "1px solid var(--border-soft)", borderRadius: 8, cursor: "pointer",
+                textAlign: "left", fontFamily: "inherit", color: "var(--text-primary)",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}
+            >
+              <span style={{ fontSize: 16, fontWeight: 600 }}>
+                <span style={{ color: "#c0392b", marginRight: 10, fontWeight: 700 }}>{i + 1}</span>
+                {section.title}
+              </span>
+              <span style={{ color: "var(--text-dim)", fontSize: 18 }}>{isOpen ? "−" : "+"}</span>
+            </button>
+
+            {isOpen && (
+              <div style={{ padding: "16px 20px 20px", borderLeft: "3px solid #c0392b44", marginLeft: 10, marginTop: 4 }}>
+                {/* Regular content */}
+                {section.content && section.content.map((line, j) => (
+                  <p key={j} style={{
+                    fontSize: 15, color: line.startsWith("#") || line.startsWith("##") ? "var(--text-primary)" : "var(--text-body)",
+                    fontWeight: line.startsWith("#") ? 700 : 400,
+                    lineHeight: 1.8, margin: "0 0 8px",
+                    fontFamily: line.includes("brew ") || line.includes("curl ") || line.includes("claude") || line.includes("npm ") || line.startsWith("Option") ? "'IBM Plex Mono', monospace" : "inherit",
+                    fontSize: line.includes("brew ") || line.includes("curl ") || line.startsWith("Option") ? 14 : 15,
+                    background: (line.includes("brew ") || line.includes("curl ") || line.includes("claude --version")) ? "var(--bg-panel)" : "transparent",
+                    padding: (line.includes("brew ") || line.includes("curl ") || line.includes("claude --version")) ? "6px 10px" : 0,
+                    borderRadius: 4,
+                  }}>
+                    {line || "\u00A0"}
+                  </p>
+                ))}
+
+                {/* Commands table */}
+                {section.commands && (
+                  <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "8px 16px" }}>
+                    {section.commands.map((c, j) => (
+                      <div key={j} style={{ display: "contents" }}>
+                        <span style={{ fontSize: 14, fontFamily: "'IBM Plex Mono', monospace", color: "#c0392b", fontWeight: 600 }}>{c.cmd}</span>
+                        <span style={{ fontSize: 15, color: "var(--text-body)", lineHeight: 1.6 }}>{c.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Translations table */}
+                {section.translations && (
+                  <div>
+                    {section.translations.map((t, j) => (
+                      <div key={j} style={{
+                        display: "flex", gap: 16, padding: "10px 0",
+                        borderBottom: "1px solid var(--border-soft)",
+                        fontSize: 15, lineHeight: 1.6,
+                      }}>
+                        <span style={{ flex: 1, color: "var(--text-faint)" }}>{t.desktop}</span>
+                        <span style={{ color: "var(--text-dim)", flexShrink: 0 }}>→</span>
+                        <span style={{ flex: 1, color: "var(--text-body)" }}>{t.terminal}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
