@@ -2276,125 +2276,160 @@ function RulesTab({ rules }) {
 /* ─── CLIGuideTab ─── */
 const CLI_GUIDE = [
   {
-    title: "Why switch to the terminal?",
+    title: "You're not replacing anything — you're adding a superpower",
+    tier: "Start here",
     content: [
-      "Most of what the CCA exam tests — agentic loops, hooks, MCP, CLAUDE.md hierarchy, path-specific rules — happens in the CLI and the Agent SDK, not the desktop app.",
-      "The desktop app is great for chatting. But when you need hooks, skills, subagents, session forking, or CI/CD integration, you need the terminal.",
-      "Your Max subscription covers both. You're not paying extra — just changing the interface.",
+      "Nobody goes pure CLI overnight. The most productive developers use both: the desktop app for quick chats, the terminal for real work — hooks, skills, subagents, session forking, CI/CD. That's where the CCA exam content lives.",
+      "Your Max subscription already covers the CLI. Same account, same models, no extra cost.",
+      "Think of it as adding a command centre to your workflow, not abandoning your tools.",
     ],
   },
   {
-    title: "Step 1 — Pick a terminal",
+    title: "Nothing bad happens if you type something wrong",
+    tier: "Start here",
     content: [
-      "macOS Terminal.app works fine out of the box. If you want something nicer:",
-      "iTerm2 — free, mature, supports image pasting. Install: brew install --cask iterm2",
-      "Warp — modern and fast. Install: brew install --cask warp",
-      "Ghostty — lightweight and native. Install: brew install --cask ghostty",
-      "Start with Terminal.app if you're unsure. You can always switch later.",
+      "If you've avoided the terminal because it feels like defusing a bomb — here's the truth:",
+      "An invalid command just shows an error message and does nothing. Your computer doesn't break.",
+      "The CLI asks before making changes. You review and approve every action.",
+      "Git tracks everything. You can always undo.",
+      "The only destructive command is rm, and it won't run without your explicit approval.",
+      "The terminal is just a text interface. It's less scary than a spreadsheet formula — at least here the error messages tell you exactly what went wrong.",
     ],
   },
   {
-    title: "Step 2 — Install the CLI",
+    title: "Your first session in 3 steps (under 5 minutes)",
+    tier: "Day 1",
     content: [
-      "The recommended install method (2026) is the native installer or Homebrew:",
-      "Option 1 (recommended): curl -fsSL https://claude.ai/install.sh | bash",
-      "Option 2 (Homebrew): brew install --cask claude-code",
-      "Verify it works: claude --version",
-      "The npm install method (npm install -g @anthropic-ai/claude-code) is deprecated.",
+      "Step 1 — Open your terminal (Terminal.app on Mac, or whatever you already have)",
+      "Step 2 — Install: curl -fsSL https://claude.ai/install.sh | bash",
+      "Step 3 — Navigate to any project folder and type: claude",
+      "A browser window opens for sign-in. Use your existing account. That's it — you're in.",
+      "Try asking it something about the CCA exam right now. 'Explain the agentic loop lifecycle.' See how it responds. That's your first win.",
+      "Don't try to learn everything today. One session, one conversation, one successful interaction. Build from there.",
     ],
   },
   {
-    title: "Step 3 — Sign in",
+    title: "The golden rule: plan first, then implement",
+    tier: "Day 1",
     content: [
-      "Navigate to any project directory and run: claude",
-      "A browser window opens for OAuth sign-in. Use the same account that holds your Max subscription.",
-      "No API key needed. No separate payment. Your Max usage limits apply to the CLI automatically.",
+      "The single biggest difference between people who love the CLI and people who quit after a week: the plan-first workflow.",
+      "Bad: 'Build me a web app' → vague, unpredictable, frustrating results.",
+      "Good: 'Plan how you'd add user authentication to this React app. Show me the plan before writing any code.' → review the plan, adjust, then say 'implement it.'",
+      "Always ask for a plan. Review it. Then approve implementation. This applies to everything — code changes, refactors, debugging, file edits.",
+      "The people who treat the CLI like a vending machine ('do this thing') get frustrated. The people who treat it like a colleague ('let's think through this together') get productive fast.",
     ],
   },
   {
-    title: "Step 4 — Essential slash commands",
+    title: "5 commands — that's all you need for the first week",
+    tier: "Week 1",
     commands: [
-      { cmd: "/help", desc: "Lists every available command. Read this once." },
-      { cmd: "/clear", desc: "Clears the conversation. Fresh start." },
-      { cmd: "/compact", desc: "Summarises the conversation to reclaim context. Use at ~80% capacity." },
-      { cmd: "/resume", desc: "Resumes a prior named session." },
-      { cmd: "/model", desc: "Switches between available models." },
-      { cmd: "/tasks", desc: "Lists background tasks." },
-      { cmd: "/config", desc: "Adjusts settings for this session." },
-      { cmd: "/init", desc: "Creates a CLAUDE.md from the current project." },
+      { cmd: "/help", desc: "Lists every command. Read it once, forget it exists." },
+      { cmd: "/clear", desc: "Wipes the conversation. Start fresh." },
+      { cmd: "/compact", desc: "Summarises to reclaim context budget. Use when things start feeling slow or repetitive." },
+      { cmd: "/model", desc: "Switch between models. Sonnet for speed, Opus for depth." },
+      { cmd: "/init", desc: "Creates a CLAUDE.md from your current project. Instant context setup." },
     ],
   },
   {
-    title: "Step 5 — Desktop habits → terminal equivalents",
+    title: "What you used to do in the desktop app → what you do now",
+    tier: "Week 1",
     translations: [
-      { desktop: "Clicked 'New chat'", terminal: "/clear (or quit and re-run claude)" },
-      { desktop: "Attached a file", terminal: "Just mention the file path — it gets read automatically" },
-      { desktop: "Dragged in a screenshot", terminal: "Paste the image (iTerm2, Warp support this) or mention the file path" },
-      { desktop: "Used the settings menu", terminal: "Edit ~/.claude/settings.json or .claude/settings.json in your project" },
-      { desktop: "Saved custom instructions", terminal: "Create CLAUDE.md at the project root — same purpose, version-controllable" },
-      { desktop: "Used Projects with context", terminal: "Use CLAUDE.md + .claude/rules/ with glob patterns" },
+      { desktop: "Clicked 'New chat'", terminal: "/clear — or just quit and run claude again" },
+      { desktop: "Attached a file", terminal: "Just mention the file path. It reads it automatically." },
+      { desktop: "Dragged in a screenshot", terminal: "Paste the image (iTerm2, Warp) or save it and mention the path" },
+      { desktop: "Saved custom instructions", terminal: "Create CLAUDE.md at the project root — version-controllable, shareable" },
+      { desktop: "Used the settings menu", terminal: "Edit ~/.claude/settings.json or .claude/settings.json" },
+      { desktop: "Used Projects with context", terminal: "CLAUDE.md + .claude/rules/ with glob patterns" },
     ],
   },
   {
-    title: "Step 6 — Set up your first CLAUDE.md",
+    title: "Set up CLAUDE.md — your project's memory",
+    tier: "Week 1",
     content: [
-      "Inside any project directory, create a CLAUDE.md file:",
+      "This is what replaces 'custom instructions' from the desktop app — but better, because it lives in your codebase and your team can share it.",
+      "Create a file called CLAUDE.md in any project root:",
       "# Project context",
-      "This is a [describe project] using [stack].",
+      "This is a React study plan app using Vite.",
       "",
       "## Conventions",
-      "- Use [naming convention]",
-      "- Tests live in [path]",
-      "- Don't modify [file/dir] without asking",
+      "- Use Inter font, no external UI libraries",
+      "- Keep everything in src/App.jsx",
+      "- Inline styles only, no CSS files",
       "",
-      "Then run claude and ask: 'What conventions should you follow in this project?'",
-      "If it reads them back, you've set up what the desktop app's custom instructions did — but in a file you own and can check into git.",
+      "Then run claude and ask: 'What conventions should you follow here?'",
+      "If it reads them back correctly, you're set. Every session in this project automatically loads these rules.",
     ],
   },
   {
-    title: "Antigravity (optional — Path B)",
+    title: "Bad prompt vs good prompt — the difference is everything",
+    tier: "Week 1",
     content: [
-      "Google Antigravity is a free agent-first IDE that supports multiple models including Sonnet 4.6 and Opus 4.6.",
-      "Download from antigravity.google for macOS. Import your VS Code or Cursor settings on first launch.",
-      "Install the agy CLI tool so you can open projects with: agy .",
-      "Use Agent-assisted mode (recommended) — handles safe automations, asks for risky ones.",
-      "Open the integrated terminal (View → Terminal) and run claude there. You get two agent surfaces side by side.",
-      "Use Antigravity's agents for inline editing and quick refactors. Use the CLI for longer sessions, hooks, skills, and MCP.",
+      "The technical barrier to the CLI is low. The real barrier is knowing how to ask.",
+      "",
+      "BAD: 'Fix the bugs in this project'",
+      "→ Too vague. Which bugs? Where? It'll guess randomly and waste your time.",
+      "",
+      "GOOD: 'The login form submits even when the email field is empty. Add validation that shows an error message below the field when email is missing or invalid.'",
+      "→ Specific problem, specific location, specific expected behavior. Clear results.",
+      "",
+      "BAD: 'Make the UI better'",
+      "→ Better how? Faster? Prettier? More accessible? For whom?",
+      "",
+      "GOOD: 'The text on the Concepts tab is too small and low-contrast on the grey theme. Bump body text to 16px and brighten the muted text color from #666 to #8a8a96.'",
+      "→ Exact problem, exact numbers, exact fix. Done in seconds.",
     ],
   },
   {
-    title: "Common gotchas",
+    title: "Level up: hooks and custom commands (exam-critical)",
+    tier: "Month 1",
     content: [
-      "'command not found' after installing — restart your terminal or run: source ~/.zshrc",
-      "Pasted images don't work — use iTerm2, Warp, or Ghostty. Terminal.app doesn't support image pasting.",
-      "CLI feels slower than the desktop app — same speed, different rendering. The CLI streams character by character; the desktop app buffers.",
-      "Context runs out faster — the desktop app does aggressive auto-compaction. In the CLI, you control it with /compact. Run it when the bar shows >80%.",
-      "Not sure which model you're using — /model tells you.",
+      "Hooks are deterministic code that runs before or after every tool call. This is what the CCA exam tests heavily — and you can only use them from the CLI.",
+      "PostToolUse hooks intercept tool results and normalise data. PreToolUse hooks block actions that violate policy.",
+      "Example: a hook that prevents file edits to protected directories. No prompt instruction needed — the hook enforces it 100% of the time.",
+      ".claude/commands/ holds reusable slash commands you create yourself. Like macros for repetitive workflows.",
+      ".claude/skills/ holds skills with SKILL.md frontmatter. context: fork isolates verbose output so it doesn't pollute your main conversation.",
+      "These features separate 'I use the CLI' from 'I'm an architect who builds with the CLI.' The exam expects the latter.",
     ],
   },
   {
-    title: "7-day onboarding plan",
+    title: "What to expect (realistic timeline)",
+    tier: "The long view",
     content: [
-      "Day 1 — Install the CLI, run claude --version, open a toy project, have one conversation. Don't do anything important yet.",
-      "Day 2 — Create a CLAUDE.md in one of your real projects. Have it follow your conventions.",
-      "Day 3 — Learn /compact and /clear. Use both at least once today.",
-      "Day 4 — Try .claude/commands/ — create one custom slash command for a repetitive task.",
-      "Day 5 — Try a hook. Add a PostToolUse hook in .claude/settings.json that echoes a message after file edits. This is heavily tested on the exam.",
-      "Day 6 — Install Antigravity if you want Path B. Otherwise, spend today in the terminal and notice what you miss from the desktop app.",
-      "Day 7 — Decide: terminal, Antigravity, or keep the desktop app for some things? All three are fine. Many people keep the desktop app for quick chats and use the CLI for coding.",
+      "Day 1: You get it working, have one useful conversation. Feels unfamiliar but not hard.",
+      "Week 1: You're comfortable with the core commands. You reach for the terminal more often than the desktop app for coding tasks.",
+      "Week 4: The terminal is your default. You open the desktop app only for quick one-off questions or image-heavy conversations.",
+      "Month 3: Muscle memory. You stop thinking about the commands. Hooks, CLAUDE.md, custom commands — all second nature.",
+      "Research shows habit formation takes about 66 days on average, not the popular '21 days' myth. The awkward middle period (weeks 2-4) is normal. Push through it — that's where the switch happens.",
+      "The strongest predictor of long-term adoption: whether you use the CLI on a real project within 48 hours of your first session. Don't wait. Pick a real task today.",
+    ],
+  },
+  {
+    title: "When to keep the desktop app",
+    tier: "Perspective",
+    content: [
+      "Quick questions not tied to a codebase — just ask and go.",
+      "Image-heavy conversations — screenshots, diagrams, visual comparisons.",
+      "When you're on someone else's machine and don't want to install anything.",
+      "There's no rule that says you can't use both. Most productive people do.",
     ],
   },
 ];
+
+const TIER_COLORS = { "Start here": "#27ae60", "Day 1": "#2980b9", "Week 1": "#d35400", "Month 1": "#8e44ad", "The long view": "#95a5a6", "Perspective": "#95a5a6" };
 
 function CLIGuideTab() {
   const [openIdx, setOpenIdx] = useState(0);
   return (
     <div>
-      <p style={{ fontSize: 16, color: "var(--text-body)", marginTop: 0, marginBottom: 24, lineHeight: 1.7 }}>
-        A step-by-step guide to switching from the desktop app to the terminal — where hooks, skills, subagents, and everything the exam tests actually live.
+      <p style={{ fontSize: 17, color: "var(--text-body)", marginTop: 0, marginBottom: 12, lineHeight: 1.7, fontWeight: 500 }}>
+        You don't need to learn the terminal to use the CLI. The CLI is how you learn the terminal.
+      </p>
+      <p style={{ fontSize: 15, color: "var(--text-faint)", marginTop: 0, marginBottom: 28, lineHeight: 1.7 }}>
+        Step-by-step guide from desktop app to terminal — where hooks, skills, subagents, and everything the exam tests actually live. Follow the tiers at your own pace.
       </p>
       {CLI_GUIDE.map((section, i) => {
         const isOpen = openIdx === i;
+        const tierColor = TIER_COLORS[section.tier] || "#95a5a6";
         return (
           <div key={i} style={{ marginBottom: 8 }}>
             <button
@@ -2403,37 +2438,49 @@ function CLIGuideTab() {
                 width: "100%", padding: "16px 20px", background: isOpen ? "var(--bg-panel-alt)" : "var(--bg-panel)",
                 border: "1px solid var(--border-soft)", borderRadius: 8, cursor: "pointer",
                 textAlign: "left", fontFamily: "inherit", color: "var(--text-primary)",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
+                display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
               }}
             >
-              <span style={{ fontSize: 16, fontWeight: 600 }}>
-                <span style={{ color: "#c0392b", marginRight: 10, fontWeight: 700 }}>{i + 1}</span>
-                {section.title}
-              </span>
-              <span style={{ color: "var(--text-dim)", fontSize: 18 }}>{isOpen ? "−" : "+"}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
+                  background: `${tierColor}18`, color: tierColor, padding: "3px 8px", borderRadius: 4,
+                  flexShrink: 0, border: `1px solid ${tierColor}33`,
+                }}>{section.tier}</span>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>{section.title}</span>
+              </div>
+              <span style={{ color: "var(--text-dim)", fontSize: 18, flexShrink: 0 }}>{isOpen ? "−" : "+"}</span>
             </button>
 
             {isOpen && (
-              <div style={{ padding: "16px 20px 20px", borderLeft: "3px solid #c0392b44", marginLeft: 10, marginTop: 4 }}>
+              <div style={{ padding: "20px 24px 24px", borderLeft: `3px solid ${tierColor}55`, marginLeft: 10, marginTop: 4 }}>
                 {/* Regular content */}
-                {section.content && section.content.map((line, j) => (
-                  <p key={j} style={{
-                    fontSize: 15, color: line.startsWith("#") || line.startsWith("##") ? "var(--text-primary)" : "var(--text-body)",
-                    fontWeight: line.startsWith("#") ? 700 : 400,
-                    lineHeight: 1.8, margin: "0 0 8px",
-                    fontFamily: line.includes("brew ") || line.includes("curl ") || line.includes("claude") || line.includes("npm ") || line.startsWith("Option") ? "'IBM Plex Mono', monospace" : "inherit",
-                    fontSize: line.includes("brew ") || line.includes("curl ") || line.startsWith("Option") ? 14 : 15,
-                    background: (line.includes("brew ") || line.includes("curl ") || line.includes("claude --version")) ? "var(--bg-panel)" : "transparent",
-                    padding: (line.includes("brew ") || line.includes("curl ") || line.includes("claude --version")) ? "6px 10px" : 0,
-                    borderRadius: 4,
-                  }}>
-                    {line || "\u00A0"}
-                  </p>
-                ))}
+                {section.content && section.content.map((line, j) => {
+                  const isCode = line.includes("curl ") || line.includes("brew ") || line.includes("claude") && !line.includes("Claude") || line.startsWith("Option") || line.startsWith("Step ");
+                  const isHeading = line.startsWith("#") || line.startsWith("BAD:") || line.startsWith("GOOD:");
+                  const isBad = line.startsWith("BAD:") || line.startsWith("→ Too") || line.startsWith("→ Better");
+                  const isGood = line.startsWith("GOOD:");
+                  return (
+                    <p key={j} style={{
+                      fontSize: isCode ? 14 : 15,
+                      color: isGood ? "#27ae60" : isBad ? "#e74c3c" : isHeading ? "var(--text-primary)" : "var(--text-body)",
+                      fontWeight: isHeading || line.startsWith("Step ") ? 700 : 400,
+                      lineHeight: 1.8, margin: line === "" ? "0 0 16px" : "0 0 8px",
+                      fontFamily: isCode ? "'IBM Plex Mono', monospace" : "inherit",
+                      background: isCode ? "var(--bg-panel)" : "transparent",
+                      padding: isCode ? "8px 12px" : 0,
+                      borderRadius: 6,
+                      borderLeft: isGood ? "3px solid #27ae60" : isBad ? "3px solid #e74c3c" : "none",
+                      paddingLeft: (isGood || isBad) ? 12 : isCode ? 12 : 0,
+                    }}>
+                      {line || "\u00A0"}
+                    </p>
+                  );
+                })}
 
                 {/* Commands table */}
                 {section.commands && (
-                  <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "8px 16px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "10px 20px" }}>
                     {section.commands.map((c, j) => (
                       <div key={j} style={{ display: "contents" }}>
                         <span style={{ fontSize: 14, fontFamily: "'IBM Plex Mono', monospace", color: "#c0392b", fontWeight: 600 }}>{c.cmd}</span>
