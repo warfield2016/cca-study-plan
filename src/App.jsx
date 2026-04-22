@@ -2413,9 +2413,263 @@ const CLI_GUIDE = [
       "There's no rule that says you can't use both. Most productive people do.",
     ],
   },
+  // ═══════════════════════════════════════════════════════════
+  // EXAM-CRITICAL: features that ONLY exist in the CLI
+  // ═══════════════════════════════════════════════════════════
+  {
+    title: "Hooks — deterministic control over every tool call",
+    tier: "Exam-Critical",
+    examInfo: "D1 Task 1.5 · 19 questions · 27% of exam weight",
+    whyCLI: "The desktop app runs tool calls inside its own black box — you can't intercept, block, or modify them. Hooks require .claude/settings.json configuration and shell script execution, which only exist in the CLI environment. There is no hook equivalent in the desktop UI.",
+    content: [
+      "Hooks are shell commands that fire at specific lifecycle events. They give you 100% deterministic enforcement — not prompt-based suggestions that fail 5% of the time.",
+      "",
+      "The lifecycle events you need to know:",
+      "PreToolUse — fires BEFORE a tool executes. Block a refund over $500. Validate inputs. Require identity verification before account changes.",
+      "PostToolUse — fires AFTER a tool executes. Normalise data formats (Unix timestamps → ISO 8601). Scrub PII from responses. Log every database write for audit.",
+      "UserPromptSubmit — fires when the user sends a message. Transform inputs, inject context, enforce formatting.",
+      "Stop — fires when the agent finishes. Final validation, cleanup, summary generation.",
+      "",
+      "Configuration lives in .claude/settings.json:",
+    ],
+    code: `{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash",
+      "hooks": [{
+        "type": "command",
+        "command": "if echo \\"$TOOL_INPUT\\" | grep -q 'rm -rf'; then exit 1; fi"
+      }]
+    }],
+    "PostToolUse": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "echo \\"Tool $TOOL_NAME executed\\" >> /tmp/audit.log"
+      }]
+    }]
+  }
+}`,
+    examTrap: "When the exam says 'compliance MUST be guaranteed', 'occasionally fails', or 'non-zero failure rate' — the answer is ALWAYS a hook, never a better prompt. This is the single most tested pattern in Domain 1. Any answer that suggests 'add a system prompt instruction' for compliance-critical flows is wrong.",
+  },
+  {
+    title: "CLAUDE.md hierarchy — layered configuration",
+    tier: "Exam-Critical",
+    examInfo: "D3 Task 3.1 · 17 questions · 20% of exam weight",
+    whyCLI: "The desktop app has 'custom instructions' — a single flat text box. It has no concept of layered configuration, file-level inheritance, or directory-scoped rules. The three-tier hierarchy (user → project → directory) only makes sense when you're working in a project directory via the CLI, where each level can override or extend the one above it.",
+    content: [
+      "Three levels, most specific wins:",
+      "",
+      "~/.claude/CLAUDE.md — User level. Private to you. NOT version-controlled. Personal preferences, private tokens, experimental settings.",
+      "",
+      ".claude/CLAUDE.md (or CLAUDE.md at project root) — Project level. Shared with the team via git. Coding standards, naming conventions, test patterns, deployment rules.",
+      "",
+      "any-subdirectory/CLAUDE.md — Directory level. Overrides project-level for that path. Legacy code rules, module-specific conventions.",
+      "",
+      "You can also use @import to compose modular standards files:",
+    ],
+    code: `# CLAUDE.md (project root)
+@import .claude/standards/naming.md
+@import .claude/standards/testing.md
+@import .claude/standards/security.md
+
+## Project context
+This is a React app using Vite. All components are in src/.
+Do not modify package-lock.json manually.`,
+    examTrap: "The exam tests two traps: (1) committing ~/.claude/ to git — WRONG, user-level is private. (2) Using a monolithic CLAUDE.md when @import would keep it modular. The question will present 'add everything to one CLAUDE.md file' as an option — reject it for large teams.",
+  },
+  {
+    title: "Path-specific rules — glob-based conditional loading",
+    tier: "Exam-Critical",
+    examInfo: "D3 Task 3.3 · 16 questions · 20% of exam weight",
+    whyCLI: "The desktop app has no file-awareness at all. It doesn't know which files you're editing or what directory structure your project has. Path-specific rules use YAML frontmatter with glob patterns to conditionally load rules based on which file the agent is touching — a concept that only exists when the agent is operating inside a real file system via the CLI.",
+    content: [
+      "Instead of scattering CLAUDE.md files across every directory, you can create rules in .claude/rules/ that activate based on file paths:",
+    ],
+    code: `# .claude/rules/api-conventions.md
+---
+paths:
+  - "src/api/**/*"
+  - "src/routes/**/*"
+---
+
+All API endpoints must:
+- Return structured JSON errors with errorCategory and isRetryable
+- Validate input parameters before processing
+- Log request/response pairs for debugging`,
+    content2: [
+      "The glob pattern **/*.test.tsx would match every test file across all directories — one rule file replaces dozens of directory-level CLAUDE.md files.",
+      "",
+      "Use path rules for cross-directory conventions (all test files, all API routes, all config files). Use directory CLAUDE.md only for truly directory-specific overrides.",
+    ],
+    examTrap: "The exam asks: 'A team needs consistent test conventions across 40 directories.' The wrong answer is 'create a CLAUDE.md in each directory.' The right answer is '.claude/rules/ with a glob pattern.' This is tested explicitly.",
+  },
+  {
+    title: "Commands and skills — reusable automation",
+    tier: "Exam-Critical",
+    examInfo: "D3 Task 3.2 · 17 questions · 20% of exam weight",
+    whyCLI: "The desktop app has no concept of file-based command definitions or skill frontmatter. Commands and skills are Markdown files stored in .claude/ directories with YAML frontmatter that controls allowed tools, argument hints, and context isolation. This entire customisation layer exists only in the CLI.",
+    content: [
+      "Commands are reusable slash commands defined as Markdown files:",
+      "",
+      ".claude/commands/ — project-level, shared with team via git",
+      "~/.claude/commands/ — personal, not shared",
+      "",
+      "Each command is a Markdown file that becomes a slash command:",
+    ],
+    code: `# .claude/commands/review-pr.md
+---
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+argument-hint: "PR number or branch name"
+---
+
+Review the PR for:
+1. Security vulnerabilities
+2. Breaking API changes
+3. Missing test coverage
+4. Naming convention violations
+
+Output a structured report with severity levels.`,
+    content2: [
+      "Skills are similar but more powerful — they have a SKILL.md with frontmatter and can use context: fork to isolate verbose output:",
+    ],
+    code2: `# .claude/skills/analyze-deps/SKILL.md
+---
+context: fork
+allowed-tools:
+  - Read
+  - Bash
+  - Glob
+---
+
+Analyse all dependencies in package.json.
+Report outdated packages, security advisories,
+and unused dependencies.`,
+    content3: [
+      "context: fork is the key feature here. Without it, a skill that reads 50 files and produces a detailed report would fill the parent conversation's context window. With fork, the skill runs in an isolated context and only the final result comes back.",
+    ],
+    examTrap: "The exam tests context: fork specifically. When a question describes verbose skill output polluting the main conversation, the answer is always context: fork. Also: project commands go in .claude/commands/ (version-controlled), personal commands in ~/.claude/commands/ (not shared).",
+  },
+  {
+    title: "MCP configuration — project vs personal tooling",
+    tier: "Exam-Critical",
+    examInfo: "D2 Task 2.4 · 18 questions · 18% of exam weight",
+    whyCLI: "The desktop app can connect to MCP servers, but it can't distinguish between project-shared and personal configurations. The CLI uses two config files — .mcp.json (project, version-controlled) and ~/.claude.json (personal, private) — which is how teams share tool configurations without leaking credentials. This two-tier model only works in the CLI.",
+    content: [
+      ".mcp.json — project-level. Checked into git. Every teammate gets the same MCP servers automatically.",
+      "~/.claude.json — user-level. Private. Your personal API tokens, experimental servers.",
+      "",
+      "Env var expansion keeps secrets out of config files:",
+    ],
+    code: `// .mcp.json (project, shared via git)
+{
+  "mcpServers": {
+    "database": {
+      "command": "npx",
+      "args": ["@company/db-mcp"],
+      "env": {
+        "DB_CONNECTION": "\${DB_CONNECTION_STRING}"
+      }
+    }
+  }
+}`,
+    content2: [
+      "The critical distinction the exam tests: MCP tools vs MCP resources.",
+      "",
+      "Tools = actions. They DO things: create a ticket, run a query, send a message.",
+      "Resources = content catalogues. They SHOW things: list available schemas, browse documentation, display issue templates.",
+      "",
+      "Resources reduce exploratory tool calls because the agent can browse what's available without executing anything. When the exam asks 'how to reduce unnecessary tool calls' or 'give the agent visibility into available options', the answer is resources.",
+    ],
+    examTrap: "Two traps: (1) Putting personal tokens in .mcp.json and committing to git — WRONG, use ~/.claude.json or env vars. (2) Building a custom MCP server for a standard integration — WRONG if a community server already exists. The exam favours community servers over custom builds for standard integrations.",
+  },
+  {
+    title: "Subagents — Task tool, context passing, parallel spawning",
+    tier: "Exam-Critical",
+    examInfo: "D1 Tasks 1.2-1.3 · 40 questions · 27% of exam weight",
+    whyCLI: "The desktop app's conversation is a single thread. There is no way to spawn parallel agents, restrict tool access per agent, or explicitly pass structured context between agents. The CLI's Task tool creates subagents with their own AgentDefinition (system prompt, allowed tools, description) — a primitives layer that doesn't exist in the desktop UI.",
+    content: [
+      "Subagents are spawned via the Task tool. The coordinator's allowedTools MUST include 'Task' or it can't create subagents at all.",
+      "",
+      "The #1 misconception the exam tests: subagents do NOT inherit parent context.",
+      "",
+      "Every piece of information a subagent needs must be explicitly included in its prompt. If the coordinator found 10 relevant documents and spawns a synthesis subagent without passing those documents in the prompt, the synthesis agent has nothing to work with.",
+      "",
+      "Parallel spawning: emit multiple Task calls in a single coordinator response. This spawns subagents in parallel instead of sequentially — faster and tested for latency awareness on the exam.",
+      "",
+      "Each subagent gets an AgentDefinition:",
+    ],
+    code: `{
+  "name": "legal-research-agent",
+  "description": "Searches legal databases for regulatory requirements",
+  "systemPrompt": "You are a legal research specialist...",
+  "allowedTools": ["search_legal_db", "read_regulation"],
+  "disallowedTools": ["write_file", "execute_code"]
+}`,
+    content2: [
+      "Hub-and-spoke architecture: ALL communication flows through the coordinator. Subagents never talk to each other directly.",
+      "",
+      "When a multi-agent system produces incomplete results, the exam expects you to trace the failure to its root cause. If the coordinator's task decomposition was too narrow (e.g., only covering solar and wind when asked about renewable energy), the fix is the coordinator's decomposition — not any downstream agent.",
+    ],
+    examTrap: "The exam's favourite trap: a synthesis agent produces claims with no source attribution. The distractor says 'fix the synthesis agent's prompts.' The correct answer: the context passing between agents didn't include structured metadata (source URLs, document names). Fix the data that flows between agents, not the agent that processes it.",
+  },
+  {
+    title: "Session state — --resume and fork_session",
+    tier: "Exam-Critical",
+    examInfo: "D1 Task 1.7 · 16 questions · 27% of exam weight",
+    whyCLI: "The desktop app has a chat history you can scroll through. That's it. The CLI has named sessions you can resume by name, fork into parallel explorations, and manage across context boundaries. Session forking — creating independent branches from a shared analysis baseline — is a concept that has no desktop equivalent.",
+    content: [
+      "--resume session-name — continues a prior named session with its full context intact.",
+      "",
+      "fork_session — creates an independent branch from the current point. Both branches share the same history up to the fork, then diverge independently.",
+      "",
+      "The tradeoff the exam tests:",
+      "Fresh + summary — start a new session with a summary of what was found before. Best when tool results have changed since last time (code was merged, DB was updated).",
+      "--resume — best when context is still accurate and the previous reasoning chain is valuable.",
+      "",
+      "When to fork: comparing two approaches from the same starting point. Example: you've analysed a codebase and want to explore two different refactoring strategies. Fork the session — each branch explores independently without contaminating the other.",
+      "",
+      "Context degradation signals: answers start referencing 'typical patterns' instead of specific findings. This means the context is saturated. Solutions: scratchpad files to persist key findings, /compact to reclaim space, or fresh start with summary.",
+    ],
+    examTrap: "The exam presents 'always --resume' and 'always start fresh' as options. Both are wrong. The correct answer depends on whether the context is stale. Stale tool results → fresh + summary. Recent, still-valid context → --resume.",
+  },
+  {
+    title: "CLI for CI/CD — non-interactive mode and structured output",
+    tier: "Exam-Critical",
+    examInfo: "D3 Task 3.6 · 17 questions · 20% of exam weight",
+    whyCLI: "CI/CD pipelines run without a human present. The desktop app requires a person sitting at a screen clicking buttons. The -p (--print) flag runs the CLI non-interactively, --output-format json makes the output machine-parseable, and --json-schema enforces structured responses. This entire automation surface only exists in the CLI.",
+    content: [
+      "-p / --print — non-interactive mode. No user prompts, no confirmations. The agent runs, produces output, exits.",
+      "--output-format json — returns structured JSON instead of free text. Machine-parseable for CI pipelines.",
+      "--json-schema — constrains the output to match a specific schema. Guarantees the fields your pipeline expects.",
+      "",
+      "CLAUDE.md still loads in -p mode — your project context applies even in CI.",
+      "",
+      "Session isolation is critical: use a separate instance for generation and review. If the same session generates code AND reviews it, the review is biased by the reasoning that produced the code.",
+    ],
+    code: `# GitHub Actions example
+- name: Review PR
+  run: |
+    claude -p "Review this diff for security issues" \\
+      --output-format json \\
+      --json-schema '{"type":"object","properties":{"issues":{"type":"array"}}}' \\
+      < diff.patch`,
+    content2: [
+      "Batch processing via the Message Batches API: 50% cost savings, up to 24-hour processing window, no latency guarantee.",
+      "",
+      "Use batch for: overnight report generation, bulk ticket classification, end-of-day processing.",
+      "Use sync for: pre-merge code review, real-time chat, anything where someone is waiting.",
+      "",
+      "The exam always presents batch as an option for blocking workflows. Reject it — developers can't wait 24 hours for a code review.",
+    ],
+    examTrap: "Two traps: (1) Using the same session for code generation AND code review — WRONG, the reviewer is biased. Use separate instances. (2) Using batch API for pre-merge blocking checks — WRONG, developers are waiting. Batch is for overnight jobs only.",
+  },
 ];
 
-const TIER_COLORS = { "Start here": "#27ae60", "Day 1": "#2980b9", "Week 1": "#d35400", "Month 1": "#8e44ad", "The long view": "#95a5a6", "Perspective": "#95a5a6" };
+const TIER_COLORS = { "Start here": "#27ae60", "Day 1": "#2980b9", "Week 1": "#d35400", "Month 1": "#8e44ad", "Exam-Critical": "#c0392b", "The long view": "#95a5a6", "Perspective": "#95a5a6" };
 
 function CLIGuideTab() {
   const [openIdx, setOpenIdx] = useState(0);
@@ -2454,29 +2708,77 @@ function CLIGuideTab() {
 
             {isOpen && (
               <div style={{ padding: "20px 24px 24px", borderLeft: `3px solid ${tierColor}55`, marginLeft: 10, marginTop: 4 }}>
-                {/* Regular content */}
-                {section.content && section.content.map((line, j) => {
-                  const isCode = line.includes("curl ") || line.includes("brew ") || line.includes("claude") && !line.includes("Claude") || line.startsWith("Option") || line.startsWith("Step ");
-                  const isHeading = line.startsWith("#") || line.startsWith("BAD:") || line.startsWith("GOOD:");
-                  const isBad = line.startsWith("BAD:") || line.startsWith("→ Too") || line.startsWith("→ Better");
-                  const isGood = line.startsWith("GOOD:");
-                  return (
-                    <p key={j} style={{
-                      fontSize: isCode ? 14 : 15,
-                      color: isGood ? "#27ae60" : isBad ? "#e74c3c" : isHeading ? "var(--text-primary)" : "var(--text-body)",
-                      fontWeight: isHeading || line.startsWith("Step ") ? 700 : 400,
-                      lineHeight: 1.8, margin: line === "" ? "0 0 16px" : "0 0 8px",
-                      fontFamily: isCode ? "'IBM Plex Mono', monospace" : "inherit",
-                      background: isCode ? "var(--bg-panel)" : "transparent",
-                      padding: isCode ? "8px 12px" : 0,
-                      borderRadius: 6,
-                      borderLeft: isGood ? "3px solid #27ae60" : isBad ? "3px solid #e74c3c" : "none",
-                      paddingLeft: (isGood || isBad) ? 12 : isCode ? 12 : 0,
-                    }}>
-                      {line || "\u00A0"}
-                    </p>
-                  );
-                })}
+
+                {/* Exam weight badge */}
+                {section.examInfo && (
+                  <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, color: "#c0392b", background: "#c0392b0a", border: "1px solid #c0392b22", borderRadius: 6, padding: "6px 14px", marginBottom: 16 }}>
+                    {section.examInfo}
+                  </div>
+                )}
+
+                {/* Why the desktop app can't teach this */}
+                {section.whyCLI && (
+                  <div style={{ padding: "14px 18px", background: "#f39c120a", border: "1px solid #f39c1222", borderRadius: 8, marginBottom: 20, fontSize: 14, color: "#f39c12", lineHeight: 1.7 }}>
+                    <span style={{ fontWeight: 700, fontSize: 12, letterSpacing: 0.5, display: "block", marginBottom: 6, textTransform: "uppercase" }}>Why this only exists in the CLI</span>
+                    <span style={{ color: "var(--text-body)" }}>{section.whyCLI}</span>
+                  </div>
+                )}
+
+                {/* Content block renderer */}
+                {[section.content, section.content2, section.content3].filter(Boolean).map((block, bi) => (
+                  <div key={`block-${bi}`}>
+                    {bi > 0 && section[`code${bi > 1 ? bi : ""}`] == null && <div style={{ height: 8 }} />}
+                    {block.map((line, j) => {
+                      const isCmd = line.includes("curl ") || line.includes("brew ") || (line.includes("claude") && !line.includes("Claude")) || line.startsWith("Option") || line.startsWith("Step ");
+                      const isHeading = line.startsWith("#") || line.startsWith("BAD:") || line.startsWith("GOOD:");
+                      const isBad = line.startsWith("BAD:") || line.startsWith("→ Too") || line.startsWith("→ Better");
+                      const isGood = line.startsWith("GOOD:");
+                      const isKeyTerm = line.startsWith("PreToolUse") || line.startsWith("PostToolUse") || line.startsWith("UserPromptSubmit") || line.startsWith("Stop") || line.startsWith("Tools =") || line.startsWith("Resources =") || line.startsWith("--resume") || line.startsWith("fork_session") || line.startsWith("-p") || line.startsWith(".mcp.json") || line.startsWith("~/.claude");
+                      return (
+                        <p key={`${bi}-${j}`} style={{
+                          fontSize: isCmd ? 14 : 15,
+                          color: isGood ? "#27ae60" : isBad ? "#e74c3c" : isHeading ? "var(--text-primary)" : isKeyTerm ? "var(--text-primary)" : "var(--text-body)",
+                          fontWeight: isHeading || line.startsWith("Step ") || isKeyTerm ? 600 : 400,
+                          lineHeight: 1.8, margin: line === "" ? "0 0 16px" : "0 0 8px",
+                          fontFamily: isCmd ? "'IBM Plex Mono', monospace" : "inherit",
+                          background: isCmd ? "var(--bg-panel)" : "transparent",
+                          padding: isCmd ? "8px 12px" : 0,
+                          borderRadius: 6,
+                          borderLeft: isGood ? "3px solid #27ae60" : isBad ? "3px solid #e74c3c" : isKeyTerm ? `3px solid ${tierColor}44` : "none",
+                          paddingLeft: (isGood || isBad || isKeyTerm) ? 14 : isCmd ? 12 : 0,
+                        }}>
+                          {line || "\u00A0"}
+                        </p>
+                      );
+                    })}
+                    {/* Code block after this content block */}
+                    {bi === 0 && section.code && (
+                      <pre style={{ fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", background: "var(--bg-panel)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: "16px 20px", marginTop: 12, marginBottom: 16, overflowX: "auto", lineHeight: 1.6, color: "var(--text-body)", whiteSpace: "pre-wrap" }}>
+                        {section.code}
+                      </pre>
+                    )}
+                    {bi === 1 && section.code2 && (
+                      <pre style={{ fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", background: "var(--bg-panel)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: "16px 20px", marginTop: 12, marginBottom: 16, overflowX: "auto", lineHeight: 1.6, color: "var(--text-body)", whiteSpace: "pre-wrap" }}>
+                        {section.code2}
+                      </pre>
+                    )}
+                  </div>
+                ))}
+
+                {/* Standalone code block if no content2 */}
+                {section.code && !section.content2 && !section.content?.length && (
+                  <pre style={{ fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", background: "var(--bg-panel)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: "16px 20px", marginBottom: 16, overflowX: "auto", lineHeight: 1.6, color: "var(--text-body)", whiteSpace: "pre-wrap" }}>
+                    {section.code}
+                  </pre>
+                )}
+
+                {/* Exam trap warning */}
+                {section.examTrap && (
+                  <div style={{ padding: "14px 18px", background: "#e74c3c0a", border: "1px solid #e74c3c22", borderLeft: "4px solid #e74c3c", borderRadius: "0 8px 8px 0", marginTop: 16, fontSize: 14, lineHeight: 1.7 }}>
+                    <span style={{ fontWeight: 700, fontSize: 12, letterSpacing: 0.5, color: "#e74c3c", display: "block", marginBottom: 6, textTransform: "uppercase" }}>Exam trap</span>
+                    <span style={{ color: "var(--text-body)" }}>{section.examTrap}</span>
+                  </div>
+                )}
 
                 {/* Commands table */}
                 {section.commands && (
